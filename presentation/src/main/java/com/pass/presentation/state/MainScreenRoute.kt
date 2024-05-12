@@ -1,4 +1,4 @@
-package com.pass.presentation.view.component
+package com.pass.presentation.state
 
 import com.pass.presentation.R
 
