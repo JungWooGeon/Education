@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">가상 교육 플랫폼</string>
+    <string name="live_screen">Live</string>
+    <string name="video_screen">동영상</string>
+</resources>
