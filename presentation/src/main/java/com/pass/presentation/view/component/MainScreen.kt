@@ -32,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.pass.presentation.R
 import com.pass.presentation.state.MainScreenRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,11 +51,13 @@ fun MainScreen(logoResource: Int) {
                 Image(
                     painter = painterResource(id = logoResource),
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp).padding(end = 10.dp)
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 10.dp)
                 )
 
                 Text(
-                    text = "가상 교육 플랫폼",
+                    text = stringResource(id = R.string.app_name),
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
                     modifier = Modifier.fillMaxWidth()
