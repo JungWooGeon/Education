@@ -45,6 +45,7 @@ fun MyApplicationTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val backgroundColor = MaterialTheme.colorScheme.background
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -59,8 +60,8 @@ fun MyApplicationTheme(
         SideEffect {
             val window = (view.context as Activity).window
 
-            // 상태 표시줄 색상을 흰색으로 설정
-            window.statusBarColor = Color.White.toArgb()
+            // 상태 표시줄 색상을 기본 배경색으로 설정
+            window.statusBarColor = backgroundColor.toArgb()
             // 상태 표시줄의 요소들의 색상을 검은색으로 설정
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }

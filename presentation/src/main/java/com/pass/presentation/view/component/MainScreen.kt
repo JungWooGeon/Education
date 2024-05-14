@@ -71,10 +71,7 @@ fun MainScreen(logoResource: Int) {
             )
         }
     ) {
-        Box(
-            Modifier
-                .padding(it)
-                .background(Color.White)) {
+        Box(Modifier.padding(it)) {
             NavigationGraph(navController)
         }
     }
@@ -87,7 +84,8 @@ fun BottomNavigationBar(
 ) {
     val bottomNavItems = listOf(
         MainScreenRoute.LiveListScreen,
-        MainScreenRoute.VideoListScreen
+        MainScreenRoute.VideoListScreen,
+        MainScreenRoute.MyScreen
     )
 
     NavigationBar(
@@ -138,6 +136,10 @@ fun NavigationGraph(
 
         composable(MainScreenRoute.VideoListScreen.screenRoute) {
             VideoListScreen()
+        }
+
+        composable(MainScreenRoute.MyScreen.screenRoute) {
+            MyScreen()
         }
     }
 }
