@@ -30,7 +30,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
     buildFeatures {
         compose = true
@@ -84,4 +84,7 @@ dependencies {
     implementation("org.orbit-mvi:orbit-core:7.1.0")
     implementation("org.orbit-mvi:orbit-viewmodel:7.1.0")
     implementation("org.orbit-mvi:orbit-compose:7.1.0")
+
+    // coroutine
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
