@@ -27,7 +27,7 @@ class SignInViewModel @Inject constructor(
 
         signInUseCase(id, password).collect { result ->
             result.onSuccess {
-                postSideEffect(SignInSideEffect.Toast(message = "로그인에 성공하였습니다."))
+                postSideEffect(SignInSideEffect.NavigateToProfileScreen)
             }.onFailure { exception ->
                 postSideEffect(SignInSideEffect.Toast(message = exception.message ?: "로그인 실패 : Unknown error"))
             }
@@ -54,5 +54,6 @@ data class SignInState(
 )
 
 sealed interface SignInSideEffect {
-    class Toast(val message: String) : SignInSideEffect
+    data object NavigateToProfileScreen : SignInSideEffect
+    data class Toast(val message: String) : SignInSideEffect
 }

@@ -16,7 +16,10 @@ class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) 
     }
 
     override suspend fun signIn(id: String, password: String): Flow<Result<Unit>> = callbackFlow {
-        auth.signInWithEmailAndPassword(id, password).addOnCompleteListener { task ->
+        if (id == "" || password == "") {
+            trySend(Result.failure(Exception("아이디와 비밀번호를 입력해주세요.")))
+        } else {
+            auth.signInWithEmailAndPassword(id, password).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     // 로그인 성공
                     trySend(Result.success(Unit))
@@ -27,25 +30,34 @@ class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) 
                     } ?: trySend(Result.failure(Exception("Unknown Error")))
                 }
             }
+        }
+
         awaitClose()
     }
 
-    override suspend fun signUp(id: String, password: String): Flow<Result<Unit>> = callbackFlow {
-        auth.createUserWithEmailAndPassword(id, password).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                // 회원가입 성공
-                trySend(Result.success(Unit))
-            } else {
-                // 회원가입 실패
-                task.exception?.let {
-                    trySend(Result.failure(it))
-                } ?: trySend(Result.failure(Exception("Unknown Error")))
+    override suspend fun signUp(id: String, password: String, verifyPassword: String): Flow<Result<Unit>> = callbackFlow {
+        if (id == "" || password == "" || verifyPassword == "") {
+            trySend(Result.failure(Exception("아이디와 비밀번호를 입력해주세요.")))
+        } else if (password != verifyPassword) {
+            trySend(Result.failure(Exception("비밀번호가 맞지 않습니다.")))
+        } else {
+            auth.createUserWithEmailAndPassword(id, password).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // 회원가입 성공
+                    trySend(Result.success(Unit))
+                } else {
+                    // 회원가입 실패
+                    task.exception?.let {
+                        trySend(Result.failure(it))
+                    } ?: trySend(Result.failure(Exception("Unknown Error")))
+                }
             }
         }
+
         awaitClose()
     }
 
     override suspend fun signOut() {
-        return auth.signOut()
+        auth.signOut()
     }
 }

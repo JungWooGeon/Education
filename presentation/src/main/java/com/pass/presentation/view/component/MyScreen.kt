@@ -33,14 +33,32 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onNavigateToProfileScreen = {
+                        myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
+                            myScreenNavController.graph.startDestinationRoute?.let {
+                                popUpTo(it) { saveState = true }
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
             }
 
             composable(MyScreenRoute.SignUpScreen.screenRoute) {
                 SignUpScreen(
-                    onNavigateBackStack = {
+                    onNavigateToSignInScreen = {
                         myScreenNavController.navigate(MyScreenRoute.SignInScreen.screenRoute) {
+                            myScreenNavController.graph.startDestinationRoute?.let {
+                                popUpTo(it) { saveState = true }
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToProfileScreen = {
+                        myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
                             myScreenNavController.graph.startDestinationRoute?.let {
                                 popUpTo(it) { saveState = true }
                             }
@@ -52,7 +70,17 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
             }
 
             composable(MyScreenRoute.ProfileScreen.screenRoute) {
-                ProfileScreen()
+                ProfileScreen(
+                    onNavigateToSignInScreen = {
+                        myScreenNavController.navigate(MyScreenRoute.SignInScreen.screenRoute) {
+                            myScreenNavController.graph.startDestinationRoute?.let {
+                                popUpTo(it) { saveState = true }
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
             }
         }
     }

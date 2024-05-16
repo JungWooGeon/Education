@@ -30,7 +30,8 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 @Composable
 fun SignInScreen(
     viewModel: SignInViewModel = hiltViewModel(),
-    onNavigateToSignUpScreen: () -> Unit
+    onNavigateToSignUpScreen: () -> Unit,
+    onNavigateToProfileScreen: () -> Unit
 ) {
     val signInState = viewModel.collectAsState().value
     val context = LocalContext.current
@@ -38,6 +39,10 @@ fun SignInScreen(
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
             is SignInSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
+            is SignInSideEffect.NavigateToProfileScreen -> {
+                Toast.makeText(context, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
+                onNavigateToProfileScreen()
+            }
         }
     }
 
@@ -90,7 +95,7 @@ fun SignInScreen(
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = "SignIn",
+                text = "Sign In",
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp
             )
@@ -106,7 +111,7 @@ fun SignInScreen(
         ) {
             Text(text = "Don't have an account?", fontSize = 12.sp)
             Text(
-                text = "Sign up",
+                text = "Sign Up",
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 12.sp,
                 modifier = Modifier.clickable { onNavigateToSignUpScreen() }

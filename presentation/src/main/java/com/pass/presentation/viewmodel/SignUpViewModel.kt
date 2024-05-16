@@ -24,10 +24,11 @@ class SignUpViewModel @Inject constructor(
     fun onClickSignUp() = intent {
         val id = state.id
         val password = state.password
+        val verifyPassword = state.verifyPassword
 
-        signUpUseCase(id, password).collect { result ->
+        signUpUseCase(id, password, verifyPassword).collect { result ->
             result.onSuccess {
-                postSideEffect(SignUpSideEffect.Toast(message = "회원 가입에 성공하였습니다."))
+                postSideEffect(SignUpSideEffect.NavigateToProfileScreen)
             }.onFailure { exception ->
                 postSideEffect(SignUpSideEffect.Toast(message = exception.message ?: "회원가입 실패 : Unknown error"))
             }
@@ -61,5 +62,6 @@ data class SignUpState(
 )
 
 sealed interface SignUpSideEffect {
-    class Toast(val message: String) : SignUpSideEffect
+    data object NavigateToProfileScreen : SignUpSideEffect
+    data class Toast(val message: String) : SignUpSideEffect
 }
