@@ -1,6 +1,5 @@
 package com.pass.presentation.view.component
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,44 +10,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.pass.presentation.ui.theme.MyApplicationTheme
-import com.pass.presentation.viewmodel.LoginSideEffect
-import com.pass.presentation.viewmodel.MyViewModel
-import org.orbitmvi.orbit.compose.collectAsState
-import org.orbitmvi.orbit.compose.collectSideEffect
-
-@Composable
-fun LoginScreen(viewModel: MyViewModel = hiltViewModel()) {
-    val loginState = viewModel.collectAsState().value
-    val context = LocalContext.current
-
-    viewModel.collectSideEffect { sideEffect ->  
-        when(sideEffect) {
-            is LoginSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    LoginScreen(
-        isLogin = false,
-        id = loginState.id,
-        password = loginState.password,
-        onChangeId = viewModel::onChangeId,
-        onChangePassword = viewModel::onChangePassword,
-        onClickLogin = viewModel::onClickLogin
-    )
-}
 
 @Composable
 fun LoginScreen(
@@ -105,16 +74,6 @@ fun LoginScreen(
         ) {
             Text(text = "Don't have an account?", fontSize = 12.sp)
             Text(text = "Sign up", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
-        }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewMyScreen() {
-    MyApplicationTheme {
-        Surface {
-            MyScreen()
         }
     }
 }
