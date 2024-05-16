@@ -30,7 +30,7 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
-fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
+fun LoginScreen(viewModel: MyViewModel = hiltViewModel()) {
     val loginState = viewModel.collectAsState().value
     val context = LocalContext.current
 
@@ -40,7 +40,7 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
         }
     }
 
-    MyScreen(
+    LoginScreen(
         isLogin = false,
         id = loginState.id,
         password = loginState.password,
@@ -51,7 +51,7 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun MyScreen(
+fun LoginScreen(
     isLogin: Boolean,
     id: String,
     password: String,
