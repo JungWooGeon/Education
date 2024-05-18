@@ -1,6 +1,9 @@
 package com.pass.data.di
 
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,5 +16,10 @@ class FirebaseModule {
     @Provides
     fun providesFirebaseAuth(): FirebaseAuth {
         return FirebaseAuth.getInstance()
+    }
+
+    @Provides
+    fun providesFirebaseFireStore(): FirebaseFirestore {
+        return Firebase.firestore
     }
 }

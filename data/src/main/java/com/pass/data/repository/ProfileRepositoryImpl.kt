@@ -1,13 +1,18 @@
 package com.pass.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pass.domain.repository.ProfileRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) : ProfileRepository {
+class ProfileRepositoryImpl @Inject constructor(
+    private val auth: FirebaseAuth,
+    private val fireStore: FirebaseFirestore
+) : ProfileRepository {
 
     override suspend fun isSignedIn(): Flow<Boolean> = callbackFlow {
         val currentUser = auth.currentUser
@@ -35,7 +40,11 @@ class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) 
         awaitClose()
     }
 
-    override suspend fun signUp(id: String, password: String, verifyPassword: String): Flow<Result<Unit>> = callbackFlow {
+    override suspend fun signUp(
+        id: String,
+        password: String,
+        verifyPassword: String
+    ): Flow<Result<Unit>> = callbackFlow {
         if (id == "" || password == "" || verifyPassword == "") {
             trySend(Result.failure(Exception("아이디와 비밀번호를 입력해주세요.")))
         } else if (password != verifyPassword) {
@@ -44,7 +53,31 @@ class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) 
             auth.createUserWithEmailAndPassword(id, password).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     // 회원가입 성공
-                    trySend(Result.success(Unit))
+                    val uid = auth.currentUser?.uid
+
+                    println(uid)
+
+                    if (uid != null) {
+                        launch {
+                            createUserProfile(uid).collect {
+                                it.onSuccess {
+                                    // 사용자 프로필 생성 성공
+                                    trySend(Result.success(Unit))
+                                }.onFailure { e ->
+                                    // 사용자 프로필 생성 실패
+                                    trySend(Result.failure(Exception(e)))
+                                    signOut()
+                                    deleteUser()
+                                }
+                            }
+                        }
+                    } else {
+                        trySend(Result.failure(Exception("사용자 ID를 얻을 수 없습니다.")))
+                        launch {
+                            signOut()
+                            deleteUser()
+                        }
+                    }
                 } else {
                     // 회원가입 실패
                     task.exception?.let {
@@ -59,5 +92,28 @@ class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) 
 
     override suspend fun signOut() {
         auth.signOut()
+    }
+
+    private suspend fun createUserProfile(userId: String): Flow<Result<Unit>> = callbackFlow {
+        val userProfile = hashMapOf(
+            "name" to userId,
+            "pictureUrl" to ""
+        )
+
+        fireStore.collection("profiles").document(userId)
+            .set(userProfile)
+            .addOnSuccessListener {
+                trySend(Result.success(Unit))
+            }
+            .addOnFailureListener { e ->
+                trySend(Result.failure(Exception(e.message)))
+            }
+
+        awaitClose()
+    }
+
+    private fun deleteUser() {
+        val user = auth.currentUser
+        user?.delete()
     }
 }
