@@ -39,7 +39,8 @@ jobs:
        target: default
        arch: x86_64
        profile: Nexus 6
-       script: ./gradlew connectedCheck --stacktrace
+       script: ./gradlew connectedCheck --stacktrace --no-daemon
+       timeout-minutes: 30
        
     - name: Assemble
       run: ./gradlew assemble
