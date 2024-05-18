@@ -2,7 +2,6 @@ package com.pass.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.toObject
 import com.pass.domain.model.Profile
 import com.pass.domain.repository.ProfileRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -119,7 +118,6 @@ class ProfileRepositoryImpl @Inject constructor(
         awaitClose()
     }
 
-
     private suspend fun createUserProfile(userId: String): Flow<Result<Unit>> = callbackFlow {
         val userProfile = hashMapOf(
             "name" to userId,
@@ -142,4 +140,26 @@ class ProfileRepositoryImpl @Inject constructor(
         val user = auth.currentUser
         user?.delete()
     }
+
+    override suspend fun updateUserProfileName(name: String): Flow<Result<Unit>> = callbackFlow {
+        val userId = auth.currentUser?.uid
+
+        if (userId != null) {
+            val sfDocRef = fireStore.collection("profiles").document(userId)
+
+            fireStore.runTransaction { transaction ->
+                transaction.update(sfDocRef, "name", name)
+                null
+            }.addOnSuccessListener {
+                trySend(Result.success(Unit))
+            }.addOnFailureListener { e ->
+                trySend(Result.failure(Exception(e.message)))
+                println(e.message)
+            }
+        }
+
+        awaitClose()
+    }
+
+    // 기존 사진 삭제 + 새로운 사진 업로드 + 새로운 사진 url 업데이트
 }

@@ -10,4 +10,5 @@ interface ProfileRepository {
     suspend fun signOut()
 
     suspend fun getUserProfile(): Flow<Result<Profile>>
+    suspend fun updateUserProfileName(name: String): Flow<Result<Unit>>
 }

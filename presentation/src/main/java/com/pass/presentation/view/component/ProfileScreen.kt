@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -61,13 +62,16 @@ fun ProfileScreen(
     ProfileScreen(
         userProfileUrl = profileState.userProfileURL,
         userName = profileState.userName,
+        onEditDialog = profileState.onEditDialog,
+        editDialogUserName = profileState.editDialogUserName,
         onClickSignOut = viewModel::onClickSignOut,
-        onClickEditButton = {
-            // popup
-        },
+        onClickEditButton = viewModel::onClickEditButton,
+        onCancelEditPopUp = viewModel::onCancelEditPopUp,
         onClickProfileImage = {
             // 갤러리
-        }
+        },
+        onChangeEditDialogUserName = viewModel::onChangeEditDialogUserName,
+        onClickSaveEditDialogButton = viewModel::onClickSaveEditDialogButton
     )
 }
 
@@ -75,9 +79,14 @@ fun ProfileScreen(
 fun ProfileScreen(
     userProfileUrl: String,
     userName: String,
+    onEditDialog: Boolean,
+    editDialogUserName: String,
     onClickSignOut: () -> Unit,
     onClickEditButton: () -> Unit,
-    onClickProfileImage: () -> Unit
+    onCancelEditPopUp: () -> Unit,
+    onClickProfileImage: () -> Unit,
+    onChangeEditDialogUserName: (String) -> Unit,
+    onClickSaveEditDialogButton: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -154,5 +163,21 @@ fun ProfileScreen(
                 )
             }
         }
+    }
+
+    if (onEditDialog) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))  // 배경을 반투명한 검정색으로 설정
+                .clickable { onCancelEditPopUp() }
+        )
+
+        EditNameDialog(
+            onDismissRequest = onCancelEditPopUp,
+            textFieldValue = editDialogUserName,
+            onValueChange = onChangeEditDialogUserName,
+            onClickSaveEditDialogButton = onClickSaveEditDialogButton
+        )
     }
 }
