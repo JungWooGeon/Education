@@ -2,6 +2,8 @@ package com.pass.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObject
+import com.pass.domain.model.Profile
 import com.pass.domain.repository.ProfileRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -55,8 +57,6 @@ class ProfileRepositoryImpl @Inject constructor(
                     // 회원가입 성공
                     val uid = auth.currentUser?.uid
 
-                    println(uid)
-
                     if (uid != null) {
                         launch {
                             createUserProfile(uid).collect {
@@ -93,6 +93,32 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun signOut() {
         auth.signOut()
     }
+
+    override suspend fun getUserProfile(): Flow<Result<Profile>> = callbackFlow {
+        val userId = auth.currentUser?.uid
+
+        if (userId != null) {
+            val docRef = fireStore.collection("profiles").document(userId)
+            docRef.get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        val user = document.toObject(Profile::class.java)
+                        if (user != null) {
+                            trySend(Result.success(user))
+                        } else {
+                            trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
+                        }
+                    } else {
+                        trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
+                    }
+                }
+                .addOnFailureListener { e ->
+                    trySend(Result.failure(Exception(e.message)))
+                }
+        }
+        awaitClose()
+    }
+
 
     private suspend fun createUserProfile(userId: String): Flow<Result<Unit>> = callbackFlow {
         val userProfile = hashMapOf(

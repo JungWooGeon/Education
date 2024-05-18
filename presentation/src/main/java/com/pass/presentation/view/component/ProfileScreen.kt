@@ -1,24 +1,35 @@
 package com.pass.presentation.view.component
 
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.pass.presentation.R
 import com.pass.presentation.viewmodel.ProfileSideEffect
 import com.pass.presentation.viewmodel.ProfileViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -32,65 +43,116 @@ fun ProfileScreen(
     val profileState = viewModel.collectAsState().value
     val context = LocalContext.current
 
-    viewModel.collectSideEffect { sideEffect ->  
-        when(sideEffect) {
-            is ProfileSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
+    viewModel.collectSideEffect { sideEffect ->
+        when (sideEffect) {
+            is ProfileSideEffect.Toast -> Toast.makeText(
+                context,
+                sideEffect.message,
+                Toast.LENGTH_SHORT
+            ).show()
+
             is ProfileSideEffect.NavigateSignInScreen -> {
                 onNavigateToSignInScreen()
-                Toast.makeText(context, "로그아웃을 완료하였습니다.",Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "로그아웃을 완료하였습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     ProfileScreen(
-        userProfileURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Android_logo_2023_%28stacked%29.svg/242px-Android_logo_2023_%28stacked%29.svg.png",
+        userProfileUrl = profileState.userProfileURL,
         userName = profileState.userName,
-        onClickSignOut = viewModel::onClickSignOut
+        onClickSignOut = viewModel::onClickSignOut,
+        onClickEditButton = {
+            // popup
+        },
+        onClickProfileImage = {
+            // 갤러리
+        }
     )
 }
 
 @Composable
 fun ProfileScreen(
-    userProfileURL: String,
+    userProfileUrl: String,
     userName: String,
-    onClickSignOut: () -> Unit
+    onClickSignOut: () -> Unit,
+    onClickEditButton: () -> Unit,
+    onClickProfileImage: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        AsyncImage(
-            model = userProfileURL,
-            contentDescription = "",
-            modifier = Modifier.aspectRatio(2f),
-            contentScale = ContentScale.FillWidth
-        )
-
         Row(
-
-        ){
-            Column {
-                Text(
-                    modifier = Modifier.padding(bottom = 10.dp),
-                    text = userName,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+            modifier = Modifier.padding(top = 10.dp, start = 20.dp, end = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            if (userProfileUrl == "") {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .border(
+                            width = 1.dp,
+                            shape = CircleShape,
+                            color = Color.LightGray
+                        )
+                        .clickable { onClickProfileImage() }
                 )
+            } else {
+                AsyncImage(
+                    model = userProfileUrl,
+                    contentDescription = null,
+                    clipToBounds = true,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clickable {
+                            onClickProfileImage()
+                        }
+                )
+            }
 
-                Button(
-                    modifier = Modifier.padding(top = 20.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    onClick = onClickSignOut
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.padding(start = 10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "Sign Out",
-                        textAlign = TextAlign.Center,
-                        fontSize = 14.sp
+                        text = userName,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 10.dp)
                     )
+
+                    IconButton(
+                        onClick = onClickEditButton
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_edit),
+                            contentDescription = null,
+                            tint = Color.Black.copy(alpha = 0.8F),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
+
+                Text(
+                    text = "Sign Out",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onClickSignOut() }
+                )
             }
         }
     }
-
-
 }
