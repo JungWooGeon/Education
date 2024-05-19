@@ -5,6 +5,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.repository.ProfileRepositoryImpl
 import io.mockk.coEvery
 import io.mockk.every
@@ -19,6 +20,7 @@ class ProfileRepositorySignInTest {
     // firebase 모킹
     private val auth = mockk<FirebaseAuth>()
     private val fireStore = mockk<FirebaseFirestore>()
+    private val storage = mockk<FirebaseStorage>()
 
     // Task 객체 모킹
     private val mockException = Exception("signIn failed")
@@ -26,7 +28,7 @@ class ProfileRepositorySignInTest {
     private val mockAuthResult = mockk<AuthResult>()
 
     // repository 초기화
-    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, fireStore)
+    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, fireStore, storage)
 
     @Test
     fun testSuccessIsSignedIn() = runBlocking {

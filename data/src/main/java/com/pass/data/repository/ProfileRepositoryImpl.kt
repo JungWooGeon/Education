@@ -1,7 +1,9 @@
 package com.pass.data.repository
 
+import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.pass.domain.model.Profile
 import com.pass.domain.repository.ProfileRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -12,7 +14,8 @@ import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val fireStore: FirebaseFirestore
+    private val fireStore: FirebaseFirestore,
+    private val storage: FirebaseStorage
 ) : ProfileRepository {
 
     override suspend fun isSignedIn(): Flow<Boolean> = callbackFlow {
@@ -136,18 +139,17 @@ class ProfileRepositoryImpl @Inject constructor(
         user?.delete()
     }
 
-    override suspend fun updateUserProfileName(name: String): Flow<Result<Unit>> = callbackFlow {
+    override suspend fun updateUserProfile(name: String, field: String): Flow<Result<Unit>> = callbackFlow {
         val userId = auth.currentUser?.uid
 
         if (userId != null) {
             fireStore.runTransaction { transaction ->
-                transaction.update(fireStore.collection("profiles").document(userId), "name", name)
+                transaction.update(fireStore.collection("profiles").document(userId), field, name)
                 null
             }.addOnSuccessListener {
                 trySend(Result.success(Unit))
             }.addOnFailureListener { e ->
                 trySend(Result.failure(Exception(e.message)))
-                println(e.message)
             }
         } else {
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
@@ -156,5 +158,29 @@ class ProfileRepositoryImpl @Inject constructor(
         awaitClose()
     }
 
-    // 기존 사진 삭제 + 새로운 사진 업로드 + 새로운 사진 url 업데이트
+    override suspend fun updateUserProfilePicture(pictureUri: String): Flow<Result<String>> = callbackFlow {
+        // 기존 사진 삭제 + 새로운 사진 업로드 + 새로운 사진 url 업데이트
+        val file = pictureUri.toUri()
+        val riversRef = storage.reference.child("user_profile/${auth.currentUser?.uid}")
+        val uploadTask = riversRef.putFile(file)
+
+        uploadTask.addOnSuccessListener { taskSnapshot ->
+            // DB 에 프로필 링크 업데이트
+            taskSnapshot.metadata?.reference?.downloadUrl?.addOnSuccessListener { downloadUrl ->
+                launch {
+                    updateUserProfile(downloadUrl.toString(), "pictureUrl").collect {
+                        it.onSuccess {
+                            trySend(Result.success(downloadUrl.toString()))
+                        }.onFailure {
+                            trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
+                        }
+                    }
+                }
+            }
+        }.addOnFailureListener {
+            trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
+        }
+
+        awaitClose()
+    }
 }

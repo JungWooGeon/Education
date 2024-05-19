@@ -6,6 +6,6 @@ import javax.inject.Inject
 
 class UpdateUserProfileNameUseCase @Inject constructor(private val profileRepository: ProfileRepository) {
     suspend operator fun invoke(name: String): Flow<Result<Unit>> {
-        return profileRepository.updateUserProfileName(name)
+        return profileRepository.updateUserProfile(name, "name")
     }
 }

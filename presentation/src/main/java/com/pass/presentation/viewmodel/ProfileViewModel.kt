@@ -1,9 +1,11 @@
 package com.pass.presentation.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.SignOutUseCase
 import com.pass.domain.usecase.UpdateUserProfileNameUseCase
+import com.pass.domain.usecase.UpdateUserProfilePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -18,7 +20,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val signOutUseCase: SignOutUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
-    private val updateUserProfileNameUseCase: UpdateUserProfileNameUseCase
+    private val updateUserProfileNameUseCase: UpdateUserProfileNameUseCase,
+    private val updateUserProfilePicture: UpdateUserProfilePictureUseCase
 ) : ViewModel(), ContainerHost<ProfileState, ProfileSideEffect> {
 
     override val container: Container<ProfileState, ProfileSideEffect> = container(
@@ -94,6 +97,23 @@ class ProfileViewModel @Inject constructor(
                     state.copy(onEditDialog = false)
                 }
                 postSideEffect(ProfileSideEffect.Toast("닉네임 변경에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+            }
+        }
+    }
+
+    fun onChangeUserProfilePicture(uri: Uri?) = intent {
+        if (uri == null) {
+            postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경을 취소하였습니다."))
+        } else {
+            updateUserProfilePicture(uri.toString()).collect { result ->
+                result.onSuccess { pictureUrl ->
+                    reduce {
+                        state.copy(userProfileURL = pictureUrl)
+                    }
+                    postSideEffect(ProfileSideEffect.Toast("프로필 사진을 변경하였습니다."))
+                }.onFailure {
+                    postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경에 실패하였습니다."))
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.repository.ProfileRepositoryImpl
 import com.pass.domain.model.Profile
 import io.mockk.every
@@ -17,9 +18,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProfileRepositoryUserProfileTest {
+
     // firebase 모킹
     private val auth = mockk<FirebaseAuth>()
     private val fireStore = mockk<FirebaseFirestore>()
+    private val storage = mockk<FirebaseStorage>()
 
     // fireStore 모킹
     private val mockFireStoreTask = mockk<Task<DocumentSnapshot>>()
@@ -31,7 +34,7 @@ class ProfileRepositoryUserProfileTest {
     private val testProfile = Profile("test name", "")
 
     // repository 초기화
-    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, fireStore)
+    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, fireStore, storage)
 
     @Test
     fun testSuccessGetUserProfile() = runBlocking {
@@ -137,7 +140,7 @@ class ProfileRepositoryUserProfileTest {
         }
 
         // fireStore updateUserProfile 성공 시나리오 테스트
-        val result = profileRepositoryImpl.updateUserProfileName("test").first()
+        val result = profileRepositoryImpl.updateUserProfile("test", "name").first()
         assertTrue(result.isSuccess)
     }
 
@@ -162,7 +165,7 @@ class ProfileRepositoryUserProfileTest {
         }
 
         // fireStore updateUserProfile 실패 시나리오 테스트
-        val result = profileRepositoryImpl.updateUserProfileName("test").first()
+        val result = profileRepositoryImpl.updateUserProfile("test", "name").first()
         assertTrue(result.isFailure)
         assertEquals(mockFireStoreException.message, result.exceptionOrNull()?.message)
     }
@@ -171,7 +174,7 @@ class ProfileRepositoryUserProfileTest {
     fun testFailUpdateUserProfileNameWithNullUid() = runBlocking {
         every { auth.currentUser?.uid } returns null
 
-        val result = profileRepositoryImpl.updateUserProfileName("test").first()
+        val result = profileRepositoryImpl.updateUserProfile("test", "name").first()
         assertTrue(result.isFailure)
         assertEquals("오류가 발생하였습니다. 다시 로그인을 진행해주세요.", result.exceptionOrNull()?.message)
     }
