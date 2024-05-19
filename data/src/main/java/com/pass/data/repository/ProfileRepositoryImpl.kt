@@ -59,23 +59,20 @@ class ProfileRepositoryImpl @Inject constructor(
                     if (uid != null) {
                         launch {
                             createUserProfile(uid).collect {
-                                it.onSuccess {
-                                    // 사용자 프로필 생성 성공
-                                    trySend(Result.success(Unit))
-                                }.onFailure { e ->
-                                    // 사용자 프로필 생성 실패
-                                    trySend(Result.failure(Exception(e)))
+                                if (it.isFailure) {
+                                    // 사용자 프로필 생성 실패 시
                                     signOut()
                                     deleteUser()
                                 }
+                                trySend(it)
                             }
                         }
                     } else {
-                        trySend(Result.failure(Exception("사용자 ID를 얻을 수 없습니다.")))
                         launch {
                             signOut()
                             deleteUser()
                         }
+                        trySend(Result.failure(Exception("사용자 ID를 얻을 수 없습니다.")))
                     }
                 } else {
                     // 회원가입 실패
@@ -97,16 +94,12 @@ class ProfileRepositoryImpl @Inject constructor(
         val userId = auth.currentUser?.uid
 
         if (userId != null) {
-            val docRef = fireStore.collection("profiles").document(userId)
-            docRef.get()
+            fireStore.collection("profiles").document(userId)
+                .get()
                 .addOnSuccessListener { document ->
-                    if (document != null) {
-                        val user = document.toObject(Profile::class.java)
-                        if (user != null) {
-                            trySend(Result.success(user))
-                        } else {
-                            trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
-                        }
+                    val user = document.toObject(Profile::class.java)
+                    if (user != null) {
+                        trySend(Result.success(user))
                     } else {
                         trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
                     }
@@ -114,6 +107,8 @@ class ProfileRepositoryImpl @Inject constructor(
                 .addOnFailureListener { e ->
                     trySend(Result.failure(Exception(e.message)))
                 }
+        } else {
+            trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         }
         awaitClose()
     }
@@ -145,10 +140,8 @@ class ProfileRepositoryImpl @Inject constructor(
         val userId = auth.currentUser?.uid
 
         if (userId != null) {
-            val sfDocRef = fireStore.collection("profiles").document(userId)
-
             fireStore.runTransaction { transaction ->
-                transaction.update(sfDocRef, "name", name)
+                transaction.update(fireStore.collection("profiles").document(userId), "name", name)
                 null
             }.addOnSuccessListener {
                 trySend(Result.success(Unit))
@@ -156,6 +149,8 @@ class ProfileRepositoryImpl @Inject constructor(
                 trySend(Result.failure(Exception(e.message)))
                 println(e.message)
             }
+        } else {
+            trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         }
 
         awaitClose()
