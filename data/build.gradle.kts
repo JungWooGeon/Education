@@ -63,5 +63,7 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.mockk:mockk-agent:1.13.8")
     androidTestImplementation("io.mockk:mockk-android:1.13.8")
-    androidTestImplementation("io.mockk:mockk-agent:1.13.8")
+
+    // test with Uri(android)
+    testImplementation("org.robolectric:robolectric:4.12.2")
 }
