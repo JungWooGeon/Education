@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.pass.presentation.R
 import com.pass.presentation.ui.theme.MyApplicationTheme
-import com.pass.presentation.view.component.MainScreen
+import com.pass.presentation.view.screen.MainScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

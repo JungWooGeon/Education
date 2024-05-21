@@ -1,5 +1,8 @@
 package com.pass.presentation.view.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +30,13 @@ fun EditNameDialog(
     onValueChange: (String) -> Unit,
     onClickSaveEditDialogButton: () -> Unit
 ) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.4f))  // 배경을 반투명한 검정색으로 설정
+            .clickable { onDismissRequest() }
+    )
+
     Dialog(onDismissRequest = onDismissRequest) {
         Card(
             shape = RoundedCornerShape(10.dp),

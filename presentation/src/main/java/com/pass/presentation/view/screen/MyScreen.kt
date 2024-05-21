@@ -1,4 +1,4 @@
-package com.pass.presentation.view.component
+package com.pass.presentation.view.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState

@@ -1,12 +1,10 @@
-package com.pass.presentation.view.component
+package com.pass.presentation.view.screen
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,48 +20,54 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pass.presentation.viewmodel.SignInSideEffect
-import com.pass.presentation.viewmodel.SignInViewModel
+import com.pass.presentation.view.component.SignInInputTextField
+import com.pass.presentation.viewmodel.SignUpSideEffect
+import com.pass.presentation.viewmodel.SignUpViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
-fun SignInScreen(
-    viewModel: SignInViewModel = hiltViewModel(),
-    onNavigateToSignUpScreen: () -> Unit,
+fun SignUpScreen(
+    viewModel: SignUpViewModel = hiltViewModel(),
+    onNavigateToSignInScreen: () -> Unit,
     onNavigateToProfileScreen: () -> Unit
 ) {
-    val signInState = viewModel.collectAsState().value
+    val signUpState = viewModel.collectAsState().value
     val context = LocalContext.current
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
-            is SignInSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
-            is SignInSideEffect.NavigateToProfileScreen -> {
-                Toast.makeText(context, "로그인에 성공하였습니다.", Toast.LENGTH_SHORT).show()
+            is SignUpSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
+
+            is SignUpSideEffect.NavigateToProfileScreen -> {
+                Toast.makeText(context, "회원 가입에 성공하였습니다.", Toast.LENGTH_SHORT).show()
                 onNavigateToProfileScreen()
             }
         }
     }
 
-    SignInScreen(
-        id = signInState.id,
-        password = signInState.password,
+    SignUpScreen(
+        id = signUpState.id,
+        password = signUpState.password,
+        verifyPassword = signUpState.verifyPassword,
         onChangeId = viewModel::onChangeId,
         onChangePassword = viewModel::onChangePassword,
-        onClickSignIn = viewModel::onClickSignIn,
-        onNavigateToSignUpScreen = onNavigateToSignUpScreen
+        onChangeVerifyPassword = viewModel::onChangeVerifyPassword,
+        onClickSignUp = viewModel::onClickSignUp,
+        onClickCancel = onNavigateToSignInScreen
     )
 }
 
 @Composable
-fun SignInScreen(
+fun SignUpScreen(
     id: String,
     password: String,
+    verifyPassword: String,
     onChangeId: (String) -> Unit,
     onChangePassword: (String) -> Unit,
-    onClickSignIn: () -> Unit,
-    onNavigateToSignUpScreen: () -> Unit
+    onChangeVerifyPassword: (String) -> Unit,
+    onClickSignUp: () -> Unit,
+    onClickCancel: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -88,34 +92,32 @@ fun SignInScreen(
             visualTransformation = PasswordVisualTransformation()
         )
 
+        SignInInputTextField(
+            modifier = Modifier.padding(top = 20.dp),
+            value = verifyPassword,
+            onChangeValue = onChangeVerifyPassword,
+            placeHolderValue = "verify password",
+            visualTransformation = PasswordVisualTransformation()
+        )
+
         Button(
             modifier = Modifier.padding(top = 20.dp),
             contentPadding = PaddingValues(16.dp),
-            onClick = onClickSignIn
+            onClick = onClickSignUp
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Sign In",
+                text = "SignUp",
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp
             )
         }
-    }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Spacer(modifier = Modifier.weight(1f))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(text = "Don't have an account?", fontSize = 12.sp)
-            Text(
-                text = "Sign Up",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 12.sp,
-                modifier = Modifier.clickable { onNavigateToSignUpScreen() }
-            )
-        }
+        Text(
+            text = "cancel",
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 16.dp).clickable { onClickCancel() }
+        )
     }
 }
