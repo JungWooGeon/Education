@@ -6,10 +6,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.domain.model.Profile
 import com.pass.domain.repository.ProfileRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
@@ -166,16 +171,24 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun updateUserProfilePicture(pictureUri: String): Flow<Result<String>> =
         callbackFlow {
             // 기존 사진 삭제 + 새로운 사진 업로드 + 새로운 사진 url 업데이트
-            val file = pictureUri.toUri()
+            val file = withContext(Dispatchers.IO) {
+                URLDecoder.decode(pictureUri, StandardCharsets.UTF_8.toString())
+            }.toUri()
             storage.reference.child("user_profile/${auth.currentUser?.uid}").putFile(file)
                 .addOnSuccessListener { taskSnapshot ->
                     // DB 에 프로필 링크 업데이트
                     taskSnapshot.metadata?.reference?.downloadUrl
                         ?.addOnSuccessListener { downloadUrl ->
                             launch {
-                                updateUserProfile(downloadUrl.toString(), "pictureUrl").collect {
+                                val uriString = withContext(Dispatchers.IO) {
+                                            URLEncoder.encode(
+                                                downloadUrl.toString(),
+                                                StandardCharsets.UTF_8.toString()
+                                            )
+                                        }
+                                updateUserProfile(uriString, "pictureUrl").collect {
                                     it.onSuccess {
-                                        trySend(Result.success(downloadUrl.toString()))
+                                        trySend(Result.success(uriString))
                                     }.onFailure {
                                         trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
                                     }

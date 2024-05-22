@@ -40,7 +40,7 @@ fun ProfileInfoBox(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.Center
         ) {
-            ProfileImage(
+            ProfileImageView(
                 context = context,
                 modifier = Modifier,
                 userProfileUrl = userProfileUrl,

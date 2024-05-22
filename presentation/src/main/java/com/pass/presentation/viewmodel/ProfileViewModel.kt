@@ -7,12 +7,16 @@ import com.pass.domain.usecase.SignOutUseCase
 import com.pass.domain.usecase.UpdateUserProfileNameUseCase
 import com.pass.domain.usecase.UpdateUserProfilePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
@@ -105,7 +109,9 @@ class ProfileViewModel @Inject constructor(
         if (uri == null) {
             postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경을 취소하였습니다."))
         } else {
-            updateUserProfilePicture(uri.toString()).collect { result ->
+            updateUserProfilePicture(withContext(Dispatchers.IO) {
+                URLEncoder.encode(uri.toString(), StandardCharsets.UTF_8.toString())
+            }).collect { result ->
                 result.onSuccess { pictureUrl ->
                     reduce {
                         state.copy(userProfileURL = pictureUrl)

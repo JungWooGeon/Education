@@ -18,7 +18,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 @Composable
-fun ProfileImage(
+fun ProfileImageView(
     context: Context,
     modifier: Modifier,
     userProfileUrl: String,

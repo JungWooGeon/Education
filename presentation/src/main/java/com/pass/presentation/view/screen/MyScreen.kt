@@ -3,9 +3,11 @@ package com.pass.presentation.view.screen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.pass.presentation.state.MyScreenRoute
 import com.pass.presentation.viewmodel.MyViewModel
 
@@ -79,8 +81,42 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onNavigateToAddVideoScreen = { videoUri ->
+                        myScreenNavController.navigate(MyScreenRoute.AddVideoScreen.createSelectedVideoUri(videoUri)) {
+                            myScreenNavController.graph.startDestinationRoute?.let {
+                                popUpTo(it) { saveState = true }
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
+            }
+
+            composable(
+                route = MyScreenRoute.AddVideoScreen.screenRoute,
+                arguments = listOf(
+                    navArgument("videoUri") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val videoUri = backStackEntry.arguments?.getString("videoUri")
+                videoUri?.let {
+                    AddVideoScreen(
+                        videoUri = videoUri,
+                        onNavigateProfileScreen = {
+                            myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
             }
         }
     }
