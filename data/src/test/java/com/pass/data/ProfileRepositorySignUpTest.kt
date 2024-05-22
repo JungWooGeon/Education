@@ -9,6 +9,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.repository.ProfileRepositoryImpl
+import com.pass.data.util.FirebaseAuthUtil
+import com.pass.data.util.FirebaseDatabaseUtil
+import com.pass.data.util.FirebaseStorageUtil
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -27,6 +30,11 @@ class ProfileRepositorySignUpTest {
     private val fireStore = mockk<FirebaseFirestore>()
     private val storage = mockk<FirebaseStorage>()
 
+    // util 선언
+    private val firebaseAuthUtil = FirebaseAuthUtil(auth)
+    private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
+    private val firebaseStorageUtil = FirebaseStorageUtil(auth, storage)
+
     // Task 객체 모킹
     private val mockException = Exception("signIn failed")
     private val mockTask = mockk<Task<AuthResult>>()
@@ -37,7 +45,7 @@ class ProfileRepositorySignUpTest {
     private val mockFireStoreException = RuntimeException("Error")
 
     // repository 초기화
-    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, fireStore, storage)
+    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil)
 
     @Before
     fun setup() {

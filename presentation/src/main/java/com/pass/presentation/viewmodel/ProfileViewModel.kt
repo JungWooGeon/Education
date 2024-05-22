@@ -15,6 +15,7 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
+import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.annotation.concurrent.Immutable
@@ -41,7 +42,7 @@ class ProfileViewModel @Inject constructor(
             result.onSuccess { profile ->
                 reduce {
                     state.copy(
-                        userProfileURL = profile.pictureUrl,
+                        userProfileURL = URLDecoder.decode(profile.pictureUrl, StandardCharsets.UTF_8.toString()),
                         userName = profile.name,
                         editDialogUserName = profile.name
                     )
@@ -114,7 +115,7 @@ class ProfileViewModel @Inject constructor(
             }).collect { result ->
                 result.onSuccess { pictureUrl ->
                     reduce {
-                        state.copy(userProfileURL = pictureUrl)
+                        state.copy(userProfileURL = URLDecoder.decode(pictureUrl, StandardCharsets.UTF_8.toString()))
                     }
                     postSideEffect(ProfileSideEffect.Toast("프로필 사진을 변경하였습니다."))
                 }.onFailure {

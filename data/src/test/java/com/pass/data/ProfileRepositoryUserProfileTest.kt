@@ -10,13 +10,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
-import com.google.firebase.storage.UploadTask.TaskSnapshot
-import com.google.firebase.storage.taskState
 import com.pass.data.repository.ProfileRepositoryImpl
+import com.pass.data.util.FirebaseAuthUtil
+import com.pass.data.util.FirebaseDatabaseUtil
+import com.pass.data.util.FirebaseStorageUtil
 import com.pass.domain.model.Profile
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -32,6 +32,11 @@ class ProfileRepositoryUserProfileTest {
     private val auth = mockk<FirebaseAuth>()
     private val fireStore = mockk<FirebaseFirestore>()
     private val storage = mockk<FirebaseStorage>()
+
+    // util 선언
+    private val firebaseAuthUtil = FirebaseAuthUtil(auth)
+    private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
+    private val firebaseStorageUtil = FirebaseStorageUtil(auth, storage)
 
     // fireStore 모킹
     private val mockFireStoreTask = mockk<Task<DocumentSnapshot>>()
@@ -49,7 +54,7 @@ class ProfileRepositoryUserProfileTest {
     private val testProfile = Profile("test name", "")
 
     // repository 초기화
-    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, fireStore, storage)
+    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil)
 
     @Test
     fun testSuccessGetUserProfile() = runBlocking {
