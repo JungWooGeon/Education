@@ -26,72 +26,82 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
 
         NavHost(navController = myScreenNavController, startDestination = startScreen!!) {
             composable(MyScreenRoute.SignInScreen.screenRoute) {
-                SignInScreen(
-                    onNavigateToSignUpScreen = {
-                        myScreenNavController.navigate(MyScreenRoute.SignUpScreen.screenRoute) {
-                            myScreenNavController.graph.startDestinationRoute?.let {
-                                popUpTo(it) { saveState = true }
+                AnimatedScreen {
+                    SignInScreen(
+                        onNavigateToSignUpScreen = {
+                            myScreenNavController.navigate(MyScreenRoute.SignUpScreen.screenRoute) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    onNavigateToProfileScreen = {
-                        myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
-                            myScreenNavController.graph.startDestinationRoute?.let {
-                                popUpTo(it) { saveState = true }
+                        },
+                        onNavigateToProfileScreen = {
+                            myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                )
+                    )
+                }
             }
 
             composable(MyScreenRoute.SignUpScreen.screenRoute) {
-                SignUpScreen(
-                    onNavigateToSignInScreen = {
-                        myScreenNavController.navigate(MyScreenRoute.SignInScreen.screenRoute) {
-                            myScreenNavController.graph.startDestinationRoute?.let {
-                                popUpTo(it) { saveState = true }
+                AnimatedScreen {
+                    SignUpScreen(
+                        onNavigateToSignInScreen = {
+                            myScreenNavController.navigate(MyScreenRoute.SignInScreen.screenRoute) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    onNavigateToProfileScreen = {
-                        myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
-                            myScreenNavController.graph.startDestinationRoute?.let {
-                                popUpTo(it) { saveState = true }
+                        },
+                        onNavigateToProfileScreen = {
+                            myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                )
+                    )
+                }
             }
 
             composable(MyScreenRoute.ProfileScreen.screenRoute) {
-                ProfileScreen(
-                    onNavigateToSignInScreen = {
-                        myScreenNavController.navigate(MyScreenRoute.SignInScreen.screenRoute) {
-                            myScreenNavController.graph.startDestinationRoute?.let {
-                                popUpTo(it) { saveState = true }
+                AnimatedScreen {
+                    ProfileScreen(
+                        onNavigateToSignInScreen = {
+                            myScreenNavController.navigate(MyScreenRoute.SignInScreen.screenRoute) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    onNavigateToAddVideoScreen = { videoUri ->
-                        myScreenNavController.navigate(MyScreenRoute.AddVideoScreen.createSelectedVideoUri(videoUri)) {
-                            myScreenNavController.graph.startDestinationRoute?.let {
-                                popUpTo(it) { saveState = true }
+                        },
+                        onNavigateToAddVideoScreen = { videoUri ->
+                            myScreenNavController.navigate(
+                                MyScreenRoute.AddVideoScreen.createSelectedVideoUri(
+                                    videoUri
+                                )
+                            ) {
+                                myScreenNavController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) { saveState = true }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                )
+                    )
+                }
             }
 
             composable(
@@ -104,18 +114,20 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
             ) { backStackEntry ->
                 val videoUri = backStackEntry.arguments?.getString("videoUri")
                 videoUri?.let {
-                    AddVideoScreen(
-                        videoUri = videoUri,
-                        onNavigateProfileScreen = {
-                            myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
-                                myScreenNavController.graph.startDestinationRoute?.let {
-                                    popUpTo(it) { saveState = true }
+                    AnimatedScreen {
+                        AddVideoScreen(
+                            videoUri = videoUri,
+                            onNavigateProfileScreen = {
+                                myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
+                                    myScreenNavController.graph.startDestinationRoute?.let {
+                                        popUpTo(it) { saveState = true }
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

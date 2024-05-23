@@ -34,11 +34,7 @@ class ProfileViewModel @Inject constructor(
         initialState = ProfileState()
     )
 
-    init {
-        readProfile()
-    }
-
-    private fun readProfile() = intent {
+    fun readProfile() = intent {
         getUserProfileUseCase().collect { result ->
             result.onSuccess { profile ->
                 reduce {

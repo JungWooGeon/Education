@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -20,13 +21,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pass.presentation.view.component.ExoPlayerView
 import com.pass.presentation.viewmodel.AddVideoSideEffect
 import com.pass.presentation.viewmodel.AddVideoViewModel
+import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonState
+import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonType
+import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSJetPackComposeProgressButton
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
@@ -60,6 +64,7 @@ fun AddVideoScreen(
         title = addVideoState.title,
         onChangeTitle = viewModel::onChangeTitle,
         onClickUploadButton = viewModel::onClickUploadButton,
+        progressButtonState = addVideoState.progressButtonState
     )
 }
 
@@ -70,7 +75,8 @@ fun AddVideoScreen(
     videoUri: String,
     title: String,
     onChangeTitle: (String) -> Unit,
-    onClickUploadButton: () -> Unit
+    onClickUploadButton: () -> Unit,
+    progressButtonState: SSButtonState
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
@@ -103,16 +109,22 @@ fun AddVideoScreen(
             )
         }
 
-        Button(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            onClick = onClickUploadButton
+            .fillMaxWidth()
+            .align(Alignment.BottomCenter)
+            .padding(16.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
+            SSJetPackComposeProgressButton(
+                type = SSButtonType.ZOOM_IN_OUT_CIRCLE,
+                width = LocalConfiguration.current.screenWidthDp.dp,
+                height = 50.dp,
+                assetColor = Color.White,
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary, contentColor = Color.White),
+                buttonState = progressButtonState,
                 text = "동영상 업로드",
-                fontSize = 16.sp
+                onClick = onClickUploadButton
             )
         }
     }

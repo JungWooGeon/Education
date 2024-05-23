@@ -6,6 +6,7 @@ import android.util.Base64
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.AddVideoUseCase
 import com.pass.domain.usecase.CreateVideoThumbnailUseCase
+import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -26,7 +27,7 @@ class AddVideoViewModel @Inject constructor(
 ) : ViewModel(), ContainerHost<AddVideoState, AddVideoSideEffect> {
 
     override val container: Container<AddVideoState, AddVideoSideEffect> = container(
-        initialState = AddVideoState(null, "", "")
+        initialState = AddVideoState(null, "", "", SSButtonState.IDLE)
     )
 
     fun createVideoThumbnail(videoUri: String) = intent {
@@ -54,6 +55,12 @@ class AddVideoViewModel @Inject constructor(
     }
 
     fun onClickUploadButton() = intent {
+        reduce {
+            state.copy(
+                progressButtonState = SSButtonState.LOADING
+            )
+        }
+
         if (state.videoThumbnailBitmap == null) {
             postSideEffect(AddVideoSideEffect.Toast("동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
         } else {
@@ -63,9 +70,19 @@ class AddVideoViewModel @Inject constructor(
                 title = state.title
             ).collect { result ->
                 result.onSuccess {
+                    reduce {
+                        state.copy(
+                            progressButtonState = SSButtonState.SUCCESS
+                        )
+                    }
                     postSideEffect(AddVideoSideEffect.Toast("동영상을 업로드하였습니다."))
                     postSideEffect(AddVideoSideEffect.NavigateProfileScreen)
                 }.onFailure { e ->
+                    reduce {
+                        state.copy(
+                            progressButtonState = SSButtonState.FAILURE
+                        )
+                    }
                     postSideEffect(AddVideoSideEffect.Toast(e.message ?: "동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
                 }
             }
@@ -89,7 +106,8 @@ class AddVideoViewModel @Inject constructor(
 data class AddVideoState(
     val videoThumbnailBitmap: Bitmap?,
     val videoUri: String,
-    val title: String
+    val title: String,
+    val progressButtonState: SSButtonState
 )
 
 sealed interface AddVideoSideEffect {

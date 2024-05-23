@@ -7,6 +7,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
@@ -44,6 +45,9 @@ class ProfileRepositoryUserProfileTest {
     private val mockDocumentSnapshot = mockk<DocumentSnapshot>()
     private val mockFireStoreTransactionTask = mockk<Task<Any>>()
 
+    private val mockFireStoreQuerySnapshotTask = mockk<Task<QuerySnapshot>>()
+    private val mockQuerySnapshot = mockk<QuerySnapshot>()
+
     // firebase storage 모킹
     private val mockUploadTask = mockk<UploadTask>()
     private val mockUpStorageTask = mockk<StorageTask<UploadTask.TaskSnapshot>>()
@@ -60,8 +64,11 @@ class ProfileRepositoryUserProfileTest {
     fun testSuccessGetUserProfile() = runBlocking {
         // fireStore getUserProfile 성공 가정
         every { auth.currentUser?.uid } returns "test123"
-        every { mockDocumentSnapshot.toObject(Profile::class.java) } returns testProfile
         every { mockFireStoreTask.isSuccessful } returns true
+        every { mockFireStoreQuerySnapshotTask.isSuccessful } returns true
+        every { mockQuerySnapshot.documents } returns listOf(mockDocumentSnapshot, mockDocumentSnapshot)
+        every { mockDocumentSnapshot.getString(any()) } returns ""
+        every { mockDocumentSnapshot.id } returns "test_test"
 
         // listener 성공 가정
         every { mockFireStoreTask.addOnSuccessListener(any()) } answers {
@@ -71,9 +78,17 @@ class ProfileRepositoryUserProfileTest {
         every { mockFireStoreTask.addOnFailureListener(any()) } answers {
             mockFireStoreTask
         }
+        every { mockFireStoreQuerySnapshotTask.addOnSuccessListener(any()) } answers {
+            firstArg<OnSuccessListener<QuerySnapshot>>().onSuccess(mockQuerySnapshot)
+            mockFireStoreQuerySnapshotTask
+        }
+        every { mockFireStoreQuerySnapshotTask.addOnFailureListener(any()) } answers {
+            mockFireStoreQuerySnapshotTask
+        }
 
         // fireStore getUserProfile 성공 시나리오 테스트
         every { fireStore.collection(any()).document(any()).get() } returns mockFireStoreTask
+        every { fireStore.collection(any()).document(any()).collection(any()).get() } returns mockFireStoreQuerySnapshotTask
 
         // fireStore getUserProfile 성공 시나리오 테스트
         val result = profileRepositoryImpl.getUserProfile().first()
@@ -85,6 +100,7 @@ class ProfileRepositoryUserProfileTest {
         // fireStore getUserProfile 실패 가정
         every { auth.currentUser?.uid } returns "test123"
         every { mockFireStoreTask.isSuccessful } returns false
+        every { mockFireStoreQuerySnapshotTask.isSuccessful } returns false
 
         // listener 실패 가정
         every { mockFireStoreTask.addOnSuccessListener(any()) } answers {
@@ -94,9 +110,17 @@ class ProfileRepositoryUserProfileTest {
             firstArg<OnFailureListener>().onFailure(mockFireStoreException)
             mockFireStoreTask
         }
+        every { mockFireStoreQuerySnapshotTask.addOnSuccessListener(any()) } answers {
+            mockFireStoreQuerySnapshotTask
+        }
+        every { mockFireStoreQuerySnapshotTask.addOnFailureListener(any()) } answers {
+            firstArg<OnFailureListener>().onFailure(mockFireStoreException)
+            mockFireStoreQuerySnapshotTask
+        }
 
         // firebase collection  메서드를 호출에 대한 실패 모킹 적용
         every { fireStore.collection(any()).document(any()).get() } returns mockFireStoreTask
+        every { fireStore.collection(any()).document(any()).collection(any()).get() } returns mockFireStoreQuerySnapshotTask
 
         // fireStore getUserProfile 실패 시나리오 테스트
         val result = profileRepositoryImpl.getUserProfile().first()
@@ -116,27 +140,13 @@ class ProfileRepositoryUserProfileTest {
 
     @Test
     fun testFailGetUserProfileWithNullUser() = runBlocking {
-        // fireStore getUserProfile 성공 + user null 가정
-        every { auth.currentUser?.uid } returns "test123"
-        every { mockDocumentSnapshot.toObject(Profile::class.java) } returns null
-        every { mockFireStoreTask.isSuccessful } returns true
-
-        // listener 성공 가정
-        every { mockFireStoreTask.addOnSuccessListener(any()) } answers {
-            firstArg<OnSuccessListener<DocumentSnapshot>>().onSuccess(mockDocumentSnapshot)
-            mockFireStoreTask
-        }
-        every { mockFireStoreTask.addOnFailureListener(any()) } answers {
-            mockFireStoreTask
-        }
-
-        // firebase collection  메서드를 호출에 대한 실패 모킹 적용
-        every { fireStore.collection(any()).document(any()).get() } returns mockFireStoreTask
+        // user null 가정
+        every { auth.currentUser?.uid } returns null
 
         // fireStore getUserProfile 실패 시나리오 테스트
         val result = profileRepositoryImpl.getUserProfile().first()
         assertTrue(result.isFailure)
-        assertEquals("프로필을 조회할 수 없습니다.", result.exceptionOrNull()?.message)
+        assertEquals("오류가 발생하였습니다. 다시 로그인을 진행해주세요.", result.exceptionOrNull()?.message)
     }
 
     @Test
