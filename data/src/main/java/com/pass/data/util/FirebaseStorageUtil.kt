@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.core.net.toUri
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.domain.util.StorageUtil
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +19,6 @@ import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 class FirebaseStorageUtil @Inject constructor(
-    private val auth: FirebaseAuth,
     private val storage: FirebaseStorage
 ) : StorageUtil {
 

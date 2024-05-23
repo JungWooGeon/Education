@@ -57,7 +57,7 @@ class VideoRepositoryImpl @Inject constructor(
     override suspend fun addVideo(videoUri: String, videoThumbnailBitmap: String, title: String): Flow<Result<Boolean>> = callbackFlow {
         // 1. 동영상 업로드
         // 2. 동영상 썸네일 이미지 업로드
-        // 3. 전체 비디오 목록 추가
+        // 3. 전체 비디두오 목록 추가
         // 4. 내 프로필에 내 비디오 목록 추가
         // 1 ~ 2 번 동기적으로 성공 시 3 ~ 4 번 병렬적으로 진행 후 모두 성공할 경우에만 성공으로 반환
 
@@ -75,6 +75,7 @@ class VideoRepositoryImpl @Inject constructor(
                         thumbnailResult.onSuccess { videoThumbnailUri ->
                             // 내 비디오 목록에 추가
                             val profileVideoData = hashMapOf(
+                                "title" to title,
                                 "videoThumbnailUrl" to URLDecoder.decode(videoThumbnailUri, StandardCharsets.UTF_8.toString()),
                                 "videoUrl" to videoUriString
                             )

@@ -17,21 +17,18 @@ class FirebaseDatabaseUtil @Inject constructor(
 
     }
 
-    override suspend fun readData() = callbackFlow {
-        val userId = auth.currentUser?.uid
-
-        if (userId != null) {
-            fireStore.collection("profiles").document(userId)
-                .get()
-                .addOnSuccessListener { document ->
-                    trySend(Result.success(document))
-                }
-                .addOnFailureListener { e ->
-                    trySend(Result.failure<DocumentSnapshot>(e))
-                }
-        } else {
-            trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
-        }
+    override suspend fun readData(
+        collectionPath: String,
+        documentPath: String
+    ) = callbackFlow {
+        fireStore.collection(collectionPath).document(documentPath)
+            .get()
+            .addOnSuccessListener { document ->
+                trySend(Result.success(document))
+            }
+            .addOnFailureListener { e ->
+                trySend(Result.failure<DocumentSnapshot>(e))
+            }
         awaitClose()
     }
 
@@ -89,6 +86,36 @@ class FirebaseDatabaseUtil @Inject constructor(
             }
         } else {
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
+        }
+
+        awaitClose()
+    }
+
+    override suspend fun readDataList(
+        collectionPath: String,
+        documentPath: String,
+        collectionPath2: String?
+    ): Flow<Result<List<DocumentSnapshot>>> = callbackFlow {
+
+        if (collectionPath2 != null) {
+            fireStore.collection(collectionPath)
+                .document(documentPath)
+                .collection(collectionPath2)
+                .get()
+                .addOnSuccessListener { result ->
+                    trySend(Result.success(result.documents))
+
+                }.addOnFailureListener { e ->
+                    trySend(Result.failure(e))
+                }
+        } else {
+            fireStore.collection(collectionPath)
+                .get()
+                .addOnSuccessListener { result ->
+                    trySend(Result.success(result.documents))
+                }.addOnFailureListener { e ->
+                    trySend(Result.failure(e))
+                }
         }
 
         awaitClose()

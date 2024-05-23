@@ -4,7 +4,12 @@ import kotlinx.coroutines.flow.Flow
 
 interface DatabaseUtil<T> {
     suspend fun deleteData()
-    suspend fun readData(): Flow<Result<T>>
+
+    suspend fun readData(
+        collectionPath: String,
+        documentPath: String
+    ): Flow<Result<T>>
+
     suspend fun createData(
         dataMap: HashMap<String, String>,
         collectionPath: String,
@@ -14,4 +19,10 @@ interface DatabaseUtil<T> {
     ): Flow<Result<Unit>>
 
     suspend fun updateData(name: String, field: String, collectionPath: String): Flow<Result<Unit>>
+
+    suspend fun readDataList(
+        collectionPath: String,
+        documentPath: String,
+        collectionPath2: String? = null
+    ): Flow<Result<List<T>>>
 }

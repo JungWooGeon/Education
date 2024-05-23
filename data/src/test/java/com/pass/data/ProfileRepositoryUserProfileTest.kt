@@ -36,7 +36,7 @@ class ProfileRepositoryUserProfileTest {
     // util 선언
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
     private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
-    private val firebaseStorageUtil = FirebaseStorageUtil(auth, storage)
+    private val firebaseStorageUtil = FirebaseStorageUtil(storage)
 
     // fireStore 모킹
     private val mockFireStoreTask = mockk<Task<DocumentSnapshot>>()
@@ -51,7 +51,7 @@ class ProfileRepositoryUserProfileTest {
     private val mockDownUriTask = mockk<Task<Uri>>()
     private val mockDownloadUri = mockk<Uri>()
 
-    private val testProfile = Profile("test name", "")
+    private val testProfile = Profile("test name", "", listOf())
 
     // repository 초기화
     private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil)

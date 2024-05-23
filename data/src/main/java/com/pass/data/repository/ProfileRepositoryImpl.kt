@@ -3,6 +3,7 @@ package com.pass.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.domain.model.Profile
+import com.pass.domain.model.Video
 import com.pass.domain.repository.ProfileRepository
 import com.pass.domain.util.AuthUtil
 import com.pass.domain.util.DatabaseUtil
@@ -10,6 +11,7 @@ import com.pass.domain.util.StorageUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.zip
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
@@ -56,20 +58,89 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserProfile(): Flow<Result<Profile>> = callbackFlow {
-        firebaseDatabaseUtil.readData().collect { result ->
-            result.onSuccess { document ->
-                val user = document.toObject(Profile::class.java)
+        // 1. 프로필 정보 조회
+        // 2. 내 프로필 동영상 목록 조회
+        // 1 ~ 2 플로우를 동시에 실행하여 모두 성공 시 성공으로 반환
 
-                if (user != null) {
-                    trySend(Result.success(user))
-                } else {
-                    trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
+        val userId = auth.currentUser?.uid
+
+        if (userId != null) {
+            // 프로필 정보 조회
+            val readProfileInfoFlow = firebaseDatabaseUtil.readData(
+                collectionPath =  "profiles",
+                documentPath = userId
+            )
+
+            // 내 프로필 동영상 목록 조회
+            val readProfileVideoListFlow = firebaseDatabaseUtil.readDataList(
+                collectionPath = "profiles",
+                documentPath = userId,
+                collectionPath2 = "videos"
+            )
+
+            // 두 flow 가 모두 성공했을 경우에만 Success
+            readProfileInfoFlow.zip(readProfileVideoListFlow) { readProfileInfoFlowResult, readProfileVideoListFlowResult ->
+                when {
+                    readProfileInfoFlowResult.isSuccess && readProfileVideoListFlowResult.isSuccess -> {
+                        val profileDocumentSnapshot = readProfileInfoFlowResult.getOrNull()
+                        val videoDocumentSnapshotList = readProfileVideoListFlowResult.getOrNull()
+
+                        if (profileDocumentSnapshot == null || videoDocumentSnapshotList == null) {
+                            Result.failure(Exception("프로필을 조회할 수 없습니다."))
+                        } else {
+                            val name = profileDocumentSnapshot.getString("name")
+                            val pictureUrl = profileDocumentSnapshot.getString("pictureUrl")
+                            val videoList = mutableListOf<Video>()
+
+                            videoDocumentSnapshotList.forEach { videoDocumentSnapshot ->
+                                val videoThumbnailUrl = videoDocumentSnapshot.getString("videoThumbnailUrl")
+                                val videoUrl = videoDocumentSnapshot.getString("videoUrl")
+                                val videoTitle = videoDocumentSnapshot.getString("title")
+                                val videoIdSplitList = videoDocumentSnapshot.id.split("_")
+
+                                if (videoThumbnailUrl != null && videoUrl != null && videoTitle != null && videoIdSplitList.size >= 2) {
+                                    val time = videoIdSplitList[1]
+
+                                    videoList.add(Video(
+                                        userId = userId,
+                                        videoThumbnailUrl = videoThumbnailUrl,
+                                        time = time,
+                                        videoTitle = videoTitle,
+                                        videoUrl = videoUrl
+                                    ))
+                                }
+                            }
+
+                            if (name != null && pictureUrl != null) {
+                                val profile = Profile(
+                                    name = name,
+                                    pictureUrl = pictureUrl,
+                                    videoList = videoList
+                                )
+
+                                Result.success(profile)
+                            } else {
+                                Result.failure(Exception("프로필을 조회할 수 없습니다."))
+                            }
+                        }
+                    }
+                    readProfileInfoFlowResult.isFailure -> {
+                        Result.failure(readProfileInfoFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류"))
+                    }
+                    readProfileVideoListFlowResult.isFailure -> {
+                        Result.failure(readProfileVideoListFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류"))
+                    }
+                    else -> {
+                        Result.failure(Exception("알 수 없는 오류"))
+                    }
                 }
-            }.onFailure {
-                trySend(Result.failure(it))
+            }.collect { combinedResult ->
+                trySend(combinedResult)
+                close()
             }
+        } else {
+            trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         }
-
         awaitClose()
     }
 

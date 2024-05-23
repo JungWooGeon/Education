@@ -60,7 +60,7 @@ class AddVideoViewModel @Inject constructor(
             addVideoUseCase(
                 videoUri = state.videoUri,
                 videoThumbnailBitmap = convertBitmapToString(state.videoThumbnailBitmap!!),
-                title = ""
+                title = state.title
             ).collect { result ->
                 result.onSuccess {
                     postSideEffect(AddVideoSideEffect.Toast("동영상을 업로드하였습니다."))

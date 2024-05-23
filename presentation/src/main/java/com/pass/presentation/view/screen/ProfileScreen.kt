@@ -95,6 +95,7 @@ fun ProfileScreen(
         context = context,
         userProfileUrl = profileState.userProfileURL,
         userName = profileState.userName,
+        videoList = profileState.videoList,
         onEditDialog = profileState.onEditDialog,
         editDialogUserName = profileState.editDialogUserName,
         onClickSignOut = viewModel::onClickSignOut,
@@ -134,6 +135,7 @@ fun ProfileScreen(
     context: Context,
     userProfileUrl: String,
     userName: String,
+    videoList: List<Video>,
     onEditDialog: Boolean,
     editDialogUserName: String,
     onClickSignOut: () -> Unit,
@@ -165,47 +167,8 @@ fun ProfileScreen(
                 modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 20.dp)
             )
 
-            val testVideoList = listOf(
-                Video(
-                    userId = "",
-                    videoThumbnailUrl = userProfileUrl,
-                    videoTitle = "테스트 제목 입니다. 많은 시청 바랍니다.",
-                    time = "1년전"
-                ),
-                Video(
-                    userId = "",
-                    videoThumbnailUrl = userProfileUrl,
-                    videoTitle = "시작",
-                    time = "10년전"
-                ),
-                Video(
-                    userId = "",
-                    videoThumbnailUrl = "",
-                    videoTitle = "테스트 제목 입니다. 많은 시청 바랍니다. 지금 바로 시작합니다!",
-                    time = "1년전"
-                ),
-                Video(
-                    userId = "",
-                    videoThumbnailUrl = userProfileUrl,
-                    videoTitle = "테스트 제목 입니다. 많은 시청 바랍니다.",
-                    time = "1년전"
-                ),
-                Video(
-                    userId = "",
-                    videoThumbnailUrl = userProfileUrl,
-                    videoTitle = "시작",
-                    time = "10년전"
-                ),
-                Video(
-                    userId = "",
-                    videoThumbnailUrl = "",
-                    videoTitle = "테스트 제목 입니다. 많은 시청 바랍니다. 지금 바로 시작합니다!",
-                    time = "1년전"
-                )
-            )
-
             LazyColumn {
-                items(testVideoList) { video ->
+                items(videoList) { video ->
                     VideoListItem(
                         context = context,
                         videoThumbnailUrl = video.videoThumbnailUrl,

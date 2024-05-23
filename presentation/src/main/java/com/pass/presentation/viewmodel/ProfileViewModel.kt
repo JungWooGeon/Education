@@ -2,6 +2,7 @@ package com.pass.presentation.viewmodel
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import com.pass.domain.model.Video
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.SignOutUseCase
 import com.pass.domain.usecase.UpdateUserProfileNameUseCase
@@ -44,7 +45,8 @@ class ProfileViewModel @Inject constructor(
                     state.copy(
                         userProfileURL = URLDecoder.decode(profile.pictureUrl, StandardCharsets.UTF_8.toString()),
                         userName = profile.name,
-                        editDialogUserName = profile.name
+                        editDialogUserName = profile.name,
+                        videoList = profile.videoList
                     )
                 }
             }.onFailure { exception ->
@@ -131,7 +133,8 @@ data class ProfileState(
     val userProfileURL: String = "",
     val userName: String = "",
     val onEditDialog: Boolean = false,
-    val editDialogUserName: String = ""
+    val editDialogUserName: String = "",
+    val videoList: List<Video> = listOf()
 )
 
 sealed interface ProfileSideEffect {
