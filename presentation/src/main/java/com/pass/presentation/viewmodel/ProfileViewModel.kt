@@ -3,6 +3,7 @@ package com.pass.presentation.viewmodel
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.model.Video
+import com.pass.domain.usecase.DeleteVideoUseCase
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.SignOutUseCase
 import com.pass.domain.usecase.UpdateUserProfileNameUseCase
@@ -27,7 +28,8 @@ class ProfileViewModel @Inject constructor(
     private val signOutUseCase: SignOutUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val updateUserProfileNameUseCase: UpdateUserProfileNameUseCase,
-    private val updateUserProfilePicture: UpdateUserProfilePictureUseCase
+    private val updateUserProfilePicture: UpdateUserProfilePictureUseCase,
+    private val deleteVideoUseCase: DeleteVideoUseCase
 ) : ViewModel(), ContainerHost<ProfileState, ProfileSideEffect> {
 
     override val container: Container<ProfileState, ProfileSideEffect> = container(
@@ -122,15 +124,61 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun openDeleteModalBottomSheet(videoIdx: Int) = intent {
+        reduce {
+            state.copy(
+                deleteVideoIdx = videoIdx,
+                isOpenDeleteModalBottomSheet = true
+            )
+        }
+    }
+
+    fun closeDeleteModalBottomSheet() = intent {
+        reduce {
+            state.copy(
+                isOpenDeleteModalBottomSheet = false
+            )
+        }
+    }
+
+    fun deleteVideoItem() = intent {
+        reduce {
+            state.copy(
+                isOpenDeleteModalBottomSheet = false
+            )
+        }
+
+        if (state.deleteVideoIdx != null) {
+            deleteVideoUseCase(state.videoList[state.deleteVideoIdx!!]).collect { result ->
+                result.onSuccess {
+                    reduce {
+                        state.copy(
+                            videoList = state.videoList.toMutableList().apply {
+                                state.deleteVideoIdx?.let { it1 -> this.removeAt(it1) }
+                            }.toList()
+                        )
+                    }
+                    postSideEffect(ProfileSideEffect.Toast("동영상 삭제에 성공하였습니다."))
+                }.onFailure { e ->
+                    postSideEffect(ProfileSideEffect.Toast(e.message ?: "동영상 삭제에 실패하였습니다."))
+                }
+            }
+        }
+    }
 }
 
 @Immutable
 data class ProfileState(
     val userProfileURL: String = "",
     val userName: String = "",
+    val videoList: List<Video> = listOf(),
+
     val onEditDialog: Boolean = false,
     val editDialogUserName: String = "",
-    val videoList: List<Video> = listOf()
+
+    val isOpenDeleteModalBottomSheet: Boolean = false,
+    val deleteVideoIdx: Int? = null
 )
 
 sealed interface ProfileSideEffect {

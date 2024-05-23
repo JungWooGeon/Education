@@ -102,6 +102,7 @@ class ProfileRepositoryImpl @Inject constructor(
                                     val time = videoIdSplitList[1]
 
                                     videoList.add(Video(
+                                        videoId = videoDocumentSnapshot.id,
                                         userId = userId,
                                         videoThumbnailUrl = videoThumbnailUrl,
                                         time = time,

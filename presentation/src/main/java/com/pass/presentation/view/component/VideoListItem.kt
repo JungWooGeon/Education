@@ -39,7 +39,8 @@ fun VideoListItem(
     videoTitle: String,
     userProfileUrl: String,
     userName: String,
-    onClickVideoItem: () -> Unit
+    onClickVideoItem: () -> Unit,
+    onClickVideoDeleteMoreIcon: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.Top,
@@ -124,12 +125,8 @@ fun VideoListItem(
             }
         }
 
-        // video delete Icon Button
-        IconButton(
-            onClick = {
-                // @TODO Bottom Sheet
-            }
-        ) {
+        // video delete More Icon Button
+        IconButton(onClick = onClickVideoDeleteMoreIcon) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_more_vertical),
                 contentDescription = null,

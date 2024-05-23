@@ -13,8 +13,35 @@ class FirebaseDatabaseUtil @Inject constructor(
     private val auth: FirebaseAuth,
     private val fireStore: FirebaseFirestore
 ) : DatabaseUtil<DocumentSnapshot> {
-    override suspend fun deleteData() {
 
+    override suspend fun deleteData(
+        collectionPath: String,
+        documentPath: String,
+        collectionPath2: String?,
+        documentPath2: String?
+    ): Flow<Result<Unit>> = callbackFlow {
+        if (collectionPath2 != null && documentPath2 != null) {
+            fireStore.collection(collectionPath).document(documentPath)
+                .collection(collectionPath2).document(documentPath2)
+                .delete()
+                .addOnSuccessListener {
+                    trySend(Result.success(Unit))
+                }
+                .addOnFailureListener { e ->
+                    trySend(Result.failure(e))
+                }
+        } else {
+            fireStore.collection(collectionPath).document(documentPath)
+                .delete()
+                .addOnSuccessListener {
+                    trySend(Result.success(Unit))
+                }
+                .addOnFailureListener { e ->
+                    trySend(Result.failure(e))
+                }
+        }
+
+        awaitClose()
     }
 
     override suspend fun readData(
@@ -29,6 +56,7 @@ class FirebaseDatabaseUtil @Inject constructor(
             .addOnFailureListener { e ->
                 trySend(Result.failure<DocumentSnapshot>(e))
             }
+
         awaitClose()
     }
 

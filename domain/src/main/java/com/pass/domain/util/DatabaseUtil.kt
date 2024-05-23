@@ -3,7 +3,12 @@ package com.pass.domain.util
 import kotlinx.coroutines.flow.Flow
 
 interface DatabaseUtil<T> {
-    suspend fun deleteData()
+    suspend fun deleteData(
+        collectionPath: String,
+        documentPath: String,
+        collectionPath2: String? = null,
+        documentPath2: String? = null
+    ): Flow<Result<Unit>>
 
     suspend fun readData(
         collectionPath: String,

@@ -22,35 +22,39 @@ class FirebaseStorageUtil @Inject constructor(
     private val storage: FirebaseStorage
 ) : StorageUtil {
 
-    override suspend fun updateFile(fileUri: String, pathString: String): Flow<Result<String>> = callbackFlow {
-        val file = withContext(Dispatchers.IO) {
-            URLDecoder.decode(fileUri, StandardCharsets.UTF_8.toString())
-        }.toUri()
-        storage.reference.child(pathString).putFile(file)
-            .addOnSuccessListener { taskSnapshot ->
-                // DB 에 프로필 링크 업데이트
-                taskSnapshot.metadata?.reference?.downloadUrl
-                    ?.addOnSuccessListener { downloadUrl ->
-                        launch {
-                            val uriString = withContext(Dispatchers.IO) {
-                                URLEncoder.encode(
-                                    downloadUrl.toString(),
-                                    StandardCharsets.UTF_8.toString()
-                                )
+    override suspend fun updateFile(fileUri: String, pathString: String): Flow<Result<String>> =
+        callbackFlow {
+            val file = withContext(Dispatchers.IO) {
+                URLDecoder.decode(fileUri, StandardCharsets.UTF_8.toString())
+            }.toUri()
+            storage.reference.child(pathString).putFile(file)
+                .addOnSuccessListener { taskSnapshot ->
+                    // DB 에 프로필 링크 업데이트
+                    taskSnapshot.metadata?.reference?.downloadUrl
+                        ?.addOnSuccessListener { downloadUrl ->
+                            launch {
+                                val uriString = withContext(Dispatchers.IO) {
+                                    URLEncoder.encode(
+                                        downloadUrl.toString(),
+                                        StandardCharsets.UTF_8.toString()
+                                    )
+                                }
+                                trySend(Result.success(uriString))
                             }
-                            trySend(Result.success(uriString))
+                        }?.addOnFailureListener {
+                            trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
                         }
-                    }?.addOnFailureListener {
-                        trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
-                    }
-            }.addOnFailureListener {
-                trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
-            }
+                }.addOnFailureListener {
+                    trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
+                }
 
-        awaitClose()
-    }
+            awaitClose()
+        }
 
-    override suspend fun updateFileWithBitmap(bitmapString: String, videoId: String): Flow<Result<String>> = callbackFlow {
+    override suspend fun updateFileWithBitmap(
+        bitmapString: String,
+        videoId: String
+    ): Flow<Result<String>> = callbackFlow {
         val bitmap = convertBitmapToString(bitmapString)
         val baos = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
@@ -75,6 +79,18 @@ class FirebaseStorageUtil @Inject constructor(
         }.addOnFailureListener {
             trySend(Result.failure(Exception("동영상 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
         }
+
+        awaitClose()
+    }
+
+    override suspend fun deleteFile(pathString: String): Flow<Result<Unit>> = callbackFlow {
+        storage.reference.child(pathString)
+            .delete()
+            .addOnSuccessListener {
+                trySend(Result.success(Unit))
+            }.addOnFailureListener { e ->
+                trySend(Result.failure(e))
+            }
 
         awaitClose()
     }

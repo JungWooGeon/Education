@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
@@ -42,6 +42,7 @@ import androidx.lifecycle.Lifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.pass.domain.model.Video
+import com.pass.presentation.view.component.DeleteModalBottomSheet
 import com.pass.presentation.view.component.EditNameDialog
 import com.pass.presentation.view.component.ProfileInfoBox
 import com.pass.presentation.view.component.VideoListItem
@@ -66,9 +67,8 @@ fun ProfileScreen(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
     LaunchedEffect(lifecycleState) {
-        // Do something with your state
-        // You may want to use DisposableEffect or other alternatives
-        // instead of LaunchedEffect
+        // onResume 생명 주기 감지 시 동영상 목록 업데이트
+        // 프로필 사진과 이름은 변경 시 자동으로 UI 업데이트 되지만, 동영상은 추가 화면으로 이동 후 다시 돌아오기 때문
         if (lifecycleState == Lifecycle.State.RESUMED) {
             viewModel.readProfile()
         }
@@ -118,6 +118,7 @@ fun ProfileScreen(
         onClickSignOut = viewModel::onClickSignOut,
         onClickEditButton = viewModel::onClickEditButton,
         onCancelEditPopUp = viewModel::onCancelEditPopUp,
+        isOpenDeleteModalBottomSheet = profileState.isOpenDeleteModalBottomSheet,
         onClickProfileImage = {
             if (multiplePermissionsState.allPermissionsGranted) {
                 // 권한 허용 - 사진 선택
@@ -143,7 +144,10 @@ fun ProfileScreen(
                 // 처음일 경우 - 권한 요청
                 multiplePermissionsState.launchMultiplePermissionRequest()
             }
-        }
+        },
+        closeDeleteModalBottomSheet = viewModel::closeDeleteModalBottomSheet,
+        openDeleteModalBottomSheet = viewModel::openDeleteModalBottomSheet,
+        deleteVideoItem = viewModel::deleteVideoItem
     )
 }
 
@@ -155,13 +159,17 @@ fun ProfileScreen(
     videoList: List<Video>,
     onEditDialog: Boolean,
     editDialogUserName: String,
+    isOpenDeleteModalBottomSheet: Boolean,
     onClickSignOut: () -> Unit,
     onClickEditButton: () -> Unit,
     onCancelEditPopUp: () -> Unit,
     onClickProfileImage: () -> Unit,
     onChangeEditDialogUserName: (String) -> Unit,
     onClickSaveEditDialogButton: () -> Unit,
-    onClickAddVideoButton: () -> Unit
+    onClickAddVideoButton: () -> Unit,
+    closeDeleteModalBottomSheet: () -> Unit,
+    openDeleteModalBottomSheet: (Int) -> Unit,
+    deleteVideoItem: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -185,14 +193,15 @@ fun ProfileScreen(
             )
 
             LazyColumn {
-                items(videoList) { video ->
+                itemsIndexed(videoList) { idx, video ->
                     VideoListItem(
                         context = context,
                         videoThumbnailUrl = video.videoThumbnailUrl,
                         videoTitle = video.videoTitle,
                         userProfileUrl = userProfileUrl,
                         userName = userName,
-                        onClickVideoItem = { }
+                        onClickVideoItem = { },
+                        onClickVideoDeleteMoreIcon = { openDeleteModalBottomSheet(idx) }
                     )
                 }
             }
@@ -216,6 +225,13 @@ fun ProfileScreen(
             textFieldValue = editDialogUserName,
             onValueChange = onChangeEditDialogUserName,
             onClickSaveEditDialogButton = onClickSaveEditDialogButton
+        )
+    }
+
+    if (isOpenDeleteModalBottomSheet) {
+        DeleteModalBottomSheet(
+            closeBottomSheet = closeDeleteModalBottomSheet,
+            onClickDeleteItem = deleteVideoItem
         )
     }
 }

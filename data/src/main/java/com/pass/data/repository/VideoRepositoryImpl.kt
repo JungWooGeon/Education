@@ -7,12 +7,14 @@ import android.util.Base64
 import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.pass.domain.model.Video
 import com.pass.domain.repository.VideoRepository
 import com.pass.domain.util.DatabaseUtil
 import com.pass.domain.util.StorageUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.zip
 import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
@@ -128,6 +130,58 @@ class VideoRepositoryImpl @Inject constructor(
                 }.onFailure {
                     trySend(Result.failure(it))
                 }
+            }
+        }
+
+        awaitClose()
+    }
+
+    override suspend fun deleteVideo(video: Video): Flow<Result<Unit>> = callbackFlow {
+        // 1. 동영상 원본 삭제
+        // 2. 동영상 썸네일 삭제
+        // 3. 내 프로필에서 동영상 목록
+        // 4. 전체 동영상 목록에서 삭제
+        // 1 ~ 4 번 병렬적 실행 후 모두 성공 시에만 성공으로 반환
+
+        val uid = auth.currentUser?.uid
+
+        if (uid == null) {
+            trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
+        } else {
+            val deleteVideoFromStorageFlow = firebaseStorageUtil.deleteFile(
+                pathString = "video/${video.videoId}"
+            )
+
+            val deleteVideoThumbnailFromStorageFlow = firebaseStorageUtil.deleteFile(
+                pathString = "video_thumbnail/${video.videoId}"
+            )
+
+            val deleteVideoFromProfileFlow = firebaseDatabaseUtil.deleteData(
+                collectionPath = "profiles",
+                documentPath = uid,
+                collectionPath2 = "videos",
+                documentPath2 = video.videoId
+            )
+
+            val deleteVideoFromTotalVideoListFlow = firebaseDatabaseUtil.deleteData(
+                collectionPath = "videos",
+                documentPath = video.videoId
+            )
+
+            combine(
+                deleteVideoFromStorageFlow,
+                deleteVideoThumbnailFromStorageFlow,
+                deleteVideoFromProfileFlow,
+                deleteVideoFromTotalVideoListFlow
+            ) { dvfStorageFlowResult, dvtfStorageFlowResult, dvfProfileFlowResult, dvfTotalVideoListFlowResult ->
+                if (dvfStorageFlowResult.isSuccess && dvtfStorageFlowResult.isSuccess && dvfProfileFlowResult.isSuccess && dvfTotalVideoListFlowResult.isSuccess) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("동영상 삭제에 실패하였습니다."))
+                }
+            }.collect { combinedResult ->
+                trySend(combinedResult)
+                close()
             }
         }
 
