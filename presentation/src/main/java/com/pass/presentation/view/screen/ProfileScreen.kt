@@ -58,7 +58,8 @@ import java.nio.charset.StandardCharsets
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onNavigateToSignInScreen: () -> Unit,
-    onNavigateToAddVideoScreen: (String) -> Unit
+    onNavigateToAddVideoScreen: (String) -> Unit,
+    onClickVideoItem: (Video) -> Unit
 ) {
     val profileState = viewModel.collectAsState().value
     val context = LocalContext.current
@@ -147,7 +148,8 @@ fun ProfileScreen(
         },
         closeDeleteModalBottomSheet = viewModel::closeDeleteModalBottomSheet,
         openDeleteModalBottomSheet = viewModel::openDeleteModalBottomSheet,
-        deleteVideoItem = viewModel::deleteVideoItem
+        deleteVideoItem = viewModel::deleteVideoItem,
+        onClickVideoItem = onClickVideoItem
     )
 }
 
@@ -169,7 +171,8 @@ fun ProfileScreen(
     onClickAddVideoButton: () -> Unit,
     closeDeleteModalBottomSheet: () -> Unit,
     openDeleteModalBottomSheet: (Int) -> Unit,
-    deleteVideoItem: () -> Unit
+    deleteVideoItem: () -> Unit,
+    onClickVideoItem: (Video) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -200,7 +203,7 @@ fun ProfileScreen(
                         videoTitle = video.videoTitle,
                         userProfileUrl = userProfileUrl,
                         userName = userName,
-                        onClickVideoItem = { },
+                        onClickVideoItem = { onClickVideoItem(video) },
                         onClickVideoDeleteMoreIcon = { openDeleteModalBottomSheet(idx) }
                     )
                 }

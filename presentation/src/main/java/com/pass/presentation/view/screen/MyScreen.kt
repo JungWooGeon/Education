@@ -8,11 +8,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.pass.domain.model.Video
 import com.pass.presentation.state.MyScreenRoute
 import com.pass.presentation.viewmodel.MyViewModel
 
 @Composable
-fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
+fun MyScreen(
+    viewModel: MyViewModel = hiltViewModel(),
+    showVideoStreamingPlayer: (Video) -> Unit
+) {
     var startScreen: String?
     val isSignedInState = viewModel.isSignedInState.collectAsState()
     val myScreenNavController = rememberNavController()
@@ -99,6 +103,9 @@ fun MyScreen(viewModel: MyViewModel = hiltViewModel()) {
                                 launchSingleTop = true
                                 restoreState = true
                             }
+                        },
+                        onClickVideoItem = { video ->
+                            showVideoStreamingPlayer(video)
                         }
                     )
                 }
