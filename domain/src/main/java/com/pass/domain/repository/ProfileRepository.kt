@@ -12,4 +12,5 @@ interface ProfileRepository {
     suspend fun getUserProfile(): Flow<Result<Profile>>
     suspend fun updateUserProfile(name: String, field: String): Flow<Result<Unit>>
     suspend fun updateUserProfilePicture(pictureUri: String): Flow<Result<String>>
+    suspend fun getOtherUserProfile(userId: String): Flow<Result<Profile>>
 }

@@ -216,7 +216,7 @@ fun ProfileScreen(
             contentColor = MaterialTheme.colorScheme.secondary,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(top = 16.dp, bottom = 64.dp, start = 16.dp, end = 16.dp)
         ) {
             Icon(Icons.Filled.Add, "Small floating action button.")
         }

@@ -63,6 +63,18 @@ class AddVideoViewModel @Inject constructor(
 
         if (state.videoThumbnailBitmap == null) {
             postSideEffect(AddVideoSideEffect.Toast("동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
+            reduce {
+                state.copy(
+                    progressButtonState = SSButtonState.FAILURE
+                )
+            }
+        } else if (state.title == "") {
+            postSideEffect(AddVideoSideEffect.Toast("제목을 입력해주세요."))
+            reduce {
+                state.copy(
+                    progressButtonState = SSButtonState.FAILURE
+                )
+            }
         } else {
             addVideoUseCase(
                 videoUri = state.videoUri,

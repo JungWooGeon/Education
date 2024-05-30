@@ -15,7 +15,8 @@ import com.pass.presentation.viewmodel.MyViewModel
 @Composable
 fun MyScreen(
     viewModel: MyViewModel = hiltViewModel(),
-    showVideoStreamingPlayer: (Video) -> Unit
+    showVideoStreamingPlayer: (Video) -> Unit,
+    onCloseVideoPlayer: () -> Unit
 ) {
     var startScreen: String?
     val isSignedInState = viewModel.isSignedInState.collectAsState()
@@ -92,6 +93,7 @@ fun MyScreen(
                             }
                         },
                         onNavigateToAddVideoScreen = { videoUri ->
+                            onCloseVideoPlayer()
                             myScreenNavController.navigate(
                                 MyScreenRoute.AddVideoScreen.createSelectedVideoUri(
                                     videoUri
@@ -125,13 +127,7 @@ fun MyScreen(
                         AddVideoScreen(
                             videoUri = videoUri,
                             onNavigateProfileScreen = {
-                                myScreenNavController.navigate(MyScreenRoute.ProfileScreen.screenRoute) {
-                                    myScreenNavController.graph.startDestinationRoute?.let {
-                                        popUpTo(it) { saveState = true }
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                myScreenNavController.popBackStack()
                             }
                         )
                     }

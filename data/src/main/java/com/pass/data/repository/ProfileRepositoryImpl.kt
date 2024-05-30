@@ -168,4 +168,32 @@ class ProfileRepositoryImpl @Inject constructor(
 
             awaitClose()
         }
+
+    override suspend fun getOtherUserProfile(userId: String): Flow<Result<Profile>> = callbackFlow {
+        firebaseDatabaseUtil.readData(
+            collectionPath =  "profiles",
+            documentPath = userId
+        ).collect { result ->
+            result.onSuccess { documentSnapShot ->
+                val name = documentSnapShot.getString("name")
+                val pictureUrl = documentSnapShot.getString("pictureUrl")
+
+                if (name != null && pictureUrl != null) {
+                    val profile = Profile(
+                        name = name,
+                        pictureUrl = pictureUrl,
+                        videoList = emptyList()
+                    )
+
+                    trySend(Result.success(profile))
+                } else {
+                    trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
+                }
+            }.onFailure {
+                trySend(Result.failure(it))
+            }
+        }
+
+        awaitClose()
+    }
 }

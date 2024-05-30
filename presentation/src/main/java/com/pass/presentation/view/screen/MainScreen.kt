@@ -1,10 +1,11 @@
 package com.pass.presentation.view.screen
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,18 +20,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,15 +38,54 @@ import androidx.navigation.compose.rememberNavController
 import com.pass.domain.model.Video
 import com.pass.presentation.R
 import com.pass.presentation.state.MainScreenRoute
+import com.pass.presentation.viewmodel.MainScreenSideEffect
+import com.pass.presentation.viewmodel.MainViewModel
+import org.orbitmvi.orbit.compose.collectAsState
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
-fun MainScreen(logoResource: Int) {
+fun MainScreen(
+    viewModel: MainViewModel = hiltViewModel(),
+    logoResource: Int
+) {
+    val mainScreenState = viewModel.collectAsState().value
+    val context = LocalContext.current
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    var showPlayerState by remember { mutableStateOf<Video?>(null) }
+    // 뒤로가기 이벤트 - 종료 (토스트 메시지 출력 후 1초 안에 뒤로가기 시 종료)
+    BackHandler(enabled = (mainScreenState.showPlayerState == null)) {
+        viewModel.onClickBackButton()
+    }
 
+    viewModel.collectSideEffect { sideEffect ->
+        when(sideEffect) {
+            is MainScreenSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
+            MainScreenSideEffect.FinishActivity -> (context as Activity).finish()
+        }
+    }
+
+    MainScreen(
+        navController = navController,
+        currentRoute = currentRoute,
+        logoResource = logoResource,
+        showPlayerState = mainScreenState.showPlayerState,
+        onCloseVideoPlayer = viewModel::onCloseVideoPlayer,
+        showVideoStreamingPlayer = viewModel::showVideoStreamingPlayer
+    )
+}
+
+@Composable
+fun MainScreen(
+    navController: NavHostController,
+    currentRoute: String?,
+    logoResource: Int,
+    showPlayerState: Video?,
+    onCloseVideoPlayer: () -> Unit,
+    showVideoStreamingPlayer: (Video) -> Unit
+) {
     Scaffold(
         topBar = {
             Row(
@@ -77,24 +115,19 @@ fun MainScreen(logoResource: Int) {
             )
         }
     ) { paddingValues ->
-        showPlayerState?.let {
-            Box(modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White).zIndex(1f)) {
-                VideoStreamingPlayer(
-                    video = it,
-                    paddingValues = paddingValues,
-                    onCloseVideoPlayer = {
-                        showPlayerState = null
-                    }
-                )
-            }
-        }
-
         Box(Modifier.padding(paddingValues)) {
             NavigationGraph(
                 navController = navController,
-                showVideoStreamingPlayer = { video ->
-                    showPlayerState = video
-                }
+                showVideoStreamingPlayer = showVideoStreamingPlayer,
+                onCloseVideoPlayer = onCloseVideoPlayer
+            )
+        }
+
+        if (showPlayerState != null) {
+            VideoStreamingPlayer(
+                video = showPlayerState,
+                paddingValues = paddingValues,
+                onCloseVideoPlayer = onCloseVideoPlayer
             )
         }
     }
@@ -151,7 +184,8 @@ fun BottomNavigationBar(
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
-    showVideoStreamingPlayer: (Video) -> Unit
+    showVideoStreamingPlayer: (Video) -> Unit,
+    onCloseVideoPlayer: () -> Unit
 ) {
     NavHost(navController = navController, startDestination =  MainScreenRoute.LiveListScreen.screenRoute) {
         composable(MainScreenRoute.LiveListScreen.screenRoute) {
@@ -164,7 +198,8 @@ fun NavigationGraph(
 
         composable(MainScreenRoute.MyScreen.screenRoute) {
             MyScreen(
-                showVideoStreamingPlayer = showVideoStreamingPlayer
+                showVideoStreamingPlayer = showVideoStreamingPlayer,
+                onCloseVideoPlayer = onCloseVideoPlayer
             )
         }
     }
