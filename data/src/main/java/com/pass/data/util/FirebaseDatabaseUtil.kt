@@ -2,6 +2,7 @@ package com.pass.data.util
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pass.domain.util.DatabaseUtil
 import kotlinx.coroutines.channels.awaitClose
@@ -121,11 +122,11 @@ class FirebaseDatabaseUtil @Inject constructor(
 
     override suspend fun readDataList(
         collectionPath: String,
-        documentPath: String,
+        documentPath: String?,
         collectionPath2: String?
     ): Flow<Result<List<DocumentSnapshot>>> = callbackFlow {
 
-        if (collectionPath2 != null) {
+        if (collectionPath2 != null && documentPath != null) {
             fireStore.collection(collectionPath)
                 .document(documentPath)
                 .collection(collectionPath2)
@@ -145,6 +146,20 @@ class FirebaseDatabaseUtil @Inject constructor(
                     trySend(Result.failure(e))
                 }
         }
+
+        awaitClose()
+    }
+
+    override suspend fun readIdList(userIdList: List<String>): Flow<Result<List<DocumentSnapshot>>> = callbackFlow {
+        fireStore.collection("profiles")
+            .whereIn(FieldPath.documentId(), userIdList)
+            .get()
+            .addOnSuccessListener { documents ->
+                trySend(Result.success(documents.documents))
+            }
+            .addOnFailureListener { e ->
+                trySend(Result.failure(e))
+            }
 
         awaitClose()
     }

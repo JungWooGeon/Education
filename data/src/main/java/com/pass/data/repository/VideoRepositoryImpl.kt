@@ -7,6 +7,8 @@ import android.util.Base64
 import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.pass.data.util.CalculateUtil
+import com.pass.domain.model.Profile
 import com.pass.domain.model.Video
 import com.pass.domain.repository.VideoRepository
 import com.pass.domain.util.DatabaseUtil
@@ -27,7 +29,8 @@ class VideoRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val firebaseDatabaseUtil: DatabaseUtil<DocumentSnapshot>,
     private val firebaseStorageUtil: StorageUtil,
-    private val context: Context
+    private val context: Context,
+    private val calculateUtil: CalculateUtil
 ) : VideoRepository {
     override fun createVideoThumbnail(videoUri: String): Result<String> {
         val retriever = MediaMetadataRetriever()
@@ -56,7 +59,11 @@ class VideoRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addVideo(videoUri: String, videoThumbnailBitmap: String, title: String): Flow<Result<Boolean>> = callbackFlow {
+    override suspend fun addVideo(
+        videoUri: String,
+        videoThumbnailBitmap: String,
+        title: String
+    ): Flow<Result<Boolean>> = callbackFlow {
         // 1. 동영상 업로드
         // 2. 동영상 썸네일 이미지 업로드
         // 3. 전체 비디오 목록에 추가
@@ -74,64 +81,80 @@ class VideoRepositoryImpl @Inject constructor(
             firebaseStorageUtil.updateFile(videoUri, "video/${videoId}").collect { result ->
                 result.onSuccess { videoUriString ->
                     // 비디오 썸네일 업로드
-                    firebaseStorageUtil.updateFileWithBitmap(videoThumbnailBitmap, videoId).collect { thumbnailResult ->
-                        thumbnailResult.onSuccess { videoThumbnailUri ->
-                            // 내 비디오 목록에 추가
-                            val profileVideoData = hashMapOf(
-                                "title" to title,
-                                "userId" to uid,
-                                "videoThumbnailUrl" to URLDecoder.decode(videoThumbnailUri, StandardCharsets.UTF_8.toString()),
-                                "videoUrl" to videoUriString,
-                                "time" to nowDateTime
-                            )
+                    firebaseStorageUtil.updateFileWithBitmap(videoThumbnailBitmap, videoId)
+                        .collect { thumbnailResult ->
+                            thumbnailResult.onSuccess { videoThumbnailUri ->
+                                // 내 비디오 목록에 추가
+                                val profileVideoData = hashMapOf(
+                                    "title" to title,
+                                    "userId" to uid,
+                                    "videoThumbnailUrl" to URLDecoder.decode(
+                                        videoThumbnailUri,
+                                        StandardCharsets.UTF_8.toString()
+                                    ),
+                                    "videoUrl" to videoUriString,
+                                    "time" to nowDateTime
+                                )
 
-                            val profileVideoFlow = firebaseDatabaseUtil.createData(
-                                profileVideoData,
-                                "profiles",
-                                uid,
-                                "videos",
-                                videoId
-                            )
+                                val profileVideoFlow = firebaseDatabaseUtil.createData(
+                                    profileVideoData,
+                                    "profiles",
+                                    uid,
+                                    "videos",
+                                    videoId
+                                )
 
-                            // 전체 비디오 목록에 추가
-                            val videoData = hashMapOf(
-                                "title" to title,
-                                "userId" to uid,
-                                "videoThumbnailUrl" to URLDecoder.decode(videoThumbnailUri, StandardCharsets.UTF_8.toString()),
-                                "videoUrl" to videoUriString,
-                                "time" to nowDateTime
-                            )
+                                // 전체 비디오 목록에 추가
+                                val videoData = hashMapOf(
+                                    "title" to title,
+                                    "userId" to uid,
+                                    "videoThumbnailUrl" to URLDecoder.decode(
+                                        videoThumbnailUri,
+                                        StandardCharsets.UTF_8.toString()
+                                    ),
+                                    "videoUrl" to videoUriString,
+                                    "time" to nowDateTime
+                                )
 
-                            val allVideoFlow = firebaseDatabaseUtil.createData(
-                                videoData,
-                                "videos",
-                                videoId
-                            )
+                                val allVideoFlow = firebaseDatabaseUtil.createData(
+                                    videoData,
+                                    "videos",
+                                    videoId
+                                )
 
-                            // 두 flow 가 모두 성공했을 경우에만 Success
-                            profileVideoFlow.zip(allVideoFlow) { profileVideoFlowResult, allVideoFlowResult ->
-                                when {
-                                    profileVideoFlowResult.isSuccess && allVideoFlowResult.isSuccess -> {
-                                        Result.success(true)
+                                // 두 flow 가 모두 성공했을 경우에만 Success
+                                profileVideoFlow.zip(allVideoFlow) { profileVideoFlowResult, allVideoFlowResult ->
+                                    when {
+                                        profileVideoFlowResult.isSuccess && allVideoFlowResult.isSuccess -> {
+                                            Result.success(true)
+                                        }
+
+                                        profileVideoFlowResult.isFailure -> {
+                                            Result.failure(
+                                                profileVideoFlowResult.exceptionOrNull()
+                                                    ?: Exception("알 수 없는 오류")
+                                            )
+                                        }
+
+                                        allVideoFlowResult.isFailure -> {
+                                            Result.failure(
+                                                allVideoFlowResult.exceptionOrNull()
+                                                    ?: Exception("알 수 없는 오류")
+                                            )
+                                        }
+
+                                        else -> {
+                                            Result.failure(Exception("알 수 없는 오류"))
+                                        }
                                     }
-                                    profileVideoFlowResult.isFailure -> {
-                                        Result.failure(profileVideoFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류"))
-                                    }
-                                    allVideoFlowResult.isFailure -> {
-                                        Result.failure(allVideoFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류"))
-                                    }
-                                    else -> {
-                                        Result.failure(Exception("알 수 없는 오류"))
-                                    }
+                                }.collect { combinedResult ->
+                                    trySend(combinedResult)
+                                    close()
                                 }
-                            }.collect { combinedResult ->
-                                trySend(combinedResult)
-                                close()
+                            }.onFailure { e ->
+                                trySend(Result.failure(e))
                             }
-                        }.onFailure { e ->
-                            trySend(Result.failure(e))
                         }
-                    }
                 }.onFailure {
                     trySend(Result.failure(it))
                 }
@@ -187,6 +210,81 @@ class VideoRepositoryImpl @Inject constructor(
             }.collect { combinedResult ->
                 trySend(combinedResult)
                 close()
+            }
+        }
+
+        awaitClose()
+    }
+
+    override suspend fun getAllVideoListUseCase(): Flow<Result<List<Video>>> = callbackFlow {
+        // 비디오 목록 조회
+        firebaseDatabaseUtil.readDataList("videos").collect { readDataListResult ->
+            readDataListResult.onSuccess { videoDocumentSnapShotList ->
+                val idSetList = mutableSetOf<String>()
+                videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
+                    val userId = videoDocumentSnapShot.getString("userId")
+                    userId?.let { idSetList.add(it) }
+                }
+
+                // id 목록 조회
+                firebaseDatabaseUtil.readIdList(idSetList.toList()).collect { readIdListResult ->
+                    readIdListResult.onSuccess { readIdDocumentSnapShotList ->
+                        // id에 대한 프로필 정보 변수
+                        val idOfVideoMap = mutableMapOf<String, Profile>()
+
+                        // 어떤 id 목록이 있는지 조회
+                        readIdDocumentSnapShotList.forEach { readIdDocumentSnapshot ->
+                            val userId = readIdDocumentSnapshot.id
+                            val name = readIdDocumentSnapshot.getString("name")
+                            val pictureUrl = readIdDocumentSnapshot.getString("pictureUrl")
+
+                            if (name != null && pictureUrl != null) {
+                                idOfVideoMap[userId] = Profile(name, pictureUrl, emptyList())
+                            }
+                        }
+
+                        // 결과 video list
+                        val resultVideoList = mutableListOf<Video>()
+
+                        // user 정보를 포함하여 video 정보 반영
+                        videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
+                            val videoId = videoDocumentSnapShot.id
+                            val userId = videoDocumentSnapShot.getString("userId")
+                            val title = videoDocumentSnapShot.getString("title")
+                            val videoThumbnailUrl = videoDocumentSnapShot.getString("videoThumbnailUrl")
+                            val videoUrl = videoDocumentSnapShot.getString("videoUrl")
+                            val userName = idOfVideoMap[userId]?.name
+                            val userProfileUrl = idOfVideoMap[userId]?.pictureUrl
+
+                            val time = videoDocumentSnapShot.getString("time")
+                            val agoTime = calculateUtil.calculateAgoTime(time)
+
+                            if (userId != null && title != null && videoThumbnailUrl != null && videoUrl != null) {
+                                resultVideoList.add(
+                                    Video(
+                                        videoId = videoId,
+                                        userId = userId,
+                                        videoThumbnailUrl = videoThumbnailUrl,
+                                        videoTitle = title,
+                                        agoTime = agoTime,
+                                        videoUrl = videoUrl,
+                                        userName = userName,
+                                        userProfileUrl = userProfileUrl
+                                    )
+                                )
+                            }
+                        }
+
+                        // return 결과 list
+                        trySend(Result.success(resultVideoList))
+
+                    }.onFailure {
+                        trySend(Result.failure(it))
+                    }
+                }
+
+            }.onFailure {
+                trySend(Result.failure(it))
             }
         }
 

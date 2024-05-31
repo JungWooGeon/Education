@@ -9,4 +9,6 @@ interface VideoRepository {
     suspend fun addVideo(videoUri: String, videoThumbnailBitmap: String, title: String): Flow<Result<Boolean>>
 
     suspend fun deleteVideo(video: Video): Flow<Result<Unit>>
+
+    suspend fun getAllVideoListUseCase(): Flow<Result<List<Video>>>
 }

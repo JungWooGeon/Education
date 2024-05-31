@@ -42,6 +42,7 @@ fun ExoPlayerView(
     LaunchedEffect(mediaSource) {
         exoPlayer.setMediaSource(mediaSource)
         exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
     }
 
     // 생명주기 종료 시 exoplayer 메모리 해제

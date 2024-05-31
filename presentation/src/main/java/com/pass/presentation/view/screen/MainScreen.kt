@@ -193,7 +193,9 @@ fun NavigationGraph(
         }
 
         composable(MainScreenRoute.VideoListScreen.screenRoute) {
-            VideoListScreen()
+            VideoListScreen(
+                showVideoStreamingPlayer = showVideoStreamingPlayer
+            )
         }
 
         composable(MainScreenRoute.MyScreen.screenRoute) {

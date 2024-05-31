@@ -27,7 +27,9 @@ interface DatabaseUtil<T> {
 
     suspend fun readDataList(
         collectionPath: String,
-        documentPath: String,
+        documentPath: String? = null,
         collectionPath2: String? = null
     ): Flow<Result<List<T>>>
+
+    suspend fun readIdList(userIdList: List<String>): Flow<Result<List<T>>>
 }

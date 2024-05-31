@@ -40,6 +40,7 @@ fun VideoListItem(
     userProfileUrl: String,
     userName: String,
     agoTime: String,
+    isMoreIconButton: Boolean = true,
     onClickVideoItem: () -> Unit,
     onClickVideoDeleteMoreIcon: () -> Unit
 ) {
@@ -55,7 +56,7 @@ fun VideoListItem(
         if (videoThumbnailUrl == "") {
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.66f)
                     .aspectRatio(1.5f)
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color.White)
@@ -70,7 +71,7 @@ fun VideoListItem(
                 clipToBounds = true,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.66f)
                     .aspectRatio(1.5f)
                     .clip(RoundedCornerShape(10.dp))
             )
@@ -112,7 +113,7 @@ fun VideoListItem(
                     fontSize = 12.sp,
                     lineHeight = 20.sp,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 2,
+                    maxLines = 1,
                     modifier = Modifier.padding(top = 5.dp)
                 )
 
@@ -126,14 +127,16 @@ fun VideoListItem(
             }
         }
 
-        // video delete More Icon Button
-        IconButton(onClick = onClickVideoDeleteMoreIcon) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_more_vertical),
-                contentDescription = null,
-                tint = Color.Black.copy(alpha = 0.8F),
-                modifier = Modifier.size(20.dp)
-            )
+        if (isMoreIconButton) {
+            // video delete More Icon Button
+            IconButton(onClick = onClickVideoDeleteMoreIcon) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_more_vertical),
+                    contentDescription = null,
+                    tint = Color.Black.copy(alpha = 0.8F),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
