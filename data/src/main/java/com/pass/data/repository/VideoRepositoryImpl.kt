@@ -59,8 +59,8 @@ class VideoRepositoryImpl @Inject constructor(
     override suspend fun addVideo(videoUri: String, videoThumbnailBitmap: String, title: String): Flow<Result<Boolean>> = callbackFlow {
         // 1. 동영상 업로드
         // 2. 동영상 썸네일 이미지 업로드
-        // 3. 전체 비디두오 목록 추가
-        // 4. 내 프로필에 내 비디오 목록 추가
+        // 3. 전체 비디오 목록에 추가
+        // 4. 내 프로필에 내 비디오 목록에 추가
         // 1 ~ 2 번 동기적으로 성공 시 3 ~ 4 번 병렬적으로 진행 후 모두 성공할 경우에만 성공으로 반환
 
         val uid = auth.currentUser?.uid
@@ -70,6 +70,7 @@ class VideoRepositoryImpl @Inject constructor(
         if (uid == null) {
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         } else {
+            // 비디오 업로드
             firebaseStorageUtil.updateFile(videoUri, "video/${videoId}").collect { result ->
                 result.onSuccess { videoUriString ->
                     // 비디오 썸네일 업로드
@@ -78,8 +79,10 @@ class VideoRepositoryImpl @Inject constructor(
                             // 내 비디오 목록에 추가
                             val profileVideoData = hashMapOf(
                                 "title" to title,
+                                "userId" to uid,
                                 "videoThumbnailUrl" to URLDecoder.decode(videoThumbnailUri, StandardCharsets.UTF_8.toString()),
-                                "videoUrl" to videoUriString
+                                "videoUrl" to videoUriString,
+                                "time" to nowDateTime
                             )
 
                             val profileVideoFlow = firebaseDatabaseUtil.createData(
@@ -94,7 +97,9 @@ class VideoRepositoryImpl @Inject constructor(
                             val videoData = hashMapOf(
                                 "title" to title,
                                 "userId" to uid,
-                                "videoUrl" to videoUriString
+                                "videoThumbnailUrl" to URLDecoder.decode(videoThumbnailUri, StandardCharsets.UTF_8.toString()),
+                                "videoUrl" to videoUriString,
+                                "time" to nowDateTime
                             )
 
                             val allVideoFlow = firebaseDatabaseUtil.createData(

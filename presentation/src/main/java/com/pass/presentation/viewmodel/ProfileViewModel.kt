@@ -159,7 +159,7 @@ class ProfileViewModel @Inject constructor(
                             }.toList()
                         )
                     }
-                    postSideEffect(ProfileSideEffect.Toast("동영상 삭제에 성공하였습니다."))
+                    postSideEffect(ProfileSideEffect.Toast("동영상을 삭제하였습니다."))
                 }.onFailure { e ->
                     postSideEffect(ProfileSideEffect.Toast(e.message ?: "동영상 삭제에 실패하였습니다."))
                 }

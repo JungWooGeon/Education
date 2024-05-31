@@ -5,6 +5,6 @@ data class Video(
     val userId: String,
     val videoThumbnailUrl: String,
     val videoTitle: String,
-    val time: String,
+    val agoTime: String,
     val videoUrl: String
 )

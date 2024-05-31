@@ -203,6 +203,7 @@ fun ProfileScreen(
                         videoTitle = video.videoTitle,
                         userProfileUrl = userProfileUrl,
                         userName = userName,
+                        agoTime = video.agoTime,
                         onClickVideoItem = { onClickVideoItem(video) },
                         onClickVideoDeleteMoreIcon = { openDeleteModalBottomSheet(idx) }
                     )

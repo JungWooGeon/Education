@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -197,7 +196,7 @@ fun VideoStreamingPlayer(
 
                     Text(
                         text = userName,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         lineHeight = 20.sp,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
@@ -208,40 +207,42 @@ fun VideoStreamingPlayer(
         } else {
             // 미니 플레이어에서 보이는 동영상 제목 및 'X' 아이콘
             Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
                     .background(Color.White)
                     .padding(
-                        start = LocalConfiguration.current.screenWidthDp.dp * videoPlayerScale + 12.dp,
+                        start = fullScreenWidthDp * videoPlayerScale + 12.dp,
                         bottom = 16.dp,
                         end = 16.dp,
                         top = 16.dp
                     )
                     .alpha(miniScreenContentAlpha)
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f).padding(end = 10.dp)
+                ) {
                     Text(
                         text = videoTitle,
                         fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = userName, fontSize = 12.sp,
+                        text = userName,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Light,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
-
                 IconButton(onClick = onCloseVideoPlayer) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
                         tint = Color.Gray,
-                        modifier = Modifier.size(18.dp).padding(start = 5.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

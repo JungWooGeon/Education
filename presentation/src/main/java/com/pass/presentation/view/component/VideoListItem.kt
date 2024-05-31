@@ -39,6 +39,7 @@ fun VideoListItem(
     videoTitle: String,
     userProfileUrl: String,
     userName: String,
+    agoTime: String,
     onClickVideoItem: () -> Unit,
     onClickVideoDeleteMoreIcon: () -> Unit
 ) {
@@ -118,7 +119,7 @@ fun VideoListItem(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Text(
-                    text = "7년 전",
+                    text = agoTime,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 5.dp)
                 )
