@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.repository.ProfileRepositoryImpl
+import com.pass.data.util.CalculateUtil
 import com.pass.data.util.FirebaseAuthUtil
 import com.pass.data.util.FirebaseDatabaseUtil
 import com.pass.data.util.FirebaseStorageUtil
@@ -29,6 +30,7 @@ class ProfileRepositorySignInTest {
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
     private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
     private val firebaseStorageUtil = FirebaseStorageUtil(storage)
+    private val calculationUtil = CalculateUtil()
 
     // Task 객체 모킹
     private val mockException = Exception("signIn failed")
@@ -36,7 +38,7 @@ class ProfileRepositorySignInTest {
     private val mockAuthResult = mockk<AuthResult>()
 
     // repository 초기화
-    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil)
+    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil, calculationUtil)
 
     @Test
     fun testSuccessIsSignedIn() = runBlocking {

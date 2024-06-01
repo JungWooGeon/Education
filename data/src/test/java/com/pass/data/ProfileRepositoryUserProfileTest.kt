@@ -12,6 +12,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
 import com.pass.data.repository.ProfileRepositoryImpl
+import com.pass.data.util.CalculateUtil
 import com.pass.data.util.FirebaseAuthUtil
 import com.pass.data.util.FirebaseDatabaseUtil
 import com.pass.data.util.FirebaseStorageUtil
@@ -38,6 +39,7 @@ class ProfileRepositoryUserProfileTest {
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
     private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
     private val firebaseStorageUtil = FirebaseStorageUtil(storage)
+    private val calculationUtil = CalculateUtil()
 
     // fireStore 모킹
     private val mockFireStoreTask = mockk<Task<DocumentSnapshot>>()
@@ -58,7 +60,7 @@ class ProfileRepositoryUserProfileTest {
     private val testProfile = Profile("test name", "", listOf())
 
     // repository 초기화
-    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil)
+    private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil, calculationUtil)
 
     @Test
     fun testSuccessGetUserProfile() = runBlocking {
@@ -67,7 +69,7 @@ class ProfileRepositoryUserProfileTest {
         every { mockFireStoreTask.isSuccessful } returns true
         every { mockFireStoreQuerySnapshotTask.isSuccessful } returns true
         every { mockQuerySnapshot.documents } returns listOf(mockDocumentSnapshot, mockDocumentSnapshot)
-        every { mockDocumentSnapshot.getString(any()) } returns ""
+        every { mockDocumentSnapshot.getString(any()) } returns "20240601223830"
         every { mockDocumentSnapshot.id } returns "test_test"
 
         // listener 성공 가정
@@ -101,6 +103,9 @@ class ProfileRepositoryUserProfileTest {
         every { auth.currentUser?.uid } returns "test123"
         every { mockFireStoreTask.isSuccessful } returns false
         every { mockFireStoreQuerySnapshotTask.isSuccessful } returns false
+        every { mockQuerySnapshot.documents } returns listOf(mockDocumentSnapshot, mockDocumentSnapshot)
+        every { mockDocumentSnapshot.getString(any()) } returns "20240601223830"
+        every { mockDocumentSnapshot.id } returns "test_test"
 
         // listener 실패 가정
         every { mockFireStoreTask.addOnSuccessListener(any()) } answers {
