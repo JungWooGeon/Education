@@ -1,4 +1,4 @@
-package com.pass.data
+package com.pass.data.repository.profile
 
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.OnFailureListener
@@ -8,6 +8,7 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.pass.data.di.DateTimeProvider
 import com.pass.data.repository.ProfileRepositoryImpl
 import com.pass.data.util.CalculateUtil
 import com.pass.data.util.FirebaseAuthUtil
@@ -35,7 +36,7 @@ class ProfileRepositorySignUpTest {
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
     private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
     private val firebaseStorageUtil = FirebaseStorageUtil(storage)
-    private val calculationUtil = CalculateUtil()
+    private val calculationUtil = CalculateUtil(DateTimeProvider())
 
     // Task 객체 모킹
     private val mockException = Exception("signIn failed")

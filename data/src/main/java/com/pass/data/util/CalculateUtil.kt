@@ -1,17 +1,16 @@
 package com.pass.data.util
 
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import com.pass.data.di.DateTimeProvider
 import javax.inject.Inject
 
-class CalculateUtil @Inject constructor() {
+class CalculateUtil @Inject constructor(private val dateTimeProvider: DateTimeProvider) {
+
     fun calculateAgoTime(time: String?): String {
-        val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-        val parseTime = LocalDateTime.parse(time, formatter)
+        val formatter = dateTimeProvider.dateTimeFormatterOfPattern()
+        val parseTime = dateTimeProvider.localDateTimeParse(time, formatter)
 
         // 두 LocalDateTime의 차이를 계산
-        val duration = Duration.between(parseTime, LocalDateTime.now())
+        val duration = dateTimeProvider.durationBetween(parseTime, dateTimeProvider.localDateTimeNow())
 
         // 차이를 일, 시간, 분, 초로 변환하여 출력
         val days = duration.toDays()
