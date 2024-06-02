@@ -1,13 +1,8 @@
 package com.pass.data.repository.profile
 
-import android.net.Uri
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageTask
-import com.google.firebase.storage.UploadTask
 import com.pass.data.di.DateTimeProvider
 import com.pass.data.repository.ProfileRepositoryImpl
 import com.pass.data.util.CalculateUtil
@@ -25,11 +20,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ProfileRepositoryGetOtherUserProfile {
+class ProfileRepositoryGetOtherUserProfileTest {
 
     // firebase 모킹
     private val auth = mockk<FirebaseAuth>()
-    private val fireStore = mockk<FirebaseFirestore>()
     private val storage = mockk<FirebaseStorage>()
     private val firebaseDatabaseUtil = mockk<FirebaseDatabaseUtil>()
 
@@ -37,18 +31,7 @@ class ProfileRepositoryGetOtherUserProfile {
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
 
     private val firebaseStorageUtil = FirebaseStorageUtil(storage)
-    private val calculationUtil = CalculateUtil(DateTimeProvider())
-
-    // fireStore 모킹
-    private val mockFireStoreException = RuntimeException("Error")
-    private val mockFireStoreTransactionTask = mockk<Task<Any>>()
-
-    // firebase storage 모킹
-    private val mockUploadTask = mockk<UploadTask>()
-    private val mockUpStorageTask = mockk<StorageTask<UploadTask.TaskSnapshot>>()
-    private val mockUploadTaskSnapshot = mockk<UploadTask.TaskSnapshot>()
-    private val mockDownUriTask = mockk<Task<Uri>>()
-    private val mockDownloadUri = mockk<Uri>()
+    private val calculationUtil = CalculateUtil(dateTimeProvider = DateTimeProvider())
 
     private val mockDocumentSnapshot = mockk<DocumentSnapshot>()
 

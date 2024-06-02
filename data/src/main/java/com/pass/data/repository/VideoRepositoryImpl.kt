@@ -7,6 +7,7 @@ import android.util.Base64
 import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.pass.data.di.DateTimeProvider
 import com.pass.data.util.CalculateUtil
 import com.pass.domain.model.Profile
 import com.pass.domain.model.Video
@@ -21,8 +22,6 @@ import kotlinx.coroutines.flow.zip
 import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class VideoRepositoryImpl @Inject constructor(
@@ -30,20 +29,18 @@ class VideoRepositoryImpl @Inject constructor(
     private val firebaseDatabaseUtil: DatabaseUtil<DocumentSnapshot>,
     private val firebaseStorageUtil: StorageUtil,
     private val context: Context,
-    private val calculateUtil: CalculateUtil
+    private val calculateUtil: CalculateUtil,
+    private val mediaMetadataRetriever: MediaMetadataRetriever,
+    private val byteArrayOutputStream: ByteArrayOutputStream,
+    private val dateTimeProvider: DateTimeProvider
 ) : VideoRepository {
     override fun createVideoThumbnail(videoUri: String): Result<String> {
-        val retriever = MediaMetadataRetriever()
-
         try {
             // 미디어 파일로부터 데이터를 추출하기 위해 setDataSource를 호출
-            retriever.setDataSource(
-                context,
-                URLDecoder.decode(videoUri, StandardCharsets.UTF_8.toString()).toUri()
-            )
+            mediaMetadataRetriever.setDataSource(context, URLDecoder.decode(videoUri, StandardCharsets.UTF_8.toString()).toUri())
 
             // 첫 번째 프레임을 비트맵으로 가져옴
-            val thumbnailBitmap = retriever.frameAtTime
+            val thumbnailBitmap = mediaMetadataRetriever.frameAtTime
 
             return if (thumbnailBitmap == null) {
                 Result.failure(Exception("동영상 선택에 실패하였습니다."))
@@ -51,11 +48,10 @@ class VideoRepositoryImpl @Inject constructor(
                 Result.success(convertBitmapToString(thumbnailBitmap))
             }
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
-            return Result.failure(Exception("동영상 선택에 실패하였습니다."))
+            return Result.failure(e)
         } finally {
             // MediaMetadataRetriever 인스턴스를 해제
-            retriever.release()
+            mediaMetadataRetriever.release()
         }
     }
 
@@ -71,7 +67,7 @@ class VideoRepositoryImpl @Inject constructor(
         // 1 ~ 2 번 동기적으로 성공 시 3 ~ 4 번 병렬적으로 진행 후 모두 성공할 경우에만 성공으로 반환
 
         val uid = auth.currentUser?.uid
-        val nowDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+        val nowDateTime = dateTimeProvider.localDateTimeNowFormat()
         val videoId = "${uid}_${nowDateTime}"
 
         if (uid == null) {
@@ -216,7 +212,7 @@ class VideoRepositoryImpl @Inject constructor(
         awaitClose()
     }
 
-    override suspend fun getAllVideoListUseCase(): Flow<Result<List<Video>>> = callbackFlow {
+    override suspend fun getAllVideoList(): Flow<Result<List<Video>>> = callbackFlow {
         // 비디오 목록 조회
         firebaseDatabaseUtil.readDataList("videos").collect { readDataListResult ->
             readDataListResult.onSuccess { videoDocumentSnapShotList ->
@@ -292,9 +288,8 @@ class VideoRepositoryImpl @Inject constructor(
     }
 
     private fun convertBitmapToString(bitmap: Bitmap): String {
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        val byteArray = outputStream.toByteArray()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 }

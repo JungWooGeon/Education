@@ -30,7 +30,7 @@ class ProfileRepositorySignInTest {
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
     private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
     private val firebaseStorageUtil = FirebaseStorageUtil(storage)
-    private val calculationUtil = CalculateUtil(DateTimeProvider())
+    private val calculationUtil = CalculateUtil(dateTimeProvider = DateTimeProvider())
 
     // Task 객체 모킹
     private val mockException = Exception("signIn failed")

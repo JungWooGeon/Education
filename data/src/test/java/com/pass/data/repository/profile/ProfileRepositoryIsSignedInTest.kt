@@ -27,7 +27,7 @@ class ProfileRepositoryIsSignedInTest {
     private val firebaseAuthUtil = FirebaseAuthUtil(auth)
     private val firebaseDatabaseUtil = FirebaseDatabaseUtil(auth, fireStore)
     private val firebaseStorageUtil = FirebaseStorageUtil(storage)
-    private val calculationUtil = CalculateUtil(DateTimeProvider())
+    private val calculationUtil = CalculateUtil(dateTimeProvider = DateTimeProvider())
 
     // repository 초기화
     private val profileRepositoryImpl = ProfileRepositoryImpl(auth, firebaseAuthUtil, firebaseDatabaseUtil, firebaseStorageUtil, calculationUtil)

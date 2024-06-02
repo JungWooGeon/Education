@@ -2,15 +2,18 @@ package com.pass.data.util
 
 import com.pass.data.di.DateTimeProvider
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class CalculateUtil @Inject constructor(private val dateTimeProvider: DateTimeProvider) {
+@Singleton
+class CalculateUtil @Inject constructor(
+    private val dateTimeProvider: DateTimeProvider
+) {
 
     fun calculateAgoTime(time: String?): String {
-        val formatter = dateTimeProvider.dateTimeFormatterOfPattern()
-        val parseTime = dateTimeProvider.localDateTimeParse(time, formatter)
+        if (time == null) return "0초 전"
 
         // 두 LocalDateTime의 차이를 계산
-        val duration = dateTimeProvider.durationBetween(parseTime, dateTimeProvider.localDateTimeNow())
+        val duration = dateTimeProvider.durationBetweenNow(time)
 
         // 차이를 일, 시간, 분, 초로 변환하여 출력
         val days = duration.toDays()

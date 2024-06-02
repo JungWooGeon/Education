@@ -13,23 +13,32 @@ import java.time.format.DateTimeFormatter
 
 class CalculateUtilTest {
 
-    private val mockDateTimeProvider = mockk<DateTimeProvider>()
-    private val calculateUtil = CalculateUtil(mockDateTimeProvider)
-    private val testFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-
     private val mockTime = "20240601224430"
+    private val mockParseTime = LocalDateTime.parse(mockTime, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    private val mockLocalDateTimeParse = mockk<(String) -> LocalDateTime>()
+    private val mockDurationBetween = mockk<(LocalDateTime, LocalDateTime) -> Duration>()
+    private val mockFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+    private val mockDateTimeProvider = mockk<DateTimeProvider>()
+
+    private val calculateUtil = CalculateUtil(dateTimeProvider = mockDateTimeProvider)
 
     @Test
     fun testSuccessCalculateAgoTime10Second() {
-        val testTime = LocalDateTime.parse("20240601224440", testFormatter)
+        val testParseTime = LocalDateTime.parse("20240601224440", mockFormatter)
 
-        every { mockDateTimeProvider.dateTimeFormatterOfPattern() } returns DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-        every { mockDateTimeProvider.localDateTimeParse(any(), any()) } returns LocalDateTime.parse(mockTime, testFormatter)
-        every { mockDateTimeProvider.localDateTimeNow() } returns testTime
-        every { mockDateTimeProvider.durationBetween(any(), any()) } returns Duration.between(
-            mockDateTimeProvider.localDateTimeParse(mockTime, testFormatter),
-            mockDateTimeProvider.localDateTimeNow()
+        every { mockLocalDateTimeParse(any()) } returns LocalDateTime.parse(mockTime, mockFormatter)
+        every { mockDurationBetween(any(), any()) } returns Duration.between(
+            mockLocalDateTimeParse(mockTime),
+            testParseTime
         )
+
+        every { mockDateTimeProvider.durationBetweenNow(any()) } answers {
+            Duration.between(mockParseTime, testParseTime)
+        }
+
+        println(mockParseTime)
+        println(testParseTime)
+        println(Duration.between(mockParseTime, testParseTime))
 
         val result = calculateUtil.calculateAgoTime(mockTime)
         assertEquals(result, "10초 전")
@@ -37,15 +46,17 @@ class CalculateUtilTest {
 
     @Test
     fun testSuccessCalculateAgoTime10Minute() {
-        val testTime = LocalDateTime.parse("20240601225440", testFormatter)
+        val testParseTime = LocalDateTime.parse("20240601225440", mockFormatter)
 
-        every { mockDateTimeProvider.dateTimeFormatterOfPattern() } returns DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-        every { mockDateTimeProvider.localDateTimeParse(any(), any()) } returns LocalDateTime.parse(mockTime, testFormatter)
-        every { mockDateTimeProvider.localDateTimeNow() } returns testTime
-        every { mockDateTimeProvider.durationBetween(any(), any()) } returns Duration.between(
-            mockDateTimeProvider.localDateTimeParse(mockTime, testFormatter),
-            mockDateTimeProvider.localDateTimeNow()
+        every { mockLocalDateTimeParse(any()) } returns LocalDateTime.parse(mockTime, mockFormatter)
+        every { mockDurationBetween(any(), any()) } returns Duration.between(
+            mockLocalDateTimeParse(mockTime),
+            testParseTime
         )
+
+        every { mockDateTimeProvider.durationBetweenNow(any()) } answers {
+            Duration.between(mockParseTime, testParseTime)
+        }
 
         val result = calculateUtil.calculateAgoTime(mockTime)
         assertEquals(result, "10분 전")

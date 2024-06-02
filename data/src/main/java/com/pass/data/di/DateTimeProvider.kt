@@ -7,19 +7,23 @@ import javax.inject.Inject
 
 class DateTimeProvider @Inject constructor() {
 
-    fun localDateTimeNow(): LocalDateTime {
-        return LocalDateTime.now()
+    fun durationBetweenNow(time: String?): Duration {
+        return Duration.between(localDateTimeParse(time), localDateTimeNow())
     }
 
-    fun dateTimeFormatterOfPattern(): DateTimeFormatter {
+    fun localDateTimeNowFormat(): String {
+        return localDateTimeNow().format(dateTimeFormatterOfPattern())
+    }
+
+    private fun dateTimeFormatterOfPattern(): DateTimeFormatter {
         return DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
     }
 
-    fun localDateTimeParse(time: String?, formatter: DateTimeFormatter): LocalDateTime {
-        return LocalDateTime.parse(time, formatter)
+    private fun localDateTimeNow(): LocalDateTime {
+        return LocalDateTime.now()
     }
 
-    fun durationBetween(parseTime: LocalDateTime, nowTime: LocalDateTime): Duration {
-        return Duration.between(parseTime, nowTime)
+    private fun localDateTimeParse(time: String?): LocalDateTime {
+        return LocalDateTime.parse(time, dateTimeFormatterOfPattern())
     }
 }

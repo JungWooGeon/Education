@@ -7,6 +7,6 @@ import javax.inject.Inject
 
 class GetAllVideoListUseCase @Inject constructor(private val videoRepository: VideoRepository) {
     suspend operator fun invoke(): Flow<Result<List<Video>>> {
-        return videoRepository.getAllVideoListUseCase()
+        return videoRepository.getAllVideoList()
     }
 }

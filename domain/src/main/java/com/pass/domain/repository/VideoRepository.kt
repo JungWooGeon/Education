@@ -10,5 +10,5 @@ interface VideoRepository {
 
     suspend fun deleteVideo(video: Video): Flow<Result<Unit>>
 
-    suspend fun getAllVideoListUseCase(): Flow<Result<List<Video>>>
+    suspend fun getAllVideoList(): Flow<Result<List<Video>>>
 }
