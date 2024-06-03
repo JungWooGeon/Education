@@ -22,7 +22,8 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 @Composable
 fun VideoListScreen(
     viewModel: VideoListViewModel = hiltViewModel(),
-    showVideoStreamingPlayer: (Video) -> Unit
+    showVideoStreamingPlayer: (Video) -> Unit,
+    onNavigateLogInScreen: () -> Unit
 ) {
     val videoListState = viewModel.collectAsState().value
     val context = LocalContext.current
@@ -40,13 +41,15 @@ fun VideoListScreen(
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
             is VideoListSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
+            is VideoListSideEffect.NavigateLogInScreen -> onNavigateLogInScreen()
+            is VideoListSideEffect.ShowVideoStreamingPlayer -> showVideoStreamingPlayer(sideEffect.video)
         }
     }
 
     VideoListScreen(
         context = context,
         videoList = videoListState.videoList,
-        onClickVideoItem = showVideoStreamingPlayer
+        onClickVideoItem = viewModel::onClickVideoItem
     )
 }
 

@@ -1,4 +1,4 @@
-package com.pass.presentation.view
+package com.pass.presentation.view.activity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

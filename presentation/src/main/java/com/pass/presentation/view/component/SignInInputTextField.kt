@@ -20,7 +20,8 @@ fun SignInInputTextField(
     value: String,
     onChangeValue: (String) -> Unit,
     placeHolderValue: String,
-    visualTransformation: VisualTransformation = VisualTransformation.None
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer
 ) {
     TextField(
         modifier = modifier.fillMaxWidth(),
@@ -34,7 +35,7 @@ fun SignInInputTextField(
         visualTransformation = visualTransformation,
         shape = RoundedCornerShape(8.dp),
         colors = TextFieldDefaults.textFieldColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = containerColor,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent

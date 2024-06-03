@@ -38,6 +38,7 @@ import androidx.navigation.compose.rememberNavController
 import com.pass.domain.model.Video
 import com.pass.presentation.R
 import com.pass.presentation.state.MainScreenRoute
+import com.pass.presentation.view.component.VideoStreamingPlayer
 import com.pass.presentation.viewmodel.MainScreenSideEffect
 import com.pass.presentation.viewmodel.MainViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -189,12 +190,31 @@ fun NavigationGraph(
 ) {
     NavHost(navController = navController, startDestination =  MainScreenRoute.LiveListScreen.screenRoute) {
         composable(MainScreenRoute.LiveListScreen.screenRoute) {
-            LiveListScreen()
+            LiveListScreen(
+                onNavigateLogInScreen = {
+                    navController.navigate(MainScreenRoute.MyScreen.screenRoute) {
+                        navController.graph.startDestinationRoute?.let {
+                            popUpTo(it) { saveState = true }
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
         }
 
         composable(MainScreenRoute.VideoListScreen.screenRoute) {
             VideoListScreen(
-                showVideoStreamingPlayer = showVideoStreamingPlayer
+                showVideoStreamingPlayer = showVideoStreamingPlayer,
+                onNavigateLogInScreen = {
+                    navController.navigate(MainScreenRoute.MyScreen.screenRoute) {
+                        navController.graph.startDestinationRoute?.let {
+                            popUpTo(it) { saveState = true }
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 

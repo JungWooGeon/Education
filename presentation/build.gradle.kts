@@ -104,9 +104,16 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // exoplayer
-    implementation("androidx.media3:media3-exoplayer:1.2.0")
-    implementation("androidx.media3:media3-ui:1.2.0")
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
 
     // compose progress butotn
     implementation("com.github.SimformSolutionsPvtLtd:SSJetPackComposeProgressButton:1.0.8")
+
+    // camerax
+    implementation("androidx.camera:camera-core:1.3.3")
+    implementation("androidx.camera:camera-camera2:1.3.3")
+    implementation("androidx.camera:camera-lifecycle:1.3.3")
+    implementation("androidx.camera:camera-view:1.4.0-beta01")
+    implementation("androidx.camera:camera-extensions:1.4.0-beta01")
 }

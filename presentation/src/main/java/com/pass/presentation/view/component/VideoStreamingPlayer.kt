@@ -1,4 +1,4 @@
-package com.pass.presentation.view.screen
+package com.pass.presentation.view.component
 
 import android.app.Activity
 import android.content.Context
@@ -31,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -49,8 +47,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pass.domain.model.Video
-import com.pass.presentation.view.component.ExoPlayerView
-import com.pass.presentation.view.component.ProfileImageView
 import com.pass.presentation.viewmodel.VideoStreamingSideEffect
 import com.pass.presentation.viewmodel.VideoStreamingViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -65,8 +61,6 @@ fun VideoStreamingPlayer(
 ) {
     val videoStreamingState = viewModel.collectAsState().value
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
     // 전체 플레이어 일 때, 뒤로 가기 클릭 시 -> 미니 플레이어로 전환
     BackHandler(enabled = !videoStreamingState.isMinimized) {
