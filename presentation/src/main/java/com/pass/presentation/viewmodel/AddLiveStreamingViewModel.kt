@@ -2,6 +2,7 @@ package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.GetUserProfileUseCase
+import com.pass.domain.usecase.StartLiveStreamingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddLiveStreamingViewModel @Inject constructor(
-    private val getUserProfileUseCase: GetUserProfileUseCase
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val startLiveStreamingUseCase: StartLiveStreamingUseCase
 ) : ViewModel(), ContainerHost<AddLiveStreamingState, AddLiveStreamingSideEffect> {
 
     override val container: Container<AddLiveStreamingState, AddLiveStreamingSideEffect> = container (
@@ -55,8 +57,16 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     fun onClickStartLiveStreamingButton() = intent {
-
+//        startLiveStreamingUseCase().collect { result ->
+//            result.onSuccess {
+//                // TODO 성공 UI 애니메이션 로직 ()
+//            }.onFailure { e ->
+//                postSideEffect(AddLiveStreamingSideEffect.FailCamera(e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+//            }
+//        }
     }
+
+    // TODO lifecyle 종료 시 camerax release + webrtc release(with usecase)
 }
 
 @Immutable

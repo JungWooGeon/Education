@@ -107,7 +107,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
 
-    // compose progress butotn
+    // compose progress button
     implementation("com.github.SimformSolutionsPvtLtd:SSJetPackComposeProgressButton:1.0.8")
 
     // camerax
@@ -116,4 +116,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.3")
     implementation("androidx.camera:camera-view:1.4.0-beta01")
     implementation("androidx.camera:camera-extensions:1.4.0-beta01")
+
+    // webrtc
+    implementation("org.webrtc:google-webrtc:1.0.32006")
 }

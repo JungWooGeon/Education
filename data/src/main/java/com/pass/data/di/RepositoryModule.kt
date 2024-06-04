@@ -1,7 +1,9 @@
 package com.pass.data.di
 
+import com.pass.data.repository.LiveStreamingRepositoryImpl
 import com.pass.data.repository.ProfileRepositoryImpl
 import com.pass.data.repository.VideoRepositoryImpl
+import com.pass.domain.repository.LiveStreamingRepository
 import com.pass.domain.repository.ProfileRepository
 import com.pass.domain.repository.VideoRepository
 import dagger.Binds
@@ -18,4 +20,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindsVideoRepository(repository: VideoRepositoryImpl): VideoRepository
+
+    @Binds
+    abstract fun bindsLiveStreamingRepository(repository: LiveStreamingRepositoryImpl): LiveStreamingRepository
 }

@@ -78,4 +78,7 @@ dependencies {
 
     // test with Uri(android)
     testImplementation("org.robolectric:robolectric:4.12.2")
+
+    // webrtc
+    implementation("org.webrtc:google-webrtc:1.0.32006")
 }
