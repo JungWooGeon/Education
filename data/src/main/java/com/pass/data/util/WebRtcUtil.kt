@@ -1,6 +1,7 @@
 package com.pass.data.util
 
 import android.content.Context
+import com.pass.data.BuildConfig
 import io.socket.client.IO
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
@@ -23,7 +24,9 @@ import org.webrtc.VideoCapturer
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class WebRtcUtil @Inject constructor(private val context: Context) {
 
     private lateinit var peerConnectionFactory: PeerConnectionFactory
@@ -32,7 +35,7 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     private lateinit var localVideoSource: VideoSource
     private lateinit var peerConnection: PeerConnection
 
-    private val socket: Socket = IO.socket("http://your-server-ip:3000")
+    private val socket: Socket = IO.socket(BuildConfig.SignalingServer)
     var onRemoteVideoTrackAvailable: ((VideoTrack) -> Unit)? = null
 
     private val iceServers = listOf(
@@ -162,8 +165,27 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
         // release
         peerConnection.close()
         peerConnection.dispose()
-        localVideoTrack.dispose()
+
+        // 이미 dispose 될 경우 catch
+        try {
+            localVideoTrack.dispose()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         localVideoSource.dispose()
+        peerConnectionFactory.dispose()
+    }
+
+    fun stopViewing() {
+        // 시청자는 자신이 받은 remoteVideoTrack을 해제
+        remoteVideoTrack.dispose()
+
+        // PeerConnection 종료 및 해제
+        peerConnection.close()
+        peerConnection.dispose()
+
+        // PeerConnectionFactory 해제
         peerConnectionFactory.dispose()
     }
 }

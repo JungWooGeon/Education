@@ -12,5 +12,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".view.activity.AddLiveStreamingActivity" />
+        <activity android:name=".view.activity.WatchBroadCastActivity" />
     </application>
 </manifest>

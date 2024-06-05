@@ -10,6 +10,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.webrtc.VideoTrack
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -22,5 +23,5 @@ abstract class RepositoryModule {
     abstract fun bindsVideoRepository(repository: VideoRepositoryImpl): VideoRepository
 
     @Binds
-    abstract fun bindsLiveStreamingRepository(repository: LiveStreamingRepositoryImpl): LiveStreamingRepository
+    abstract fun bindsLiveStreamingRepository(repository: LiveStreamingRepositoryImpl): LiveStreamingRepository<VideoTrack>
 }

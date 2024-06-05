@@ -1,10 +1,12 @@
 package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.pass.domain.model.Video
 import com.pass.domain.usecase.GetAllVideoListUseCase
-import com.pass.domain.usecase.GetUserProfileUseCase
+import com.pass.domain.usecase.IsSignedInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -19,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class VideoListViewModel @Inject constructor(
     private val getAllVideoListUseCase: GetAllVideoListUseCase,
-    private val getUserProfileUseCase: GetUserProfileUseCase
+    private val isSignedInUseCase: IsSignedInUseCase
 ) : ViewModel(), ContainerHost<VideoListState, VideoListSideEffect> {
 
     override val container: Container<VideoListState, VideoListSideEffect> = container(
@@ -27,47 +29,42 @@ class VideoListViewModel @Inject constructor(
     )
 
     fun readVideoList() = intent {
-        // 로그인 정보 확인
-        getUserProfileUseCase().collect { result ->
-            result.onSuccess {
-                reduce {
-                    state.copy(
-                        isLoggedIn = true
-                    )
-                }
 
-                // 비디오 리스트 조회
-                getAllVideoListUseCase().collect { result ->
-                    result.onSuccess { videoList ->
-                        val mutableVideoList = mutableListOf<Video>()
+        viewModelScope.launch {
+            // 비디오 리스트 조회
+            getAllVideoListUseCase().collect { result ->
+                result.onSuccess { videoList ->
+                    val mutableVideoList = mutableListOf<Video>()
 
-                        videoList.forEach {
-                            mutableVideoList.add(
-                                Video(
-                                    videoId = it.videoId,
-                                    userId = it.userId,
-                                    videoThumbnailUrl = it.videoThumbnailUrl,
-                                    videoTitle = it.videoTitle,
-                                    agoTime = it.agoTime,
-                                    videoUrl = it.videoUrl,
-                                    userName = it.userName,
-                                    userProfileUrl = URLDecoder.decode(it.userProfileUrl, StandardCharsets.UTF_8.toString())
-                                )
+                    videoList.forEach {
+                        mutableVideoList.add(
+                            Video(
+                                videoId = it.videoId,
+                                userId = it.userId,
+                                videoThumbnailUrl = it.videoThumbnailUrl,
+                                videoTitle = it.videoTitle,
+                                agoTime = it.agoTime,
+                                videoUrl = it.videoUrl,
+                                userName = it.userName,
+                                userProfileUrl = URLDecoder.decode(it.userProfileUrl, StandardCharsets.UTF_8.toString())
                             )
-                        }
-
-                        reduce {
-                            state.copy(videoList = mutableVideoList.toList())
-                        }
-                    }.onFailure {
-                        postSideEffect(VideoListSideEffect.Toast(it.message ?: "동영상 조회에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+                        )
                     }
+
+                    reduce {
+                        state.copy(videoList = mutableVideoList.toList())
+                    }
+                }.onFailure {
+                    postSideEffect(VideoListSideEffect.Toast(it.message ?: "동영상 조회에 실패하였습니다. 잠시 후 다시 시도해주세요."))
                 }
-            }.onFailure {
+            }
+        }
+
+        viewModelScope.launch {
+            // 로그인 정보 확인
+            isSignedInUseCase().collect { result ->
                 reduce {
-                    state.copy(
-                        isLoggedIn = false
-                    )
+                    state.copy(isLoggedIn = result)
                 }
             }
         }

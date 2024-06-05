@@ -8,12 +8,8 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -28,21 +24,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
-import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.pass.domain.model.LiveStreaming
 import com.pass.presentation.view.activity.AddLiveStreamingActivity
+import com.pass.presentation.view.activity.WatchBroadCastActivity
+import com.pass.presentation.view.component.LiveStreamingItem
 import com.pass.presentation.viewmodel.LiveListSideEffect
 import com.pass.presentation.viewmodel.LiveListViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -68,48 +60,66 @@ fun LiveListScreen(
     }
 
     // 권한 허용 - 카메라 권한
-    val singlePermissionsState = rememberPermissionState(Manifest.permission.CAMERA)
+    val multiplePermissionsState = rememberMultiplePermissionsState(listOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO))
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
-            LiveListSideEffect.StartLiveStreamingActivity -> {
-                if (singlePermissionsState.status.isGranted) {
+            is LiveListSideEffect.StartLiveStreamingActivity -> {
+                if (multiplePermissionsState.allPermissionsGranted) {
                     // 권한 허용 - 화면 실행
                     context.startActivity(Intent(context, AddLiveStreamingActivity::class.java))
-                } else if (singlePermissionsState.status.shouldShowRationale) {
+                } else if (multiplePermissionsState.shouldShowRationale) {
                     // 권한 미허용 - 설정으로 이동
-                    startSettings(context, "라이브 기능을 사용하려면 카메라 권한이 필요합니다.")
+                    startSettings(context, "라이브 기능을 사용하려면 카메라 및 오디오 권한이 필요합니다.")
                 } else {
                     // 처음일 경우 - 권한 요청
-                    singlePermissionsState.launchPermissionRequest()
+                    multiplePermissionsState.launchMultiplePermissionRequest()
                 }
             }
 
-            LiveListSideEffect.NavigateLogInScreen -> onNavigateLogInScreen()
+            is LiveListSideEffect.NavigateLogInScreen -> onNavigateLogInScreen()
+            is LiveListSideEffect.Toast -> { Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show() }
+            is LiveListSideEffect.StartWatchBroadCastActivity -> {
+                val intent = Intent(context, WatchBroadCastActivity::class.java)
+                intent.putExtra("broadCastId", sideEffect.broadcastId)
+                context.startActivity(Intent(context, WatchBroadCastActivity::class.java))
+            }
         }
     }
 
     LiveListScreen(
         liveStreamingList = liveListState.liveStreamingList,
-        onClickStartLiveStreamingButton = viewModel::startLiveStreamingActivity
+        onClickStartLiveStreamingButton = viewModel::startLiveStreamingActivity,
+        onClickLiveStreamingItem = viewModel::onClickLiveStreamingItem
     )
 }
 
 @Composable
 fun LiveListScreen(
     liveStreamingList: List<LiveStreaming>,
-    onClickStartLiveStreamingButton: () -> Unit
+    onClickStartLiveStreamingButton: () -> Unit,
+    onClickLiveStreamingItem: (String) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.padding(vertical = 10.dp)) {
-            LazyColumn {
-                items(liveStreamingList) { liveStreaming ->
-                    LiveStreamingItem(
-                        thumbnailUrl = liveStreaming.thumbnailURL,
-                        title = liveStreaming.title,
-                        userProfileUrl = liveStreaming.userProfileURL,
-                        userName = liveStreaming.userName
-                    )
+        if (liveStreamingList.isEmpty()) {
+            Text(
+                text = "라이브 목록 없음",
+                modifier = Modifier.align(Alignment.Center)
+            )
+        } else {
+            Column(modifier = Modifier.padding(vertical = 10.dp)) {
+                LazyColumn {
+                    items(liveStreamingList) { liveStreaming ->
+                        LiveStreamingItem(
+                            thumbnailUrl = liveStreaming.thumbnailURL,
+                            title = liveStreaming.title,
+                            userProfileUrl = liveStreaming.userProfileURL,
+                            userName = liveStreaming.userName,
+                            onClickLiveStreamingItem = {
+                                onClickLiveStreamingItem(liveStreaming.broadcastId)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -123,53 +133,6 @@ fun LiveListScreen(
                 .padding(top = 16.dp, bottom = 64.dp, start = 16.dp, end = 16.dp)
         ) {
             Icon(Icons.Filled.Add, "Small floating action button.")
-        }
-    }
-}
-
-@Composable
-fun LiveStreamingItem(
-    thumbnailUrl: String,
-    title: String,
-    userProfileUrl: String,
-    userName: String
-) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(bottom = 20.dp)) {
-        AsyncImage(
-            model = thumbnailUrl,
-            contentDescription = title,
-            modifier = Modifier.aspectRatio(2f),
-            contentScale = ContentScale.FillWidth
-        )
-
-        Row(
-            modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp)
-        ) {
-            AsyncImage(
-                model = userProfileUrl,
-                contentDescription = null,
-                clipToBounds = true,
-                modifier = Modifier.size(40.dp)
-            )
-
-            Column(
-                modifier = Modifier.padding(start = 10.dp)
-            ) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                )
-
-                Text(
-                    text = userName,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 5.dp)
-                )
-            }
         }
     }
 }

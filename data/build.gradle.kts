@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.properties.Properties
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
@@ -14,6 +16,20 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+        val localProperties = Properties().apply {
+            load(File("local.properties").inputStream())
+        }
+
+        val signalingServer: String? = localProperties["signalingServer"] as String?
+
+        if (signalingServer != null) {
+            buildConfigField("String", "SignalingServer", signalingServer)
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

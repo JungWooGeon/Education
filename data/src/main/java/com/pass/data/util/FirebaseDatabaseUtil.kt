@@ -151,15 +151,19 @@ class FirebaseDatabaseUtil @Inject constructor(
     }
 
     override suspend fun readIdList(userIdList: List<String>): Flow<Result<List<DocumentSnapshot>>> = callbackFlow {
-        fireStore.collection("profiles")
-            .whereIn(FieldPath.documentId(), userIdList)
-            .get()
-            .addOnSuccessListener { documents ->
-                trySend(Result.success(documents.documents))
-            }
-            .addOnFailureListener { e ->
-                trySend(Result.failure(e))
-            }
+        if (userIdList.isEmpty()) {
+            trySend(Result.success(emptyList()))
+        } else {
+            fireStore.collection("profiles")
+                .whereIn(FieldPath.documentId(), userIdList)
+                .get()
+                .addOnSuccessListener { documents ->
+                    trySend(Result.success(documents.documents))
+                }
+                .addOnFailureListener { e ->
+                    trySend(Result.failure(e))
+                }
+        }
 
         awaitClose()
     }
