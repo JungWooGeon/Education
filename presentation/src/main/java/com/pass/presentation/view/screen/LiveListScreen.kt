@@ -45,6 +45,7 @@ import com.pass.domain.model.LiveStreaming
 import com.pass.presentation.view.activity.AddLiveStreamingActivity
 import com.pass.presentation.viewmodel.LiveListSideEffect
 import com.pass.presentation.viewmodel.LiveListViewModel
+import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -54,6 +55,7 @@ fun LiveListScreen(
     onNavigateLogInScreen: () -> Unit
 ) {
 
+    val liveListState = viewModel.collectAsState().value
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
@@ -70,7 +72,7 @@ fun LiveListScreen(
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
-            LiveListSideEffect.StartLiveStreaming -> {
+            LiveListSideEffect.StartLiveStreamingActivity -> {
                 if (singlePermissionsState.status.isGranted) {
                     // 권한 허용 - 화면 실행
                     context.startActivity(Intent(context, AddLiveStreamingActivity::class.java))
@@ -88,30 +90,8 @@ fun LiveListScreen(
     }
 
     LiveListScreen(
-        liveStreamingList = listOf(
-            LiveStreaming(
-                thumbnailURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Android_logo_2023_%28stacked%29.svg/242px-Android_logo_2023_%28stacked%29.svg.png",
-                title = "백엔드 자바에서 코틀린으로 바꾼 이유",
-                userProfileURL = "https://www.shutterstock.com/shutterstock/photos/2351867989/display_1500/stock-vector-social-media-live-broadcast-icon-streaming-video-online-meeting-2351867989.jpg",
-                userName = "ReileyT^T",
-                tag = listOf("Java", "백엔드", "Kotlin")
-            ),
-            LiveStreaming(
-                thumbnailURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Android_logo_2023_%28stacked%29.svg/242px-Android_logo_2023_%28stacked%29.svg.png",
-                title = "안녕하세요. React 첫 방송 시작합니다.",
-                userProfileURL = "https://www.shutterstock.com/shutterstock/photos/2351867989/display_1500/stock-vector-social-media-live-broadcast-icon-streaming-video-online-meeting-2351867989.jpg",
-                userName = "형독",
-                tag = listOf("프론트엔드", "React")
-            ),
-            LiveStreaming(
-                thumbnailURL = "https://www.shutterstock.com/shutterstock/photos/1007080735/display_1500/stock-photo-switchboard-for-live-broadcast-production-equipment-in-outside-broadcasting-van-1007080735.jpg",
-                title = "Compose로 시작하는 WebRTC 프로젝트",
-                userProfileURL = "https://www.shutterstock.com/shutterstock/photos/2351867989/display_1500/stock-vector-social-media-live-broadcast-icon-streaming-video-online-meeting-2351867989.jpg",
-                userName = "콘텐츠제작소 | CONSO",
-                tag = listOf("모바일", "Android")
-            )
-        ),
-        onClickStartLiveStreamingButton = viewModel::startLiveStreaming
+        liveStreamingList = liveListState.liveStreamingList,
+        onClickStartLiveStreamingButton = viewModel::startLiveStreamingActivity
     )
 }
 
@@ -128,8 +108,7 @@ fun LiveListScreen(
                         thumbnailUrl = liveStreaming.thumbnailURL,
                         title = liveStreaming.title,
                         userProfileUrl = liveStreaming.userProfileURL,
-                        userName = liveStreaming.userName,
-                        tag = liveStreaming.tag
+                        userName = liveStreaming.userName
                     )
                 }
             }
@@ -153,8 +132,7 @@ fun LiveStreamingItem(
     thumbnailUrl: String,
     title: String,
     userProfileUrl: String,
-    userName: String,
-    tag: List<String>
+    userName: String
 ) {
     Column(modifier = Modifier
         .fillMaxWidth()

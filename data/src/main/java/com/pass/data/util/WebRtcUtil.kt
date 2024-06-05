@@ -1,6 +1,10 @@
 package com.pass.data.util
 
 import android.content.Context
+import io.socket.client.IO
+import io.socket.client.Socket
+import io.socket.emitter.Emitter
+import org.json.JSONObject
 import org.webrtc.Camera2Enumerator
 import org.webrtc.DataChannel
 import org.webrtc.DefaultVideoDecoderFactory
@@ -26,14 +30,43 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     private lateinit var localVideoTrack: VideoTrack
     private lateinit var remoteVideoTrack: VideoTrack
     private lateinit var localVideoSource: VideoSource
+    private lateinit var peerConnection: PeerConnection
+
+    private val socket: Socket = IO.socket("http://your-server-ip:3000")
+    var onRemoteVideoTrackAvailable: ((VideoTrack) -> Unit)? = null
 
     private val iceServers = listOf(
         PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer()
     )
 
+    private val onSdpAnswer = Emitter.Listener { args ->
+        val data = args[0] as JSONObject
+        val sdp = data.getString("sdp")
+        val answer = SessionDescription(SessionDescription.Type.ANSWER, sdp)
+        peerConnection.setRemoteDescription(sdpObserver, answer)
+    }
+
+    private val onIceCandidate = Emitter.Listener { args ->
+        val data = args[0] as JSONObject
+        val candidate = data.getString("candidate")
+        val sdpMid = data.getString("sdpMid")
+        val sdpMLineIndex = data.getInt("sdpMLineIndex")
+        val iceCandidate = IceCandidate(sdpMid, sdpMLineIndex, candidate)
+        peerConnection.addIceCandidate(iceCandidate)
+    }
+
+    init {
+        socket.on("sdpAnswer", onSdpAnswer)
+        socket.on("iceCandidate", onIceCandidate)
+    }
+
     private val sdpObserver = object : SdpObserver {
         override fun onCreateSuccess(sessionDescription: SessionDescription) {
             peerConnection.setLocalDescription(this, sessionDescription)
+            val sdp = JSONObject().apply {
+                put("sdp", sessionDescription.description)
+            }
+            socket.emit("offer", sdp)
         }
 
         override fun onSetSuccess() {}
@@ -47,17 +80,21 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
         override fun onIceConnectionReceivingChange(receiving: Boolean) {}
         override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState) {}
         override fun onIceCandidate(candidate: IceCandidate) {
-            // 시그널링 서버를 통해 원격 피어에게 ICE 후보를 보냅니다.
+            val candidateJson = JSONObject().apply {
+                put("candidate", candidate.sdp)
+                put("sdpMid", candidate.sdpMid)
+                put("sdpMLineIndex", candidate.sdpMLineIndex)
+            }
+            socket.emit("iceCandidate", candidateJson)
         }
 
-        override fun onIceCandidatesRemoved(p0: Array<out IceCandidate>?) {
-
-        }
-
+        override fun onIceCandidatesRemoved(p0: Array<out IceCandidate>?) {}
         override fun onAddStream(stream: MediaStream) {
             if (stream.videoTracks.isNotEmpty()) {
                 remoteVideoTrack = stream.videoTracks[0]
-                // 원격 비디오 트랙을 사용하여 UI에 표시합니다.
+
+                // UI에 원격 비디오 트랙을 표시하기 위해 데이터 저장
+                onRemoteVideoTrackAvailable?.invoke(remoteVideoTrack)
             }
         }
 
@@ -66,8 +103,6 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
         override fun onRenegotiationNeeded() {}
         override fun onAddTrack(receiver: RtpReceiver, mediaStreams: Array<MediaStream>) {}
     }
-
-    private lateinit var peerConnection: PeerConnection
 
     fun initializePeerConnectionFactory() {
         val options = PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
@@ -111,5 +146,24 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
             ?: throw IllegalStateException("Failed to create PeerConnection")
 
         peerConnection.createOffer(sdpObserver, MediaConstraints())
+    }
+
+    fun startBroadcast(broadcastId: String) {
+        socket.connect()
+        socket.emit("start", broadcastId)
+    }
+
+    fun startViewing(broadcastId: String) {
+        socket.connect()
+        socket.emit("join", broadcastId)
+    }
+
+    fun stopLiveStreaming() {
+        // release
+        peerConnection.close()
+        peerConnection.dispose()
+        localVideoTrack.dispose()
+        localVideoSource.dispose()
+        peerConnectionFactory.dispose()
     }
 }

@@ -4,8 +4,8 @@ import com.pass.domain.repository.LiveStreamingRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class StartLiveStreamingUseCase @Inject constructor(private val liveStreamingRepository: LiveStreamingRepository) {
-    suspend operator fun invoke(): Flow<Result<Boolean>> {
-        return liveStreamingRepository.startLiveStreamingUseCase()
+class StartLiveStreamingUseCase<T> @Inject constructor(private val liveStreamingRepository: LiveStreamingRepository<T>) {
+    suspend operator fun invoke(title: String): Flow<Result<Boolean>> {
+        return liveStreamingRepository.startLiveStreaming(title)
     }
 }

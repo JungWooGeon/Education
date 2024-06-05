@@ -7,6 +7,6 @@ import javax.inject.Inject
 
 class GetLiveStreamingListUseCase @Inject constructor(private val liveStreamingRepository: LiveStreamingRepository) {
     suspend operator fun invoke(): Flow<Result<List<LiveStreaming>>> {
-        return liveStreamingRepository.getLiveStreamingListUseCase()
+        return liveStreamingRepository.getLiveStreamingList()
     }
 }

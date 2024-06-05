@@ -1,6 +1,7 @@
 package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.pass.domain.model.LiveStreaming
 import com.pass.domain.usecase.GetUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
@@ -40,9 +41,9 @@ class LiveListViewModel @Inject constructor(
         }
     }
 
-    fun startLiveStreaming() = intent {
+    fun startLiveStreamingActivity() = intent {
         if (state.isLoggedIn) {
-            postSideEffect(LiveListSideEffect.StartLiveStreaming)
+            postSideEffect(LiveListSideEffect.StartLiveStreamingActivity)
         } else {
             postSideEffect(LiveListSideEffect.NavigateLogInScreen)
         }
@@ -51,10 +52,11 @@ class LiveListViewModel @Inject constructor(
 
 @Immutable
 data class LiveListState(
-    val isLoggedIn: Boolean = false
+    val isLoggedIn: Boolean = false,
+    val liveStreamingList: List<LiveStreaming> = emptyList()
 )
 
 sealed interface LiveListSideEffect {
-    data object StartLiveStreaming : LiveListSideEffect
+    data object StartLiveStreamingActivity : LiveListSideEffect
     data object NavigateLogInScreen  : LiveListSideEffect
 }

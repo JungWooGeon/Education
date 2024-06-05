@@ -81,4 +81,7 @@ dependencies {
 
     // webrtc
     implementation("org.webrtc:google-webrtc:1.0.32006")
+
+    // socket
+    implementation ("io.socket:socket.io-client:2.0.1")
 }
