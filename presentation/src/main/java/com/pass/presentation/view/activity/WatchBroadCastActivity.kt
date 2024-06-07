@@ -21,7 +21,7 @@ class WatchBroadCastActivity: ComponentActivity() {
         val broadcastId = intent.getStringExtra("broadCastId")
 
         if (broadcastId == null) {
-            Toast.makeText(this, "방송이 종료되었습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "방송 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             finish()
         } else {
             setContent {

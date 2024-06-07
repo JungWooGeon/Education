@@ -12,6 +12,7 @@ import com.pass.domain.util.DatabaseUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import org.webrtc.VideoTrack
 import javax.inject.Inject
 
@@ -118,12 +119,17 @@ class LiveStreamingRepositoryImpl @Inject constructor(
             ).collect { result ->
                 result.onSuccess {
                     try {
-                        webRtcUtil.initializePeerConnectionFactory()
-                        webRtcUtil.createPeerConnection()
-                        webRtcUtil.createLocalMediaStream()
-                        webRtcUtil.startBroadcast(broadcastId)
+                        // 연결 실패한 경우
+                        webRtcUtil.onConnectionFailed = {
+                            trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
+                        }
 
-                        trySend(Result.success(true))
+                        // 연결 성공한 경우
+                        webRtcUtil.onSuccessBroadCast = {
+                            trySend(Result.success(true))
+                        }
+
+                        webRtcUtil.startBroadcast(broadcastId)
                     } catch (e: Exception) {
                         trySend(Result.failure(e))
                     }
@@ -137,23 +143,32 @@ class LiveStreamingRepositoryImpl @Inject constructor(
     }
 
     override suspend fun watchLiveStreaming(broadcastId: String): Flow<Result<VideoTrack>> = callbackFlow {
-        webRtcUtil.initializePeerConnectionFactory()
-        webRtcUtil.createPeerConnection()
+        // 방송 시청 시작
         webRtcUtil.startViewing(broadcastId)
 
-        if (webRtcUtil.onRemoteVideoTrackAvailable == null) {
-            trySend(Result.failure(Exception("방송이 종료되었습니다.")))
-        } else {
-            webRtcUtil.onRemoteVideoTrackAvailable = { videoTrack ->
-                trySend(Result.success(videoTrack))
-            }
+        webRtcUtil.onRemoteVideoTrackAvailable = { videoTrack ->
+            trySend(Result.success(videoTrack))
+        }
+
+        // 연결 실패한 경우
+        webRtcUtil.onConnectionFailed = {
+            trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
         }
 
         awaitClose()
     }
 
     override suspend fun stopLiveStreaming() {
-        webRtcUtil.stopLiveStreaming()
+        // firebase delete
+        val uid = auth.currentUser?.uid
+
+        firebaseDatabaseUtil.deleteData(
+            collectionPath = "liveStreams",
+            documentPath = uid.toString()
+        ).first()
+
+        // webrtc release
+        webRtcUtil.stopBroadcast()
     }
 
     override suspend fun stopViewing() {

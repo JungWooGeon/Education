@@ -82,7 +82,7 @@ fun LiveListScreen(
             is LiveListSideEffect.StartWatchBroadCastActivity -> {
                 val intent = Intent(context, WatchBroadCastActivity::class.java)
                 intent.putExtra("broadCastId", sideEffect.broadcastId)
-                context.startActivity(Intent(context, WatchBroadCastActivity::class.java))
+                context.startActivity(intent)
             }
         }
     }

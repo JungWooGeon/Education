@@ -58,8 +58,9 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
 
     DisposableEffect(lifecycleState) {
         onDispose {
-            // CameraX 해제 로직
+            // CameraX + WebRTC socket release
             cameraProvider.unbindAll()
+            viewModel.onStopLiveStreaming()
         }
     }
 
@@ -87,6 +88,10 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
             AddLiveStreamingSideEffect.SuccessStopLiveStreaming -> {
                 Toast.makeText(context, "라이브 방송이 종료되었습니다.", Toast.LENGTH_SHORT).show()
                 (context as Activity).finish()
+            }
+
+            AddLiveStreamingSideEffect.StopCameraX -> {
+                cameraProvider.unbindAll()
             }
         }
     }

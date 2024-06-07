@@ -9,15 +9,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
+import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
 class WatchBroadCastViewModel @Inject constructor(
     private val watchLiveStreamingUseCase: WatchLiveStreamingUseCase<VideoTrack>,
     private val stopViewingUseCase: StopViewingUseCase<VideoTrack>
-) : ViewModel() {
+) : ViewModel(), ContainerHost<WatchBroadCastState, WatchBroadCastSideEffect> {
+
+    override val container: Container<WatchBroadCastState, WatchBroadCastSideEffect> = container(
+        initialState = WatchBroadCastState()
+    )
 
     private val _videoTrackState = MutableStateFlow<VideoTrackState>(VideoTrackState.OnLoading)
     val videoTrackState: StateFlow<VideoTrackState> = _videoTrackState
@@ -26,8 +37,10 @@ class WatchBroadCastViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             watchLiveStreamingUseCase(broadcastId).collect { result ->
                 result.onSuccess { videoTrack ->
+                    println("성공")
                     _videoTrackState.value = VideoTrackState.OnSuccess(videoTrack)
                 }.onFailure {
+                    println("실패")
                     _videoTrackState.value = VideoTrackState.OnFailure
                 }
             }
@@ -38,11 +51,6 @@ class WatchBroadCastViewModel @Inject constructor(
         if (_videoTrackState.value is VideoTrackState.OnSuccess) {
             (_videoTrackState.value as VideoTrackState.OnSuccess).videoTrack.removeSink(surfaceViewRenderer)
             (_videoTrackState.value as VideoTrackState.OnSuccess).videoTrack.dispose()
-
-            viewModelScope.launch(Dispatchers.IO) {
-                // WebRTC relaese
-                stopViewingUseCase()
-            }
         } else {
             _videoTrackState.value = VideoTrackState.OnFailure
         }
@@ -55,6 +63,34 @@ class WatchBroadCastViewModel @Inject constructor(
             _videoTrackState.value = VideoTrackState.OnFailure
         }
     }
+
+    fun onDismissRequest() = intent {
+        reduce {
+            state.copy(isExitDialog = false)
+        }
+    }
+
+    fun onExitRequest() = intent {
+        postSideEffect(WatchBroadCastSideEffect.SuccessStopLiveStreaming)
+    }
+
+    fun onClickBackButton() = intent {
+        reduce {
+            state.copy(isExitDialog = true)
+        }
+
+        // webrtc release
+        stopViewingUseCase()
+    }
+}
+
+@Immutable
+data class WatchBroadCastState(
+    val isExitDialog: Boolean = false
+)
+
+sealed interface WatchBroadCastSideEffect {
+    data object SuccessStopLiveStreaming : WatchBroadCastSideEffect
 }
 
 sealed interface VideoTrackState {

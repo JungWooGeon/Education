@@ -74,6 +74,7 @@ class VideoListViewModel @Inject constructor(
         if (state.isLoggedIn) {
             postSideEffect(VideoListSideEffect.ShowVideoStreamingPlayer(video))
         } else {
+            postSideEffect(VideoListSideEffect.Toast("로그인이 필요합니다."))
             postSideEffect(VideoListSideEffect.NavigateLogInScreen)
         }
     }

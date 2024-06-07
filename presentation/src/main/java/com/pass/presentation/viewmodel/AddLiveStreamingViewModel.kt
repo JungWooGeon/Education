@@ -1,10 +1,13 @@
 package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.StartLiveStreamingUseCase
 import com.pass.domain.usecase.StopLiveStreamingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -21,7 +24,7 @@ import javax.inject.Inject
 class AddLiveStreamingViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val startLiveStreamingUseCase: StartLiveStreamingUseCase<VideoTrack>,
-    private val stopListStreamingUseCase: StopLiveStreamingUseCase<VideoTrack>
+    private val stopLiveStreamingUseCase: StopLiveStreamingUseCase<VideoTrack>
 ) : ViewModel(), ContainerHost<AddLiveStreamingState, AddLiveStreamingSideEffect> {
 
     override val container: Container<AddLiveStreamingState, AddLiveStreamingSideEffect> = container (
@@ -60,6 +63,9 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     fun onClickStartLiveStreamingButton() = intent {
+        // CameraX 자원 해제
+        postSideEffect(AddLiveStreamingSideEffect.StopCameraX)
+
         startLiveStreamingUseCase(state.liveStreamingTitle).collect { result ->
             result.onSuccess {
                 reduce {
@@ -85,12 +91,14 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     fun onExitRequest() = intent {
-        stopListStreamingUseCase()
         postSideEffect(AddLiveStreamingSideEffect.SuccessStopLiveStreaming)
     }
 
-    // TODO lifecyle 종료 시 camerax release + webrtc release(with usecase)
-    // TODO 라이브 스트리밍 종료 + 뒤로 가기 이벤트 막기
+    fun onStopLiveStreaming() {
+        viewModelScope.launch(Dispatchers.IO) {
+            stopLiveStreamingUseCase()
+        }
+    }
 }
 
 @Immutable
@@ -106,4 +114,5 @@ sealed interface AddLiveStreamingSideEffect {
     data class FailCamera(val errorMessage: String) : AddLiveStreamingSideEffect
     data object SuccessStartLiveStreaming : AddLiveStreamingSideEffect
     data object SuccessStopLiveStreaming : AddLiveStreamingSideEffect
+    data object StopCameraX : AddLiveStreamingSideEffect
 }

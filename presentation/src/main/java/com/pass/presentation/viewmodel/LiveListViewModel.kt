@@ -55,12 +55,18 @@ class LiveListViewModel @Inject constructor(
         if (state.isLoggedIn) {
             postSideEffect(LiveListSideEffect.StartLiveStreamingActivity)
         } else {
+            postSideEffect(LiveListSideEffect.Toast("로그인이 필요합니다."))
             postSideEffect(LiveListSideEffect.NavigateLogInScreen)
         }
     }
 
     fun onClickLiveStreamingItem(broadcastId: String) = intent {
-        postSideEffect(LiveListSideEffect.StartWatchBroadCastActivity(broadcastId))
+        if (state.isLoggedIn) {
+            postSideEffect(LiveListSideEffect.StartWatchBroadCastActivity(broadcastId))
+        } else {
+            postSideEffect(LiveListSideEffect.Toast("로그인이 필요합니다."))
+            postSideEffect(LiveListSideEffect.NavigateLogInScreen)
+        }
     }
 }
 

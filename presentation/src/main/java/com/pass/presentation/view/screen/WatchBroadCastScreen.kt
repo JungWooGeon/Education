@@ -2,6 +2,7 @@ package com.pass.presentation.view.screen
 
 import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,8 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pass.presentation.view.component.ExitDialog
 import com.pass.presentation.viewmodel.VideoTrackState
+import com.pass.presentation.viewmodel.WatchBroadCastSideEffect
 import com.pass.presentation.viewmodel.WatchBroadCastViewModel
+import org.orbitmvi.orbit.compose.collectAsState
+import org.orbitmvi.orbit.compose.collectSideEffect
 import org.webrtc.EglBase
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
@@ -26,12 +31,25 @@ fun WatchBroadCastScreen(
     viewModel: WatchBroadCastViewModel = hiltViewModel(),
     broadcastId: String
 ) {
+
+    val watchBroadCastState = viewModel.collectAsState().value
     val loadingVideoTrackState = viewModel.videoTrackState.collectAsState()
     val context = LocalContext.current
+
+    // 뒤로 가기 이벤트 - 라이브 스트리밍 중에는 종료 다이얼로그 띄우기
+    BackHandler {
+        viewModel.onClickBackButton()
+    }
 
     // 첫 시작 시 방송 보기 요청
     LaunchedEffect(Unit) {
         viewModel.startViewing(broadcastId)
+    }
+
+    viewModel.collectSideEffect { sideEffect ->
+        when(sideEffect) {
+            WatchBroadCastSideEffect.SuccessStopLiveStreaming -> (context as Activity).finish()
+        }
     }
 
     when (loadingVideoTrackState.value) {
@@ -65,6 +83,14 @@ fun WatchBroadCastScreen(
             (context as Activity).finish()
         }
     }
+
+    if (watchBroadCastState.isExitDialog) {
+        ExitDialog(
+            exitTitle = "방송 시청을 종료하시겠습니까?",
+            onDismissRequest = viewModel::onDismissRequest,
+            onExitRequest = viewModel::onExitRequest
+        )
+    }
 }
 
 @Composable
@@ -78,9 +104,6 @@ fun WatchBroadCastScreen(
                 videoTrack.addSink(this)
             }
         },
-        modifier = Modifier.fillMaxSize(),
-        update = { view ->
-            videoTrack.addSink(view)
-        }
+        modifier = Modifier.fillMaxSize()
     )
 }
