@@ -4,10 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -31,18 +27,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import com.pass.presentation.view.component.ExitDialog
+import com.pass.presentation.view.component.PreviewCameraX
 import com.pass.presentation.view.component.ProfileImageView
 import com.pass.presentation.view.component.SignInInputTextField
 import com.pass.presentation.viewmodel.AddLiveStreamingSideEffect
 import com.pass.presentation.viewmodel.AddLiveStreamingViewModel
+import io.getstream.webrtc.android.compose.VideoRenderer
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
+import org.webrtc.EglBase
+import org.webrtc.RendererCommon
+import org.webrtc.VideoTrack
 
 @Composable
 fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel()) {
@@ -55,14 +54,6 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
     // CameraX
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val cameraProvider = remember(cameraProviderFuture) { cameraProviderFuture.get() }
-
-    DisposableEffect(lifecycleState) {
-        onDispose {
-            // CameraX + WebRTC socket release
-            cameraProvider.unbindAll()
-            viewModel.onStopLiveStreaming()
-        }
-    }
 
     // 뒤로 가기 이벤트 - 라이브 스트리밍 중에는 종료 다이얼로그 띄우기
     BackHandler(enabled = addLiveStreamingState.isLiveStreaming) {
@@ -89,24 +80,23 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
                 Toast.makeText(context, "라이브 방송이 종료되었습니다.", Toast.LENGTH_SHORT).show()
                 (context as Activity).finish()
             }
-
-            AddLiveStreamingSideEffect.StopCameraX -> {
-                cameraProvider.unbindAll()
-            }
         }
     }
 
     AddLiveStreamingScreen(
-        cameraProviderFuture = cameraProviderFuture,
-        cameraProvider = cameraProvider,
+        videoTrack = addLiveStreamingState.videoTrack,
         isLiveStreaming = addLiveStreamingState.isLiveStreaming,
         context = context,
+        lifecycleOwner = lifecycleOwner,
+        cameraProviderFuture = cameraProviderFuture,
+        cameraProvider = cameraProvider,
         userProfileUrl = addLiveStreamingState.userProfileUrl,
         liveStreamingTitle = addLiveStreamingState.liveStreamingTitle,
-        lifecycleOwner = lifecycleOwner,
-        onFailCamera = viewModel::onFailCamera,
         onChangeLiveStreamingTitle = viewModel::onChangeLiveStreamingTitle,
-        onClickStartLiveStreamingButton = viewModel::onClickStartLiveStreamingButton
+        onClickStartLiveStreamingButton = {
+            cameraProvider.unbindAll()
+            viewModel.onClickStartLiveStreamingButton()
+        }
     )
 
     if (addLiveStreamingState.isExitDialog) {
@@ -120,49 +110,26 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
 
 @Composable
 fun AddLiveStreamingScreen(
-    cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
-    cameraProvider: ProcessCameraProvider,
+    videoTrack: VideoTrack?,
     isLiveStreaming: Boolean,
     context: Context,
+    lifecycleOwner : LifecycleOwner,
     userProfileUrl: String,
     liveStreamingTitle: String,
-    lifecycleOwner: LifecycleOwner,
-    onFailCamera: (String) -> Unit,
+    cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
+    cameraProvider: ProcessCameraProvider,
     onChangeLiveStreamingTitle: (String) -> Unit,
     onClickStartLiveStreamingButton: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx)
+        if (!isLiveStreaming || videoTrack == null) {
+            PreviewCameraX(
+                modifier = Modifier.fillMaxSize(),
+                lifecycleOwner = lifecycleOwner,
+                cameraProviderFuture = cameraProviderFuture,
+                cameraProvider = cameraProvider
+            )
 
-                cameraProviderFuture.addListener({
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
-
-                    val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview
-                        )
-                    } catch (exc: Exception) {
-                        onFailCamera("CameraX Use case binding failed $exc")
-                    }
-
-                    preview.setSurfaceProvider(previewView.surfaceProvider)
-                }, ContextCompat.getMainExecutor(ctx))
-
-                previewView
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        if (!isLiveStreaming) {
             Row(
                 modifier = Modifier.padding(top = 50.dp, start = 30.dp),
                 horizontalArrangement = Arrangement.Center,
@@ -195,10 +162,20 @@ fun AddLiveStreamingScreen(
                 Text(text = "실시간 라이브 시작하기")
             }
         } else {
+            VideoRenderer(
+                videoTrack = videoTrack,
+                modifier = Modifier.fillMaxSize(),
+                eglBaseContext = EglBase.create().eglBaseContext,
+                rendererEvents = object : RendererCommon.RendererEvents {
+                    override fun onFirstFrameRendered() {  }
+                    override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }
+                }
+            )
+
             Box(modifier = Modifier
                 .clip(shape = CircleShape)
                 .padding(top = 30.dp)
-                .size(40.dp)
+                .size(20.dp)
                 .background(Color.Red)
                 .align(Alignment.TopCenter))
         }

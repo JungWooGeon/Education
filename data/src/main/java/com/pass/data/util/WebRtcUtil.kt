@@ -29,7 +29,6 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
 @Singleton
 class WebRtcUtil @Inject constructor(private val context: Context) {
     private var peerConnection: PeerConnection? = null
@@ -37,7 +36,9 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     lateinit var broadcastId: String
     var onRemoteVideoTrackAvailable: ((VideoTrack) -> Unit)? = null
     var onConnectionFailed: (() -> Unit)? = null
-    var onSuccessBroadCast: (() -> Unit)? = null
+    var onSuccessBroadCast: ((VideoTrack) -> Unit)? = null
+    private var videoCapturer: VideoCapturer? = null
+    private lateinit var videoTrack: VideoTrack
 
     private val factory by lazy {
         PeerConnectionFactory.initialize(
@@ -95,7 +96,7 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     fun startBroadcast(broadcastId: String) {
         this.broadcastId = broadcastId
 
-        createPeerConnection()
+        // setup and start camera capture (with create VideoTrack)
         setupMediaDevices()
 
         // 연결 시도 후 offer 생성
@@ -106,6 +107,10 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     }
 
     fun stopBroadcast() {
+        // video capture release
+        videoCapturer?.stopCapture()
+        videoCapturer = null
+
         try {
             peerConnection?.dispose()
         } catch(e: Exception) {
@@ -113,7 +118,6 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
         }
 
         socket.emit("stop", broadcastId)
-        socket.emit("disconnect_request", broadcastId)
         socket.disconnect()
     }
 
@@ -134,7 +138,7 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
             e.printStackTrace()
         }
 
-        socket.emit("disconnect_request", broadcastId)
+        socket.emit("disconnect", broadcastId)
         socket.disconnect()
     }
 
@@ -207,12 +211,14 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     private fun createAnswer(broadcastId: String) {
         peerConnection?.createAnswer(object : SdpObserver {
             override fun onCreateSuccess(sessionDescription: SessionDescription) {
+                println("answer 요청 직전")
                 peerConnection?.setLocalDescription(this, sessionDescription)
                 socket.emit("answer", broadcastId, sessionDescription.description)
+                println("answer 요청 완료")
             }
 
             override fun onCreateFailure(p0: String?) {
-                println("실패 $p0")
+                println("createAnswer 실패 $p0")
             }
             override fun onSetSuccess() {}
             override fun onSetFailure(p0: String?) {}
@@ -231,10 +237,12 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     private fun handleOffer(json: JSONObject) {
         println("offer 전달 받음")
         val offerSdp = SessionDescription(SessionDescription.Type.OFFER, json.getString("sdp"))
+
         peerConnection?.setRemoteDescription(object : SdpObserver {
             override fun onSetSuccess() {
-                println("ansewr 생성 직전")
-                createAnswer(json.getString("broadcastId"))
+                println("answer 생성 직전")
+                createAnswer(broadcastId)
+                println("answer 생성 완료")
             }
 
             override fun onCreateSuccess(p0: SessionDescription?) {}
@@ -251,7 +259,7 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
 
             override fun onSetSuccess() {
                 println("answer 적용 성공")
-                onSuccessBroadCast?.invoke()
+                onSuccessBroadCast?.invoke(videoTrack)
             }
             override fun onCreateFailure(p0: String?) {
                 println("answer 적용 실패 $p0")
@@ -261,9 +269,6 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     }
 
     private fun handleError() {
-        socket.emit("stop", broadcastId)
-        socket.emit("disconnect_request", broadcastId)
-
         try {
             peerConnection?.dispose()
         } catch(e: Exception) {
@@ -280,13 +285,15 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
     }
 
     private fun setupMediaDevices() {
+        createPeerConnection()
+
         val eglBaseContext = EglBase.create().eglBaseContext
 
         // Camera2 API를 사용한 비디오 캡처
-        val videoCapturer = createCameraCapturer(Camera2Enumerator(context))
-        val videoSource = factory.createVideoSource(videoCapturer.isScreencast)
-        videoCapturer.initialize(SurfaceTextureHelper.create("CaptureThread", eglBaseContext), context, videoSource.capturerObserver)
-        videoCapturer.startCapture(720, 480, 30)
+        videoCapturer = createCameraCapturer(Camera2Enumerator(context))
+        val videoSource = factory.createVideoSource(videoCapturer!!.isScreencast)
+        videoCapturer?.initialize(SurfaceTextureHelper.create("CaptureThread", eglBaseContext), context, videoSource.capturerObserver)
+        videoCapturer?.startCapture(720, 480, 30)
 
         val videoTrack = factory.createVideoTrack("Video${UUID.randomUUID()}", videoSource)
 
@@ -295,6 +302,8 @@ class WebRtcUtil @Inject constructor(private val context: Context) {
 
         peerConnection?.addTrack(videoTrack)
         peerConnection?.addTrack(audioTrack)
+
+        this.videoTrack = videoTrack
     }
 
     private fun createCameraCapturer(enumerator: CameraEnumerator): VideoCapturer {

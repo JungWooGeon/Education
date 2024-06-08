@@ -14,15 +14,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pass.presentation.view.component.ExitDialog
 import com.pass.presentation.viewmodel.VideoTrackState
 import com.pass.presentation.viewmodel.WatchBroadCastSideEffect
 import com.pass.presentation.viewmodel.WatchBroadCastViewModel
+import io.getstream.webrtc.android.compose.VideoRenderer
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import org.webrtc.EglBase
+import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
 
@@ -97,13 +98,13 @@ fun WatchBroadCastScreen(
 fun WatchBroadCastScreen(
     videoTrack: VideoTrack
 ) {
-    AndroidView(
-        factory = { context ->
-            SurfaceViewRenderer(context).apply {
-                init(EglBase.create().eglBaseContext, null)
-                videoTrack.addSink(this)
-            }
-        },
-        modifier = Modifier.fillMaxSize()
+    VideoRenderer(
+        videoTrack = videoTrack,
+        modifier = Modifier.fillMaxSize(),
+        eglBaseContext = EglBase.create().eglBaseContext,
+        rendererEvents = object : RendererCommon.RendererEvents {
+            override fun onFirstFrameRendered() {  }
+            override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }
+        }
     )
 }

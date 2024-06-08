@@ -93,7 +93,7 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         awaitClose()
     }
 
-    override suspend fun startLiveStreaming(title: String): Flow<Result<Boolean>> = callbackFlow {
+    override suspend fun startLiveStreaming(title: String): Flow<Result<VideoTrack>> = callbackFlow {
         // TODO cameraX 가 촬영하고 있다가 방송 시작하기를 누른 시점 캡처한 이미지를 썸네일 이미지로 저장 (presentation layer 에서 캡처 후 파라미터로 전달 필요)
         // TODO 방송 종료 시 firebase 에서 방송 목록 삭제
 
@@ -125,8 +125,8 @@ class LiveStreamingRepositoryImpl @Inject constructor(
                         }
 
                         // 연결 성공한 경우
-                        webRtcUtil.onSuccessBroadCast = {
-                            trySend(Result.success(true))
+                        webRtcUtil.onSuccessBroadCast = { videoTrack ->
+                            trySend(Result.success(videoTrack))
                         }
 
                         webRtcUtil.startBroadcast(broadcastId)

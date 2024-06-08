@@ -118,5 +118,5 @@ dependencies {
     implementation("androidx.camera:camera-extensions:1.4.0-beta01")
 
     // webrtc
-    implementation("org.webrtc:google-webrtc:1.0.32006")
+    implementation("io.getstream:stream-webrtc-android-compose:1.1.3")
 }

@@ -96,7 +96,7 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.12.2")
 
     // webrtc
-    implementation("org.webrtc:google-webrtc:1.0.32006")
+    implementation("io.getstream:stream-webrtc-android:1.1.3")
 
     // socket
     implementation ("io.socket:socket.io-client:2.0.1")

@@ -1,13 +1,10 @@
 package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.StartLiveStreamingUseCase
 import com.pass.domain.usecase.StopLiveStreamingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -33,6 +30,7 @@ class AddLiveStreamingViewModel @Inject constructor(
 
     init {
         getUserProfile()
+        initVideoTrack()
     }
 
     private fun getUserProfile() = intent {
@@ -50,6 +48,10 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
+    private fun initVideoTrack() = intent {
+
+    }
+
     fun onChangeLiveStreamingTitle(title: String) = intent {
         reduce {
             state.copy(
@@ -58,18 +60,14 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
-    fun onFailCamera(errorMessage: String) = intent {
-        postSideEffect(AddLiveStreamingSideEffect.FailCamera(errorMessage))
-    }
-
     fun onClickStartLiveStreamingButton() = intent {
-        // CameraX 자원 해제
-        postSideEffect(AddLiveStreamingSideEffect.StopCameraX)
-
         startLiveStreamingUseCase(state.liveStreamingTitle).collect { result ->
-            result.onSuccess {
+            result.onSuccess { videoTrack ->
                 reduce {
-                    state.copy(isLiveStreaming = true)
+                    state.copy(
+                        isLiveStreaming = true,
+                        videoTrack = videoTrack
+                    )
                 }
                 postSideEffect(AddLiveStreamingSideEffect.SuccessStartLiveStreaming)
             }.onFailure { e ->
@@ -91,13 +89,8 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     fun onExitRequest() = intent {
+        stopLiveStreamingUseCase()
         postSideEffect(AddLiveStreamingSideEffect.SuccessStopLiveStreaming)
-    }
-
-    fun onStopLiveStreaming() {
-        viewModelScope.launch(Dispatchers.IO) {
-            stopLiveStreamingUseCase()
-        }
     }
 }
 
@@ -106,7 +99,8 @@ data class AddLiveStreamingState(
     val userProfileUrl: String = "",
     val liveStreamingTitle: String = "",
     val isLiveStreaming: Boolean = false,
-    val isExitDialog: Boolean = false
+    val isExitDialog: Boolean = false,
+    val videoTrack: VideoTrack? = null
 )
 
 sealed interface AddLiveStreamingSideEffect {
@@ -114,5 +108,4 @@ sealed interface AddLiveStreamingSideEffect {
     data class FailCamera(val errorMessage: String) : AddLiveStreamingSideEffect
     data object SuccessStartLiveStreaming : AddLiveStreamingSideEffect
     data object SuccessStopLiveStreaming : AddLiveStreamingSideEffect
-    data object StopCameraX : AddLiveStreamingSideEffect
 }
