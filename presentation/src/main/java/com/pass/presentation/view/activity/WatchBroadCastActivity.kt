@@ -11,9 +11,14 @@ import androidx.compose.ui.Modifier
 import com.pass.presentation.ui.theme.MyApplicationTheme
 import com.pass.presentation.view.screen.WatchBroadCastScreen
 import dagger.hilt.android.AndroidEntryPoint
+import org.webrtc.EglBase
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class WatchBroadCastActivity: ComponentActivity() {
+
+    @Inject
+    lateinit var eglBaseContext: EglBase.Context
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +36,8 @@ class WatchBroadCastActivity: ComponentActivity() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         WatchBroadCastScreen(
-                            broadcastId = broadcastId
+                            broadcastId = broadcastId,
+                            eglBaseContext = eglBaseContext
                         )
                     }
                 }

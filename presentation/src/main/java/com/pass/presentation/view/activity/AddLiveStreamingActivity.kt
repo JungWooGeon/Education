@@ -10,9 +10,14 @@ import androidx.compose.ui.Modifier
 import com.pass.presentation.ui.theme.MyApplicationTheme
 import com.pass.presentation.view.screen.AddLiveStreamingScreen
 import dagger.hilt.android.AndroidEntryPoint
+import org.webrtc.EglBase
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AddLiveStreamingActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var eglBaseContext: EglBase.Context
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +28,7 @@ class AddLiveStreamingActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AddLiveStreamingScreen()
+                    AddLiveStreamingScreen(eglBaseContext = eglBaseContext)
                 }
             }
         }

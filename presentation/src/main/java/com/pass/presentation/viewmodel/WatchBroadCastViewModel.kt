@@ -15,7 +15,6 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
 import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
@@ -44,23 +43,6 @@ class WatchBroadCastViewModel @Inject constructor(
                     _videoTrackState.value = VideoTrackState.OnFailure
                 }
             }
-        }
-    }
-
-    fun stopViewing(surfaceViewRenderer: SurfaceViewRenderer) {
-        if (_videoTrackState.value is VideoTrackState.OnSuccess) {
-            (_videoTrackState.value as VideoTrackState.OnSuccess).videoTrack.removeSink(surfaceViewRenderer)
-            (_videoTrackState.value as VideoTrackState.OnSuccess).videoTrack.dispose()
-        } else {
-            _videoTrackState.value = VideoTrackState.OnFailure
-        }
-    }
-
-    fun addVideoTrackSink(surfaceViewRenderer: SurfaceViewRenderer) {
-        if (_videoTrackState.value is VideoTrackState.OnSuccess) {
-            (_videoTrackState.value as VideoTrackState.OnSuccess).videoTrack.addSink(surfaceViewRenderer)
-        } else {
-            _videoTrackState.value = VideoTrackState.OnFailure
         }
     }
 

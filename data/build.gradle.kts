@@ -22,9 +22,21 @@ android {
         }
 
         val signalingServer: String? = localProperties["signalingServer"] as String?
+        val turnServer: String? = localProperties["turnServer"] as String?
+        val turnServerUserName: String? = localProperties["turnServerUserName"] as String?
+        val turnServerUserPassword: String? = localProperties["turnServerUserPassword"] as String?
 
         if (signalingServer != null) {
             buildConfigField("String", "SignalingServer", signalingServer)
+        }
+        if (turnServer != null) {
+            buildConfigField("String", "turnServer", turnServer)
+        }
+        if (turnServerUserName != null) {
+            buildConfigField("String", "turnServerUserName", turnServerUserName)
+        }
+        if (turnServerUserPassword != null) {
+            buildConfigField("String", "turnServerUserPassword", turnServerUserPassword)
         }
     }
 
@@ -100,4 +112,6 @@ dependencies {
 
     // socket
     implementation ("io.socket:socket.io-client:2.0.1")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

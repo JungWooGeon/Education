@@ -44,7 +44,10 @@ import org.webrtc.RendererCommon
 import org.webrtc.VideoTrack
 
 @Composable
-fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel()) {
+fun AddLiveStreamingScreen(
+    viewModel: AddLiveStreamingViewModel = hiltViewModel(),
+    eglBaseContext: EglBase.Context
+) {
 
     val addLiveStreamingState = viewModel.collectAsState().value
     val context = LocalContext.current
@@ -84,6 +87,7 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
     }
 
     AddLiveStreamingScreen(
+        eglBaseContext = eglBaseContext,
         videoTrack = addLiveStreamingState.videoTrack,
         isLiveStreaming = addLiveStreamingState.isLiveStreaming,
         context = context,
@@ -110,6 +114,7 @@ fun AddLiveStreamingScreen(viewModel: AddLiveStreamingViewModel = hiltViewModel(
 
 @Composable
 fun AddLiveStreamingScreen(
+    eglBaseContext: EglBase.Context,
     videoTrack: VideoTrack?,
     isLiveStreaming: Boolean,
     context: Context,
@@ -165,7 +170,7 @@ fun AddLiveStreamingScreen(
             VideoRenderer(
                 videoTrack = videoTrack,
                 modifier = Modifier.fillMaxSize(),
-                eglBaseContext = EglBase.create().eglBaseContext,
+                eglBaseContext = eglBaseContext,
                 rendererEvents = object : RendererCommon.RendererEvents {
                     override fun onFirstFrameRendered() {  }
                     override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }

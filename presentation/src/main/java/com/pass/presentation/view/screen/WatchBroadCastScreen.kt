@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,17 +22,17 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import org.webrtc.EglBase
 import org.webrtc.RendererCommon
-import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
 
 @Composable
 fun WatchBroadCastScreen(
     viewModel: WatchBroadCastViewModel = hiltViewModel(),
-    broadcastId: String
+    broadcastId: String,
+    eglBaseContext: EglBase.Context
 ) {
 
     val watchBroadCastState = viewModel.collectAsState().value
-    val loadingVideoTrackState = viewModel.videoTrackState.collectAsState()
+    val loadingVideoTrackState = viewModel.videoTrackState.collectAsState().value
     val context = LocalContext.current
 
     // 뒤로 가기 이벤트 - 라이브 스트리밍 중에는 종료 다이얼로그 띄우기
@@ -53,7 +51,7 @@ fun WatchBroadCastScreen(
         }
     }
 
-    when (loadingVideoTrackState.value) {
+    when (loadingVideoTrackState) {
         is VideoTrackState.OnLoading -> {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -61,22 +59,10 @@ fun WatchBroadCastScreen(
         }
 
         is VideoTrackState.OnSuccess -> {
-            val surfaceViewRenderer = remember {
-                SurfaceViewRenderer(context).apply {
-                    init(EglBase.create().eglBaseContext, null)
-                    viewModel.addVideoTrackSink(this)
-                }
-            }
-
-            // Video Track release
-            DisposableEffect(surfaceViewRenderer) {
-                onDispose {
-                    viewModel.stopViewing(surfaceViewRenderer)
-                    surfaceViewRenderer.release()
-                }
-            }
-
-            WatchBroadCastScreen((loadingVideoTrackState.value as VideoTrackState.OnSuccess).videoTrack)
+            WatchBroadCastScreen(
+                videoTrack = loadingVideoTrackState.videoTrack,
+                eglBaseContext = eglBaseContext
+            )
         }
 
         is VideoTrackState.OnFailure -> {
@@ -96,15 +82,18 @@ fun WatchBroadCastScreen(
 
 @Composable
 fun WatchBroadCastScreen(
-    videoTrack: VideoTrack
+    videoTrack: VideoTrack,
+    eglBaseContext: EglBase.Context
 ) {
-    VideoRenderer(
-        videoTrack = videoTrack,
-        modifier = Modifier.fillMaxSize(),
-        eglBaseContext = EglBase.create().eglBaseContext,
-        rendererEvents = object : RendererCommon.RendererEvents {
-            override fun onFirstFrameRendered() {  }
-            override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }
-        }
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        VideoRenderer(
+            videoTrack = videoTrack,
+            modifier = Modifier.fillMaxSize(),
+            eglBaseContext = eglBaseContext,
+            rendererEvents = object : RendererCommon.RendererEvents {
+                override fun onFirstFrameRendered() {  }
+                override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }
+            }
+        )
+    }
 }
