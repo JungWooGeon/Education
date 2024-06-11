@@ -26,15 +26,15 @@ jobs:
     - name: Create google-services.json
       run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > $GITHUB_WORKSPACE/app/google-services.json
 
-    - name: Clean Bulid
-      run: ./gradlew clean
-
     - name: Create Local Properties
       run: |
         echo "signalingServer=${{ secrets.SIGNALING_SERVER }}" >> local.properties
         echo "turnServer=${{ secrets.TURN_SERVER }}" >> local.properties
         echo "turnServerUserName=${{ secrets.TURN_SERVER_USERNAME }}" >> local.properties
         echo "turnServerUserPassword=${{ secrets.TURN_SERVER_USER_PASSWORD }}" >> local.properties
+
+    - name: Clean Bulid
+      run: ./gradlew clean
 
     - name: Run Unit Test
       run: ./gradlew test
