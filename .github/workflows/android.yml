@@ -28,10 +28,10 @@ jobs:
 
     - name: Create Local Properties
       run: |
-        echo "signalingServer=${{ secrets.SIGNALING_SERVER }}" >> local.properties
-        echo "turnServer=${{ secrets.TURN_SERVER }}" >> local.properties
-        echo "turnServerUserName=${{ secrets.TURN_SERVER_USERNAME }}" >> local.properties
-        echo "turnServerUserPassword=${{ secrets.TURN_SERVER_USER_PASSWORD }}" >> local.properties
+        echo "signalingServer=\"${{ secrets.SIGNALING_SERVER }}\"" >> local.properties
+        echo "turnServer=\"${{ secrets.TURN_SERVER }}\"" >> local.properties
+        echo "turnServerUserName=\"${{ secrets.TURN_SERVER_USERNAME }}\"" >> local.properties
+        echo "turnServerUserPassword=\"${{ secrets.TURN_SERVER_USER_PASSWORD }}\"" >> local.properties
 
     - name: Clean Bulid
       run: ./gradlew clean
