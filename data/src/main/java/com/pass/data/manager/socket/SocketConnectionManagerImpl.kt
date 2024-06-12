@@ -1,4 +1,4 @@
-package com.pass.data.manager
+package com.pass.data.manager.socket
 
 import com.pass.data.BuildConfig
 import io.socket.client.IO
@@ -6,16 +6,14 @@ import io.socket.client.Socket
 import okhttp3.OkHttpClient
 import org.json.JSONObject
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class SocketManager @Inject constructor(
+class SocketConnectionManagerImpl @Inject constructor(
     private val okHttpClient: OkHttpClient
-) {
+): SocketConnectionManager {
 
     private var socket: Socket? = null
 
-    fun initializeSocket(
+    override fun initializeSocket(
         isBroadCaster: Boolean,
         handleRemoteIceCandidate: (JSONObject) -> Unit,
         handleError: () -> Unit,
@@ -48,29 +46,16 @@ class SocketManager @Inject constructor(
         }
     }
 
-    fun connect(onEventConnect: () -> Unit) {
+    override fun connect(onEventConnect: () -> Unit) {
         socket?.connect()
         socket?.on(Socket.EVENT_CONNECT) {
             onEventConnect()
         }
     }
 
-    fun disconnect() {
+    override fun disconnect() {
         socket?.disconnect()
     }
 
-    fun emitMessage(
-        message: String,
-        broadcastId: String,
-        sessionDescription: String? = null,
-        iceCandidate: JSONObject? = null
-    ) {
-        when (message) {
-            "start" -> socket?.emit(message, broadcastId, sessionDescription)
-            "stop" -> socket?.emit(message, broadcastId)
-            "join" -> socket?.emit(message, broadcastId)
-            "iceCandidate" -> socket?.emit(message, broadcastId, iceCandidate)
-            "answer" -> socket?.emit(message, broadcastId, sessionDescription)
-        }
-    }
+    override fun getSocket(): Socket? = socket
 }

@@ -3,9 +3,9 @@ package com.pass.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.data.di.DateTimeProvider
+import com.pass.data.service.webrtc.WebRtcBroadCasterService
+import com.pass.data.service.webrtc.WebRtcViewerService
 import com.pass.data.util.CalculateUtil
-import com.pass.data.util.WebRtcBroadCasterUtil
-import com.pass.data.util.WebRtcViewerUtil
 import com.pass.domain.model.LiveStreaming
 import com.pass.domain.model.Profile
 import com.pass.domain.repository.LiveStreamingRepository
@@ -22,8 +22,8 @@ class LiveStreamingRepositoryImpl @Inject constructor(
     private val firebaseDatabaseUtil: DatabaseUtil<DocumentSnapshot>,
     private val dataTimeProvider: DateTimeProvider,
     private val calculateUtil: CalculateUtil,
-    private val webRtcBroadCasterUtil: WebRtcBroadCasterUtil,
-    private val webRtcViewerUtil: WebRtcViewerUtil
+    private val webRtcBroadCasterService: WebRtcBroadCasterService,
+    private val webRtcViewerService: WebRtcViewerService
 ) : LiveStreamingRepository<VideoTrack> {
 
     override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> = callbackFlow {
@@ -122,16 +122,16 @@ class LiveStreamingRepositoryImpl @Inject constructor(
                 result.onSuccess {
                     try {
                         // 연결 실패한 경우
-                        webRtcBroadCasterUtil.onFailureConnected = {
+                        webRtcBroadCasterService.onFailureConnected = {
                             trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
                         }
 
                         // 연결 성공한 경우
-                        webRtcBroadCasterUtil.onSuccessConnected = { videoTrack ->
+                        webRtcBroadCasterService.onSuccessConnected = { videoTrack ->
                             trySend(Result.success(videoTrack))
                         }
 
-                        webRtcBroadCasterUtil.startBroadcast(broadcastId)
+                        webRtcBroadCasterService.startBroadcast(broadcastId)
                     } catch (e: Exception) {
                         trySend(Result.failure(e))
                     }
@@ -146,15 +146,15 @@ class LiveStreamingRepositoryImpl @Inject constructor(
 
     override suspend fun watchLiveStreaming(broadcastId: String): Flow<Result<VideoTrack>> = callbackFlow {
         // 방송 시청 시작
-        webRtcViewerUtil.startViewing(broadcastId)
+        webRtcViewerService.startViewing(broadcastId)
 
         // 연결 실패한 경우
-        webRtcViewerUtil.onFailureConnected = {
+        webRtcViewerService.onFailureConnected = {
             trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
         }
 
         // 연결 성공한 경우
-        webRtcViewerUtil.onSuccessConnected = { videoTrack ->
+        webRtcViewerService.onSuccessConnected = { videoTrack ->
             trySend(Result.success(videoTrack))
         }
 
@@ -171,10 +171,10 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         ).first()
 
         // webrtc release
-        webRtcBroadCasterUtil.stopBroadcast(broadcastId)
+        webRtcBroadCasterService.stopBroadcast(broadcastId)
     }
 
     override suspend fun stopViewing() {
-        webRtcViewerUtil.stopViewing()
+        webRtcViewerService.stopViewing()
     }
 }
