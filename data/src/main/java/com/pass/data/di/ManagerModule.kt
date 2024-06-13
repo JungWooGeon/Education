@@ -1,9 +1,16 @@
 package com.pass.data.di
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.data.manager.capture.AudioCaptureManager
 import com.pass.data.manager.capture.AudioCaptureManagerImpl
 import com.pass.data.manager.capture.VideoCaptureManager
 import com.pass.data.manager.capture.VideoCaptureManagerImpl
+import com.pass.data.manager.database.AuthManager
+import com.pass.data.manager.database.DatabaseManager
+import com.pass.data.manager.database.FirebaseAuthManagerImpl
+import com.pass.data.manager.database.FirebaseDatabaseManagerImpl
+import com.pass.data.manager.database.FirebaseStorageManagerImpl
+import com.pass.data.manager.database.StorageManager
 import com.pass.data.manager.socket.SocketConnectionManager
 import com.pass.data.manager.socket.SocketConnectionManagerImpl
 import com.pass.data.manager.socket.SocketMessageManager
@@ -51,4 +58,16 @@ abstract class ManagerModule {
     @Singleton
     @Binds
     abstract fun bindsSocketMessageManager(manager: SocketMessageManagerImpl): SocketMessageManager
+
+    @Singleton
+    @Binds
+    abstract fun bindsAuthManager(manager: FirebaseAuthManagerImpl): AuthManager
+
+    @Singleton
+    @Binds
+    abstract fun bindsDatabaseManager(manager: FirebaseDatabaseManagerImpl): DatabaseManager<DocumentSnapshot>
+
+    @Singleton
+    @Binds
+    abstract fun bindsStorageManager(manager: FirebaseStorageManagerImpl): StorageManager
 }

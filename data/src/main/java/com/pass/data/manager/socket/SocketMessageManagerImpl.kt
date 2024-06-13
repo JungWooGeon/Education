@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 class SocketMessageManagerImpl @Inject constructor(
     private val socketConnectionManager: SocketConnectionManager
-): SocketMessageManager {
+) : SocketMessageManager {
 
     override fun emitMessage(
         message: String,

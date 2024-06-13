@@ -1,92 +1,28 @@
 package com.pass.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.pass.data.di.DateTimeProvider
-import com.pass.data.service.webrtc.WebRtcBroadCasterService
-import com.pass.data.service.webrtc.WebRtcViewerService
-import com.pass.data.util.CalculateUtil
+import com.pass.data.service.database.LiveStreamingService
+import com.pass.data.service.webrtc.WebRtcBroadCasterServiceImpl
+import com.pass.data.service.webrtc.WebRtcViewerServiceImpl
 import com.pass.domain.model.LiveStreaming
-import com.pass.domain.model.Profile
 import com.pass.domain.repository.LiveStreamingRepository
-import com.pass.domain.util.DatabaseUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.first
 import org.webrtc.VideoTrack
 import javax.inject.Inject
 
 class LiveStreamingRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firebaseDatabaseUtil: DatabaseUtil<DocumentSnapshot>,
-    private val dataTimeProvider: DateTimeProvider,
-    private val calculateUtil: CalculateUtil,
-    private val webRtcBroadCasterService: WebRtcBroadCasterService,
-    private val webRtcViewerService: WebRtcViewerService
+    private val webRtcBroadCasterService: WebRtcBroadCasterServiceImpl,
+    private val webRtcViewerService: WebRtcViewerServiceImpl,
+    private val liveStreamingService: LiveStreamingService
 ) : LiveStreamingRepository<VideoTrack> {
 
     override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> = callbackFlow {
-        // 라이브 목록 조회
-        firebaseDatabaseUtil.readDataList("liveStreams").collect { readDataListResult ->
-            readDataListResult.onSuccess { videoDocumentSnapShotList ->
-                val idSetList = mutableSetOf<String>()
-                videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
-                    val userId = videoDocumentSnapShot.getString("userId")
-                    userId?.let { idSetList.add(it) }
-                }
-
-                // id 목록 조회
-                firebaseDatabaseUtil.readIdList(idSetList.toList()).collect { readIdListResult ->
-                    readIdListResult.onSuccess { readIdDocumentSnapShotList ->
-                        // id에 대한 프로필 정보 변수
-                        val idOfVideoMap = mutableMapOf<String, Profile>()
-
-                        // 어떤 id 목록이 있는지 조회
-                        readIdDocumentSnapShotList.forEach { readIdDocumentSnapshot ->
-                            val userId = readIdDocumentSnapshot.id
-                            val name = readIdDocumentSnapshot.getString("name")
-                            val pictureUrl = readIdDocumentSnapshot.getString("pictureUrl")
-
-                            if (name != null && pictureUrl != null) {
-                                idOfVideoMap[userId] = Profile(name, pictureUrl, emptyList())
-                            }
-                        }
-
-                        // 결과 video list
-                        val resultLiveStreamingList = mutableListOf<LiveStreaming>()
-
-                        // user 정보를 포함하여 video 정보 반영
-                        videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
-                            val broadcastId = videoDocumentSnapShot.id
-                            val title = videoDocumentSnapShot.getString("title")
-                            val startTime = videoDocumentSnapShot.getString("startTime")
-                            val userId = videoDocumentSnapShot.getString("userId")
-                            val userName = idOfVideoMap[userId]?.name
-                            val userProfileUrl = idOfVideoMap[userId]?.pictureUrl
-                            val time = videoDocumentSnapShot.getString("time")
-                            val agoTime = calculateUtil.calculateAgoTime(time)
-                            // TODO ThumbnailUrl 추가
-
-                            if (userId != null && title != null && userProfileUrl != null && userName != null) {
-                                resultLiveStreamingList.add(
-                                    LiveStreaming(
-                                        broadcastId = broadcastId,
-                                        thumbnailURL = "",
-                                        title = title,
-                                        userProfileURL = userProfileUrl,
-                                        userName = userName
-                                    )
-                                )
-                            }
-                        }
-
-                        // return 결과 list
-                        trySend(Result.success(resultLiveStreamingList))
-                    }.onFailure {
-                        trySend(Result.failure(it))
-                    }
-                }
+        liveStreamingService.getLiveStreamingList().collect { resultLiveStreamingList ->
+            resultLiveStreamingList.onSuccess { liveStreamingList ->
+                trySend(Result.success(liveStreamingList))
             }.onFailure {
                 trySend(Result.failure(it))
             }
@@ -97,44 +33,30 @@ class LiveStreamingRepositoryImpl @Inject constructor(
 
     override suspend fun startLiveStreaming(title: String): Flow<Result<VideoTrack>> = callbackFlow {
         // TODO cameraX 가 촬영하고 있다가 방송 시작하기를 누른 시점 캡처한 이미지를 썸네일 이미지로 저장 (presentation layer 에서 캡처 후 파라미터로 전달 필요)
-        // TODO 방송 종료 시 firebase 에서 방송 목록 삭제
 
         // 방송 시작 시 고유한 방송 ID 생성 및 Firebase에 저장
         val uid = auth.currentUser?.uid
+        val broadcastId = uid.toString()
+
         if (uid == null) {
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         } else {
-            val broadcastId = uid.toString()
-            val nowDateTime = dataTimeProvider.localDateTimeNowFormat()
-
-            // TODO 추후 Thumbnail 추가
-            val broadcastData = hashMapOf(
-                "userId" to uid,
-                "title" to title,
-                "startTime" to nowDateTime
-            )
-
-            firebaseDatabaseUtil.createData(
-                dataMap = broadcastData,
-                collectionPath = "liveStreams",
-                documentPath = broadcastId
+            liveStreamingService.createLiveStreamingData(
+                broadcastId = broadcastId,
+                title = title
             ).collect { result ->
                 result.onSuccess {
-                    try {
-                        // 연결 실패한 경우
-                        webRtcBroadCasterService.onFailureConnected = {
-                            trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
-                        }
-
-                        // 연결 성공한 경우
-                        webRtcBroadCasterService.onSuccessConnected = { videoTrack ->
-                            trySend(Result.success(videoTrack))
-                        }
-
-                        webRtcBroadCasterService.startBroadcast(broadcastId)
-                    } catch (e: Exception) {
-                        trySend(Result.failure(e))
+                    // 연결 실패한 경우
+                    webRtcBroadCasterService.onFailureConnected = {
+                        trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
                     }
+
+                    // 연결 성공한 경우
+                    webRtcBroadCasterService.onSuccessConnected = { videoTrack ->
+                        trySend(Result.success(videoTrack))
+                    }
+
+                    webRtcBroadCasterService.startBroadcast(broadcastId)
                 }.onFailure {
                     trySend(Result.failure(it))
                 }
@@ -164,11 +86,8 @@ class LiveStreamingRepositoryImpl @Inject constructor(
     override suspend fun stopLiveStreaming() {
         val broadcastId = auth.currentUser?.uid.toString()
 
-        // firebase delete
-        firebaseDatabaseUtil.deleteData(
-            collectionPath = "liveStreams",
-            documentPath = broadcastId
-        ).first()
+        // delete broadcast data
+        liveStreamingService.deleteLiveStreamingData(broadcastId)
 
         // webrtc release
         webRtcBroadCasterService.stopBroadcast(broadcastId)

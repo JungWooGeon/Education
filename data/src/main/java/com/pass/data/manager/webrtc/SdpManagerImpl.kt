@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 class SdpManagerImpl @Inject constructor(
     private val peerConnectionManager: PeerConnectionManager
-): SdpManager {
+) : SdpManager {
 
     override fun createOfferPeerConnection(callbackOnSetSuccess: (String?) -> Unit, callbackOnFailure: () -> Unit) {
         peerConnectionManager.getPeerConnection()?.createOffer(object : SdpObserver {

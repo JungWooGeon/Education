@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 class PeerConnectionManagerImpl @Inject constructor(
     private val factory: PeerConnectionFactory
-): PeerConnectionManager {
+) : PeerConnectionManager {
 
     private var peerConnection: PeerConnection? = null
 

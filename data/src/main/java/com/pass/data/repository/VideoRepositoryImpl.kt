@@ -8,12 +8,12 @@ import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.data.di.DateTimeProvider
+import com.pass.data.manager.database.DatabaseManager
+import com.pass.data.manager.database.StorageManager
 import com.pass.data.util.CalculateUtil
 import com.pass.domain.model.Profile
 import com.pass.domain.model.Video
 import com.pass.domain.repository.VideoRepository
-import com.pass.domain.util.DatabaseUtil
-import com.pass.domain.util.StorageUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -26,8 +26,8 @@ import javax.inject.Inject
 
 class VideoRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firebaseDatabaseUtil: DatabaseUtil<DocumentSnapshot>,
-    private val firebaseStorageUtil: StorageUtil,
+    private val firebaseDatabaseManager: DatabaseManager<DocumentSnapshot>,
+    private val firebaseStorageManager: StorageManager,
     private val context: Context,
     private val calculateUtil: CalculateUtil,
     private val mediaMetadataRetriever: MediaMetadataRetriever,
@@ -74,10 +74,10 @@ class VideoRepositoryImpl @Inject constructor(
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         } else {
             // 비디오 업로드
-            firebaseStorageUtil.updateFile(videoUri, "video/${videoId}").collect { result ->
+            firebaseStorageManager.updateFile(videoUri, "video/${videoId}").collect { result ->
                 result.onSuccess { videoUriString ->
                     // 비디오 썸네일 업로드
-                    firebaseStorageUtil.updateFileWithBitmap(videoThumbnailBitmap, videoId)
+                    firebaseStorageManager.updateFileWithBitmap(videoThumbnailBitmap, videoId)
                         .collect { thumbnailResult ->
                             thumbnailResult.onSuccess { videoThumbnailUri ->
                                 // 내 비디오 목록에 추가
@@ -92,7 +92,7 @@ class VideoRepositoryImpl @Inject constructor(
                                     "time" to nowDateTime
                                 )
 
-                                val profileVideoFlow = firebaseDatabaseUtil.createData(
+                                val profileVideoFlow = firebaseDatabaseManager.createData(
                                     profileVideoData,
                                     "profiles",
                                     uid,
@@ -112,7 +112,7 @@ class VideoRepositoryImpl @Inject constructor(
                                     "time" to nowDateTime
                                 )
 
-                                val allVideoFlow = firebaseDatabaseUtil.createData(
+                                val allVideoFlow = firebaseDatabaseManager.createData(
                                     videoData,
                                     "videos",
                                     videoId
@@ -172,22 +172,22 @@ class VideoRepositoryImpl @Inject constructor(
         if (uid == null) {
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         } else {
-            val deleteVideoFromStorageFlow = firebaseStorageUtil.deleteFile(
+            val deleteVideoFromStorageFlow = firebaseStorageManager.deleteFile(
                 pathString = "video/${video.videoId}"
             )
 
-            val deleteVideoThumbnailFromStorageFlow = firebaseStorageUtil.deleteFile(
+            val deleteVideoThumbnailFromStorageFlow = firebaseStorageManager.deleteFile(
                 pathString = "video_thumbnail/${video.videoId}"
             )
 
-            val deleteVideoFromProfileFlow = firebaseDatabaseUtil.deleteData(
+            val deleteVideoFromProfileFlow = firebaseDatabaseManager.deleteData(
                 collectionPath = "profiles",
                 documentPath = uid,
                 collectionPath2 = "videos",
                 documentPath2 = video.videoId
             )
 
-            val deleteVideoFromTotalVideoListFlow = firebaseDatabaseUtil.deleteData(
+            val deleteVideoFromTotalVideoListFlow = firebaseDatabaseManager.deleteData(
                 collectionPath = "videos",
                 documentPath = video.videoId
             )
@@ -214,7 +214,7 @@ class VideoRepositoryImpl @Inject constructor(
 
     override suspend fun getAllVideoList(): Flow<Result<List<Video>>> = callbackFlow {
         // 비디오 목록 조회
-        firebaseDatabaseUtil.readDataList("videos").collect { readDataListResult ->
+        firebaseDatabaseManager.readDataList("videos").collect { readDataListResult ->
             readDataListResult.onSuccess { videoDocumentSnapShotList ->
                 val idSetList = mutableSetOf<String>()
                 videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
@@ -223,7 +223,7 @@ class VideoRepositoryImpl @Inject constructor(
                 }
 
                 // id 목록 조회
-                firebaseDatabaseUtil.readIdList(idSetList.toList()).collect { readIdListResult ->
+                firebaseDatabaseManager.readIdList(idSetList.toList()).collect { readIdListResult ->
                     readIdListResult.onSuccess { readIdDocumentSnapShotList ->
                         // id에 대한 프로필 정보 변수
                         val idOfVideoMap = mutableMapOf<String, Profile>()

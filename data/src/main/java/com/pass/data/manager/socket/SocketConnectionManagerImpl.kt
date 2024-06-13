@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 class SocketConnectionManagerImpl @Inject constructor(
     private val okHttpClient: OkHttpClient
-): SocketConnectionManager {
+) : SocketConnectionManager {
 
     private var socket: Socket? = null
 

@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 class IceCandidateManagerImpl @Inject constructor(
     private val peerConnectionManager: PeerConnectionManager
-): IceCandidateManager {
+) : IceCandidateManager {
 
     override fun setRemoteDescriptionPeerConnection(json: JSONObject, sessionDescriptionType: SessionDescription.Type, callbackOnSetSuccess: () -> Unit, callbackOnFailure: () -> Unit) {
         val sdp = SessionDescription(sessionDescriptionType, json.getString("sdp"))
