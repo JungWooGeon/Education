@@ -1,10 +1,9 @@
 package com.pass.data.manager.database
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.core.net.toUri
 import com.google.firebase.storage.FirebaseStorage
+import com.pass.data.util.MediaUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +17,8 @@ import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 class FirebaseStorageManagerImpl @Inject constructor(
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val mediaUtil: MediaUtil
 ) : StorageManager {
 
     override suspend fun updateFile(fileUri: String, pathString: String): Flow<Result<String>> =
@@ -54,7 +54,7 @@ class FirebaseStorageManagerImpl @Inject constructor(
         bitmapString: String,
         videoId: String
     ): Flow<Result<String>> = callbackFlow {
-        val bitmap = convertBitmapToString(bitmapString)
+        val bitmap = mediaUtil.convertStringToBitmap(bitmapString)
         val baos = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
         val data = baos.toByteArray()
@@ -92,10 +92,5 @@ class FirebaseStorageManagerImpl @Inject constructor(
             }
 
         awaitClose()
-    }
-
-    private fun convertBitmapToString(base64Str: String): Bitmap {
-        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
-        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
     }
 }

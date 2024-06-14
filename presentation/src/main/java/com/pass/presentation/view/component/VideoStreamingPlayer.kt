@@ -47,7 +47,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pass.domain.model.Video
-import com.pass.presentation.viewmodel.VideoStreamingSideEffect
+import com.pass.presentation.intent.VideoStreamingIntent
+import com.pass.presentation.sideeffect.VideoStreamingSideEffect
 import com.pass.presentation.viewmodel.VideoStreamingViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -64,12 +65,12 @@ fun VideoStreamingPlayer(
 
     // 전체 플레이어 일 때, 뒤로 가기 클릭 시 -> 미니 플레이어로 전환
     BackHandler(enabled = !videoStreamingState.isMinimized) {
-        viewModel.onChangeMiniPlayer()
+        viewModel.processIntent(VideoStreamingIntent.OnChangeMiniPlayer)
     }
 
     LaunchedEffect(Unit) {
         // 비디오 상태 업데이트 (초기)
-        viewModel.initContent(video)
+        viewModel.processIntent(VideoStreamingIntent.InitContent(video))
     }
 
     viewModel.collectSideEffect { sideEffect ->
@@ -89,8 +90,8 @@ fun VideoStreamingPlayer(
         userProfileURL = videoStreamingState.userProfileURL,
         userName = videoStreamingState.userName,
         paddingValues = paddingValues,
-        onChangeMiniPlayer = viewModel::onChangeMiniPlayer,
-        onChangeFullScreenPlayer = viewModel::onChangeFullScreenPlayer,
+        onChangeMiniPlayer = { viewModel.processIntent(VideoStreamingIntent.OnChangeMiniPlayer) },
+        onChangeFullScreenPlayer = { viewModel.processIntent(VideoStreamingIntent.OnChangeFullScreenPlayer) },
         onCloseVideoPlayer = onCloseVideoPlayer
     )
 }

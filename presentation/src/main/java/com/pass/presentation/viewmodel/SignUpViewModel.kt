@@ -2,6 +2,9 @@ package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.SignUpUseCase
+import com.pass.presentation.intent.SignUpIntent
+import com.pass.presentation.sideeffect.SignUpSideEffect
+import com.pass.presentation.state.screen.SignUpState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -9,7 +12,6 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,7 +23,16 @@ class SignUpViewModel @Inject constructor(
         initialState = SignUpState()
     )
 
-    fun onClickSignUp() = intent {
+    fun processIntent(intent: SignUpIntent) {
+        when(intent) {
+            is SignUpIntent.OnClickSignUp -> onClickSignUp()
+            is SignUpIntent.OnChangeId -> onChangeId(intent.id)
+            is SignUpIntent.OnChangePassword -> onChangePassword(intent.password)
+            is SignUpIntent.OnChangeVerifyPassword -> onChangeVerifyPassword(intent.verifyPassword)
+        }
+    }
+
+    private fun onClickSignUp() = intent {
         val id = state.id
         val password = state.password
         val verifyPassword = state.verifyPassword
@@ -35,33 +46,21 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-    fun onChangeId(id: String) = intent {
+    private fun onChangeId(id: String) = intent {
         reduce {
             state.copy(id = id)
         }
     }
 
-    fun onChangePassword(password: String) = intent {
+    private fun onChangePassword(password: String) = intent {
         reduce {
             state.copy(password = password)
         }
     }
 
-    fun onChangeVerifyPassword(verifyPassword: String) = intent {
+    private fun onChangeVerifyPassword(verifyPassword: String) = intent {
         reduce {
             state.copy(verifyPassword = verifyPassword)
         }
     }
-}
-
-@Immutable
-data class SignUpState(
-    val id: String = "",
-    val password: String = "",
-    val verifyPassword: String = ""
-)
-
-sealed interface SignUpSideEffect {
-    data object NavigateToProfileScreen : SignUpSideEffect
-    data class Toast(val message: String) : SignUpSideEffect
 }

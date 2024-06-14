@@ -2,6 +2,7 @@ package com.pass.data.util
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.util.Base64
 import androidx.core.net.toUri
@@ -43,5 +44,10 @@ class MediaUtil @Inject constructor(
         } finally {
             mediaMetadataRetriever.release()
         }
+    }
+
+    override fun convertStringToBitmap(base64Str: String): Bitmap {
+        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
+        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
     }
 }

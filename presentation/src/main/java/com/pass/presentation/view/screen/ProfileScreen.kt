@@ -42,11 +42,12 @@ import androidx.lifecycle.Lifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.pass.domain.model.Video
+import com.pass.presentation.intent.ProfileIntent
+import com.pass.presentation.sideeffect.ProfileSideEffect
 import com.pass.presentation.view.component.DeleteModalBottomSheet
 import com.pass.presentation.view.component.EditNameDialog
 import com.pass.presentation.view.component.ProfileInfoBox
 import com.pass.presentation.view.component.VideoListItem
-import com.pass.presentation.viewmodel.ProfileSideEffect
 import com.pass.presentation.viewmodel.ProfileViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -71,7 +72,7 @@ fun ProfileScreen(
         // onResume 생명 주기 감지 시 동영상 목록 업데이트
         // 프로필 사진과 이름은 변경 시 자동으로 UI 업데이트 되지만, 동영상은 추가 화면으로 이동 후 다시 돌아오기 때문
         if (lifecycleState == Lifecycle.State.RESUMED) {
-            viewModel.readProfile()
+            viewModel.processIntent(ProfileIntent.ReadProfile)
         }
     }
 
@@ -89,7 +90,7 @@ fun ProfileScreen(
     // 프로필 사진 선택 런처
     val singlePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri -> uri?.let{ viewModel.onChangeUserProfilePicture(uri) } }
+        onResult = { uri -> uri?.let{ viewModel.processIntent(ProfileIntent.OnChangeUserProfilePicture(uri)) } }
     )
 
     // 동영상 사진 선택 런처
@@ -116,9 +117,9 @@ fun ProfileScreen(
         videoList = profileState.videoList,
         onEditDialog = profileState.onEditDialog,
         editDialogUserName = profileState.editDialogUserName,
-        onClickSignOut = viewModel::onClickSignOut,
-        onClickEditButton = viewModel::onClickEditButton,
-        onCancelEditPopUp = viewModel::onCancelEditPopUp,
+        onClickSignOut = { viewModel.processIntent(ProfileIntent.OnClickSignOut) },
+        onClickEditButton = { viewModel.processIntent(ProfileIntent.OnClickEditButton) },
+        onCancelEditPopUp = { viewModel.processIntent(ProfileIntent.OnCancelEditPopUp) },
         isOpenDeleteModalBottomSheet = profileState.isOpenDeleteModalBottomSheet,
         onClickProfileImage = {
             if (multiplePermissionsState.allPermissionsGranted) {
@@ -132,8 +133,8 @@ fun ProfileScreen(
                 multiplePermissionsState.launchMultiplePermissionRequest()
             }
         },
-        onChangeEditDialogUserName = viewModel::onChangeEditDialogUserName,
-        onClickSaveEditDialogButton = viewModel::onClickSaveEditDialogButton,
+        onChangeEditDialogUserName = { viewModel.processIntent(ProfileIntent.OnChangeEditDialogUserName(it)) },
+        onClickSaveEditDialogButton = { viewModel.processIntent(ProfileIntent.OnClickSaveEditDialogButton) },
         onClickAddVideoButton = {
             if (multiplePermissionsState.allPermissionsGranted) {
                 // 권한 허용 - 비디오 선택
@@ -146,9 +147,9 @@ fun ProfileScreen(
                 multiplePermissionsState.launchMultiplePermissionRequest()
             }
         },
-        closeDeleteModalBottomSheet = viewModel::closeDeleteModalBottomSheet,
-        openDeleteModalBottomSheet = viewModel::openDeleteModalBottomSheet,
-        deleteVideoItem = viewModel::deleteVideoItem,
+        closeDeleteModalBottomSheet = { viewModel.processIntent(ProfileIntent.CloseDeleteModalBottomSheet) },
+        openDeleteModalBottomSheet = { viewModel.processIntent(ProfileIntent.OpenDeleteModalBottomSheet(it)) },
+        deleteVideoItem = { viewModel.processIntent(ProfileIntent.DeleteVideoItem) },
         onClickVideoItem = onClickVideoItem
     )
 }

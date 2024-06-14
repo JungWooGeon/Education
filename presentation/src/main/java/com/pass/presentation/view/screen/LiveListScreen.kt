@@ -32,10 +32,11 @@ import androidx.lifecycle.Lifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.pass.domain.model.LiveStreaming
+import com.pass.presentation.intent.LiveListIntent
+import com.pass.presentation.sideeffect.LiveListSideEffect
 import com.pass.presentation.view.activity.AddLiveStreamingActivity
 import com.pass.presentation.view.activity.WatchBroadCastActivity
 import com.pass.presentation.view.component.LiveStreamingItem
-import com.pass.presentation.viewmodel.LiveListSideEffect
 import com.pass.presentation.viewmodel.LiveListViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -55,7 +56,7 @@ fun LiveListScreen(
     LaunchedEffect(lifecycleState) {
         // onResume 생명 주기 감지 시 로그인 상태 확인 후 리스트 표시
         if (lifecycleState == Lifecycle.State.RESUMED) {
-            viewModel.getLiveList()
+            viewModel.processIntent(LiveListIntent.GetLiveList)
         }
     }
 
@@ -89,8 +90,8 @@ fun LiveListScreen(
 
     LiveListScreen(
         liveStreamingList = liveListState.liveStreamingList,
-        onClickStartLiveStreamingButton = viewModel::startLiveStreamingActivity,
-        onClickLiveStreamingItem = viewModel::onClickLiveStreamingItem
+        onClickStartLiveStreamingButton = { viewModel.processIntent(LiveListIntent.StartLiveStreamingActivity) },
+        onClickLiveStreamingItem = { viewModel.processIntent(LiveListIntent.OnClickLiveStreamingItem(it)) }
     )
 }
 

@@ -3,6 +3,9 @@ package com.pass.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import com.pass.domain.model.Video
 import com.pass.domain.usecase.GetOtherUserProfileUseCase
+import com.pass.presentation.intent.VideoStreamingIntent
+import com.pass.presentation.sideeffect.VideoStreamingSideEffect
+import com.pass.presentation.state.screen.VideoStreamingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -12,7 +15,6 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,7 +26,15 @@ class VideoStreamingViewModel @Inject constructor(
         initialState = VideoStreamingState()
     )
 
-    fun initContent(video: Video) = intent {
+    fun processIntent(intent: VideoStreamingIntent) {
+        when(intent) {
+            is VideoStreamingIntent.InitContent -> initContent(intent.video)
+            is VideoStreamingIntent.OnChangeMiniPlayer -> onChangeMiniPlayer()
+            is VideoStreamingIntent.OnChangeFullScreenPlayer -> onChangeFullScreenPlayer()
+        }
+    }
+
+    private fun initContent(video: Video) = intent {
         // video 사용자 프로필 조회
         getOtherUserProfileUseCase(video.userId).collect { result ->
             result.onSuccess { profile ->
@@ -45,7 +55,7 @@ class VideoStreamingViewModel @Inject constructor(
         }
     }
 
-    fun onChangeMiniPlayer() = intent {
+    private fun onChangeMiniPlayer() = intent {
         reduce {
             state.copy(
                 isMinimized = true
@@ -53,25 +63,11 @@ class VideoStreamingViewModel @Inject constructor(
         }
     }
 
-    fun onChangeFullScreenPlayer() = intent {
+    private fun onChangeFullScreenPlayer() = intent {
         reduce {
             state.copy(
                 isMinimized = false
             )
         }
     }
-}
-
-@Immutable
-data class VideoStreamingState(
-    val isMinimized: Boolean = false,
-
-    val videoTitle: String = "",
-    val videoUrl: String = "",
-    val userProfileURL: String = "",
-    val userName: String = ""
-)
-
-sealed interface VideoStreamingSideEffect {
-    data class FailVideoStreaming(val errorMessage: String) : VideoStreamingSideEffect
 }

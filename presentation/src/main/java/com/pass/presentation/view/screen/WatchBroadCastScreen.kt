@@ -8,14 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pass.presentation.intent.WatchBroadCastIntent
+import com.pass.presentation.sideeffect.WatchBroadCastSideEffect
+import com.pass.presentation.state.loading.VideoTrackState
 import com.pass.presentation.view.component.ExitDialog
-import com.pass.presentation.viewmodel.VideoTrackState
-import com.pass.presentation.viewmodel.WatchBroadCastSideEffect
 import com.pass.presentation.viewmodel.WatchBroadCastViewModel
 import io.getstream.webrtc.android.compose.VideoRenderer
 import org.orbitmvi.orbit.compose.collectAsState
@@ -32,17 +32,16 @@ fun WatchBroadCastScreen(
 ) {
 
     val watchBroadCastState = viewModel.collectAsState().value
-    val loadingVideoTrackState = viewModel.videoTrackState.collectAsState().value
     val context = LocalContext.current
 
     // 뒤로 가기 이벤트 - 라이브 스트리밍 중에는 종료 다이얼로그 띄우기
     BackHandler {
-        viewModel.onClickBackButton()
+        viewModel.processIntent(WatchBroadCastIntent.OnClickBackButton)
     }
 
     // 첫 시작 시 방송 보기 요청
     LaunchedEffect(Unit) {
-        viewModel.startViewing(broadcastId)
+        viewModel.processIntent(WatchBroadCastIntent.StartViewing(broadcastId))
     }
 
     viewModel.collectSideEffect { sideEffect ->
@@ -51,7 +50,7 @@ fun WatchBroadCastScreen(
         }
     }
 
-    when (loadingVideoTrackState) {
+    when (watchBroadCastState.videoTrackState) {
         is VideoTrackState.OnLoading -> {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -60,7 +59,7 @@ fun WatchBroadCastScreen(
 
         is VideoTrackState.OnSuccess -> {
             WatchBroadCastScreen(
-                videoTrack = loadingVideoTrackState.videoTrack,
+                videoTrack = watchBroadCastState.videoTrackState.videoTrack,
                 eglBaseContext = eglBaseContext
             )
         }
@@ -74,8 +73,8 @@ fun WatchBroadCastScreen(
     if (watchBroadCastState.isExitDialog) {
         ExitDialog(
             exitTitle = "방송 시청을 종료하시겠습니까?",
-            onDismissRequest = viewModel::onDismissRequest,
-            onExitRequest = viewModel::onExitRequest
+            onDismissRequest = { viewModel.processIntent(WatchBroadCastIntent.OnDismissRequest) },
+            onExitRequest = { viewModel.processIntent(WatchBroadCastIntent.OnExitRequest) }
         )
     }
 }

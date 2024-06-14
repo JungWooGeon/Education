@@ -2,12 +2,14 @@ package com.pass.presentation.viewmodel
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import com.pass.domain.model.Video
 import com.pass.domain.usecase.DeleteVideoUseCase
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.SignOutUseCase
 import com.pass.domain.usecase.UpdateUserProfileNameUseCase
 import com.pass.domain.usecase.UpdateUserProfilePictureUseCase
+import com.pass.presentation.intent.ProfileIntent
+import com.pass.presentation.sideeffect.ProfileSideEffect
+import com.pass.presentation.state.screen.ProfileState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,7 +22,6 @@ import org.orbitmvi.orbit.viewmodel.container
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,7 +37,22 @@ class ProfileViewModel @Inject constructor(
         initialState = ProfileState()
     )
 
-    fun readProfile() = intent {
+    fun processIntent(intent: ProfileIntent) {
+        when(intent) {
+            is ProfileIntent.ReadProfile -> readProfile()
+            is ProfileIntent.OnClickSignOut -> onClickSignOut()
+            is ProfileIntent.OnClickEditButton -> onClickEditButton()
+            is ProfileIntent.OnCancelEditPopUp -> onCancelEditPopUp()
+            is ProfileIntent.OnChangeEditDialogUserName -> onChangeEditDialogUserName(intent.editDialogUserName)
+            is ProfileIntent.OnClickSaveEditDialogButton -> onClickSaveEditDialogButton()
+            is ProfileIntent.OnChangeUserProfilePicture -> onChangeUserProfilePicture(intent.uri)
+            is ProfileIntent.OpenDeleteModalBottomSheet -> openDeleteModalBottomSheet(intent.videoIdx)
+            is ProfileIntent.CloseDeleteModalBottomSheet -> closeDeleteModalBottomSheet()
+            is ProfileIntent.DeleteVideoItem -> deleteVideoItem()
+        }
+    }
+
+    private fun readProfile() = intent {
         getUserProfileUseCase().collect { result ->
             result.onSuccess { profile ->
                 reduce {
@@ -59,18 +75,18 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onClickSignOut() = intent {
+    private fun onClickSignOut() = intent {
         signOutUseCase()
         postSideEffect(ProfileSideEffect.NavigateSignInScreen)
     }
 
-    fun onClickEditButton() = intent {
+    private fun onClickEditButton() = intent {
         reduce {
             state.copy(onEditDialog = true)
         }
     }
 
-    fun onCancelEditPopUp() = intent {
+    private fun onCancelEditPopUp() = intent {
         reduce {
             state.copy(
                 onEditDialog = false,
@@ -79,7 +95,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onChangeEditDialogUserName(editDialogUserName: String) = intent {
+    private fun onChangeEditDialogUserName(editDialogUserName: String) = intent {
         reduce {
             state.copy(
                 editDialogUserName = editDialogUserName
@@ -87,7 +103,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onClickSaveEditDialogButton() = intent {
+    private fun onClickSaveEditDialogButton() = intent {
         updateUserProfileNameUseCase(name = state.editDialogUserName).collect { result ->
             result.onSuccess {
                 reduce {
@@ -106,7 +122,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onChangeUserProfilePicture(uri: Uri?) = intent {
+    private fun onChangeUserProfilePicture(uri: Uri?) = intent {
         if (uri == null) {
             postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경을 취소하였습니다."))
         } else {
@@ -125,7 +141,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun openDeleteModalBottomSheet(videoIdx: Int) = intent {
+    private fun openDeleteModalBottomSheet(videoIdx: Int) = intent {
         reduce {
             state.copy(
                 deleteVideoIdx = videoIdx,
@@ -134,7 +150,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun closeDeleteModalBottomSheet() = intent {
+    private fun closeDeleteModalBottomSheet() = intent {
         reduce {
             state.copy(
                 isOpenDeleteModalBottomSheet = false
@@ -142,7 +158,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun deleteVideoItem() = intent {
+    private fun deleteVideoItem() = intent {
         reduce {
             state.copy(
                 isOpenDeleteModalBottomSheet = false
@@ -166,22 +182,4 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
-}
-
-@Immutable
-data class ProfileState(
-    val userProfileURL: String = "",
-    val userName: String = "",
-    val videoList: List<Video> = listOf(),
-
-    val onEditDialog: Boolean = false,
-    val editDialogUserName: String = "",
-
-    val isOpenDeleteModalBottomSheet: Boolean = false,
-    val deleteVideoIdx: Int? = null
-)
-
-sealed interface ProfileSideEffect {
-    data class Toast(val message: String) : ProfileSideEffect
-    data object NavigateSignInScreen : ProfileSideEffect
 }

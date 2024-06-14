@@ -2,6 +2,9 @@ package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.pass.domain.model.Video
+import com.pass.presentation.intent.MainIntent
+import com.pass.presentation.sideeffect.MainScreenSideEffect
+import com.pass.presentation.state.screen.MainScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import org.orbitmvi.orbit.Container
@@ -10,19 +13,25 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
-
-) : ViewModel(), ContainerHost<MainScreenState, MainScreenSideEffect> {
+class MainViewModel @Inject constructor() : ViewModel(), ContainerHost<MainScreenState, MainScreenSideEffect> {
 
     override val container: Container<MainScreenState, MainScreenSideEffect> = container (
         initialState = MainScreenState()
     )
 
-    fun onClickBackButton() = intent {
+    fun processIntent(intent: MainIntent) {
+        when(intent) {
+            is MainIntent.OnClickBackButton -> onClickBackButton()
+            is MainIntent.CloseVideoPlayer -> closeVideoPlayer()
+            is MainIntent.ShowVideoPlayer -> showVideoPlayer(video = intent.video)
+            is MainIntent.NavigateScreenRoute -> navigateScreenRoute(intent.screenRoute)
+        }
+    }
+
+    private fun onClickBackButton() = intent {
         if(System.currentTimeMillis() - state.backPressedTimeState <= 1000L) {
             postSideEffect(MainScreenSideEffect.FinishActivity)
         } else {
@@ -33,13 +42,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onCloseVideoPlayer() = intent {
+    private fun closeVideoPlayer() = intent {
         reduce {
             state.copy(showPlayerState = null)
         }
     }
 
-    fun showVideoStreamingPlayer(video: Video) = intent {
+    private fun showVideoPlayer(video: Video) = intent {
         if (state.showPlayerState != null) {
             reduce {
                 state.copy(showPlayerState = null)
@@ -51,15 +60,8 @@ class MainViewModel @Inject constructor(
             state.copy(showPlayerState = video)
         }
     }
-}
 
-@Immutable
-data class MainScreenState(
-    val backPressedTimeState: Long = 0L,
-    val showPlayerState: Video? = null
-)
-
-sealed interface MainScreenSideEffect {
-    data class Toast(val message: String) : MainScreenSideEffect
-    data object FinishActivity : MainScreenSideEffect
+    private fun navigateScreenRoute(screenRoute: String) = intent {
+        postSideEffect(MainScreenSideEffect.NavigateScreenRoute(screenRoute))
+    }
 }

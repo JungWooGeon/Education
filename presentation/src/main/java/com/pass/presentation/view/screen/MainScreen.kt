@@ -37,9 +37,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.pass.domain.model.Video
 import com.pass.presentation.R
-import com.pass.presentation.state.MainScreenRoute
+import com.pass.presentation.intent.MainIntent
+import com.pass.presentation.sideeffect.MainScreenSideEffect
+import com.pass.presentation.state.route.MainScreenRoute
 import com.pass.presentation.view.component.VideoStreamingPlayer
-import com.pass.presentation.viewmodel.MainScreenSideEffect
 import com.pass.presentation.viewmodel.MainViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -58,13 +59,22 @@ fun MainScreen(
 
     // 뒤로가기 이벤트 - 종료 (토스트 메시지 출력 후 1초 안에 뒤로가기 시 종료)
     BackHandler(enabled = (mainScreenState.showPlayerState == null)) {
-        viewModel.onClickBackButton()
+        viewModel.processIntent(MainIntent.OnClickBackButton)
     }
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
             is MainScreenSideEffect.Toast -> Toast.makeText(context, sideEffect.message, Toast.LENGTH_SHORT).show()
-            MainScreenSideEffect.FinishActivity -> (context as Activity).finish()
+            is MainScreenSideEffect.FinishActivity -> (context as Activity).finish()
+            is MainScreenSideEffect.NavigateScreenRoute -> {
+                navController.navigate(sideEffect.screenRoute) {
+                    navController.graph.startDestinationRoute?.let {
+                        popUpTo(it) { saveState = true }
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         }
     }
 
@@ -73,8 +83,9 @@ fun MainScreen(
         currentRoute = currentRoute,
         logoResource = logoResource,
         showPlayerState = mainScreenState.showPlayerState,
-        onCloseVideoPlayer = viewModel::onCloseVideoPlayer,
-        showVideoStreamingPlayer = viewModel::showVideoStreamingPlayer
+        onCloseVideoPlayer = { viewModel.processIntent(MainIntent.CloseVideoPlayer) },
+        showVideoStreamingPlayer = { viewModel.processIntent(MainIntent.ShowVideoPlayer(it)) },
+        onNavigateScreenRoute = { viewModel.processIntent(MainIntent.NavigateScreenRoute(it)) }
     )
 }
 
@@ -85,7 +96,8 @@ fun MainScreen(
     logoResource: Int,
     showPlayerState: Video?,
     onCloseVideoPlayer: () -> Unit,
-    showVideoStreamingPlayer: (Video) -> Unit
+    showVideoStreamingPlayer: (Video) -> Unit,
+    onNavigateScreenRoute: (screenRoute: String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -112,7 +124,8 @@ fun MainScreen(
         bottomBar = {
             BottomNavigationBar(
                 navController = navController,
-                currentRoute = currentRoute
+                currentRoute = currentRoute,
+                onNavigateScreenRoute = onNavigateScreenRoute
             )
         }
     ) { paddingValues ->
@@ -137,7 +150,8 @@ fun MainScreen(
 @Composable
 fun BottomNavigationBar(
     navController: NavHostController,
-    currentRoute: String?
+    currentRoute: String?,
+    onNavigateScreenRoute: (screenRoute: String) -> Unit
 ) {
     val bottomNavItems = listOf(
         MainScreenRoute.LiveListScreen,
@@ -151,15 +165,7 @@ fun BottomNavigationBar(
         bottomNavItems.forEach { navItem ->
             NavigationBarItem(
                 selected = currentRoute == navItem.screenRoute,
-                onClick = {
-                    navController.navigate(navItem.screenRoute) {
-                        navController.graph.startDestinationRoute?.let {
-                            popUpTo(it) { saveState = true }
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                onClick = { onNavigateScreenRoute(navItem.screenRoute) },
                 label = { Text(stringResource(id = navItem.title), fontSize = 9.sp) },
                 icon = {
                     Icon(

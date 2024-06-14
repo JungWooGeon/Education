@@ -25,8 +25,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pass.presentation.intent.AddVideoIntent
+import com.pass.presentation.sideeffect.AddVideoSideEffect
 import com.pass.presentation.view.component.ExoPlayerView
-import com.pass.presentation.viewmodel.AddVideoSideEffect
 import com.pass.presentation.viewmodel.AddVideoViewModel
 import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonState
 import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonType
@@ -55,15 +56,15 @@ fun AddVideoScreen(
     }
 
     LaunchedEffect(key1 = videoUri) {
-        viewModel.createVideoThumbnail(videoUri)
+        viewModel.processIntent(AddVideoIntent.CreateVideoThumbnail(videoUri))
     }
 
     AddVideoScreen(
         context = context,
         videoUri = addVideoState.videoUri,
         title = addVideoState.title,
-        onChangeTitle = viewModel::onChangeTitle,
-        onClickUploadButton = viewModel::onClickUploadButton,
+        onChangeTitle = { viewModel.processIntent(AddVideoIntent.OnChangeTitle(it)) },
+        onClickUploadButton = { viewModel.processIntent(AddVideoIntent.OnClickUploadButton) },
         progressButtonState = addVideoState.progressButtonState
     )
 }
@@ -111,9 +112,9 @@ fun AddVideoScreen(
 
         Box(
             modifier = Modifier
-            .fillMaxWidth()
-            .align(Alignment.BottomCenter)
-            .padding(16.dp),
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             SSJetPackComposeProgressButton(

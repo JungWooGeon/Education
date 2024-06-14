@@ -1,4 +1,4 @@
-package com.pass.presentation.state
+package com.pass.presentation.state.route
 
 sealed class MyScreenRoute(
     val screenRoute: String

@@ -1,4 +1,4 @@
-package com.pass.presentation.view.screen
+package com.pass.presentation.view.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween

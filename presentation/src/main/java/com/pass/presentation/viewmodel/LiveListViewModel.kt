@@ -2,9 +2,11 @@ package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pass.domain.model.LiveStreaming
 import com.pass.domain.usecase.GetLiveStreamingListUseCase
 import com.pass.domain.usecase.IsSignedInUseCase
+import com.pass.presentation.intent.LiveListIntent
+import com.pass.presentation.sideeffect.LiveListSideEffect
+import com.pass.presentation.state.screen.LiveListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
@@ -14,7 +16,6 @@ import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import org.webrtc.VideoTrack
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,7 +28,15 @@ class LiveListViewModel @Inject constructor(
         initialState = LiveListState()
     )
 
-    fun getLiveList() = intent {
+    fun processIntent(intent: LiveListIntent) {
+        when(intent) {
+            is LiveListIntent.GetLiveList -> getLiveList()
+            is LiveListIntent.StartLiveStreamingActivity -> startLiveStreamingActivity()
+            is LiveListIntent.OnClickLiveStreamingItem -> onClickLiveStreamingItem(intent.broadcastId)
+        }
+    }
+
+    private fun getLiveList() = intent {
         viewModelScope.launch {
             // 라이브 리스트 정보 확인
             getLiveStreamingListUseCase().collect { result ->
@@ -51,7 +60,7 @@ class LiveListViewModel @Inject constructor(
         }
     }
 
-    fun startLiveStreamingActivity() = intent {
+    private fun startLiveStreamingActivity() = intent {
         if (state.isLoggedIn) {
             postSideEffect(LiveListSideEffect.StartLiveStreamingActivity)
         } else {
@@ -60,7 +69,7 @@ class LiveListViewModel @Inject constructor(
         }
     }
 
-    fun onClickLiveStreamingItem(broadcastId: String) = intent {
+    private fun onClickLiveStreamingItem(broadcastId: String) = intent {
         if (state.isLoggedIn) {
             postSideEffect(LiveListSideEffect.StartWatchBroadCastActivity(broadcastId))
         } else {
@@ -68,17 +77,4 @@ class LiveListViewModel @Inject constructor(
             postSideEffect(LiveListSideEffect.NavigateLogInScreen)
         }
     }
-}
-
-@Immutable
-data class LiveListState(
-    val isLoggedIn: Boolean = false,
-    val liveStreamingList: List<LiveStreaming> = emptyList()
-)
-
-sealed interface LiveListSideEffect {
-    data object StartLiveStreamingActivity : LiveListSideEffect
-    data object NavigateLogInScreen : LiveListSideEffect
-    data class Toast(val message: String) : LiveListSideEffect
-    data class StartWatchBroadCastActivity(val broadcastId: String) : LiveListSideEffect
 }

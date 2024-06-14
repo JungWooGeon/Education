@@ -13,8 +13,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import com.pass.domain.model.Video
+import com.pass.presentation.intent.VideoListIntent
+import com.pass.presentation.sideeffect.VideoListSideEffect
 import com.pass.presentation.view.component.VideoListItem
-import com.pass.presentation.viewmodel.VideoListSideEffect
 import com.pass.presentation.viewmodel.VideoListViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -34,7 +35,7 @@ fun VideoListScreen(
     LaunchedEffect(lifecycleState) {
         // onResume 생명 주기 감지 시 동영상 목록 업데이트
         if (lifecycleState == Lifecycle.State.RESUMED) {
-            viewModel.readVideoList()
+            viewModel.processIntent(VideoListIntent.ReadVideoList)
         }
     }
 
@@ -49,7 +50,7 @@ fun VideoListScreen(
     VideoListScreen(
         context = context,
         videoList = videoListState.videoList,
-        onClickVideoItem = viewModel::onClickVideoItem
+        onClickVideoItem = { viewModel.processIntent(VideoListIntent.OnClickVideoItem(it)) }
     )
 }
 

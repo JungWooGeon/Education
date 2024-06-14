@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.StartLiveStreamingUseCase
 import com.pass.domain.usecase.StopLiveStreamingUseCase
+import com.pass.presentation.intent.AddLiveStreamingIntent
+import com.pass.presentation.sideeffect.AddLiveStreamingSideEffect
+import com.pass.presentation.state.screen.AddLiveStreamingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -14,7 +17,6 @@ import org.orbitmvi.orbit.viewmodel.container
 import org.webrtc.VideoTrack
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,7 +32,16 @@ class AddLiveStreamingViewModel @Inject constructor(
 
     init {
         getUserProfile()
-        initVideoTrack()
+    }
+
+    fun processIntent(intent: AddLiveStreamingIntent) {
+        when(intent) {
+            is AddLiveStreamingIntent.OnChangeLiveStreamingTitle -> onChangeLiveStreamingTitle(intent.title)
+            is AddLiveStreamingIntent.OnClickStartLiveStreamingButton -> onClickStartLiveStreamingButton()
+            is AddLiveStreamingIntent.OnClickBackButtonDuringLiveStreaming -> onClickBackButtonDuringLiveStreaming()
+            is AddLiveStreamingIntent.OnDismissRequest -> onDismissRequest()
+            is AddLiveStreamingIntent.OnExitRequest -> onExitRequest()
+        }
     }
 
     private fun getUserProfile() = intent {
@@ -48,11 +59,7 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
-    private fun initVideoTrack() = intent {
-
-    }
-
-    fun onChangeLiveStreamingTitle(title: String) = intent {
+    private fun onChangeLiveStreamingTitle(title: String) = intent {
         reduce {
             state.copy(
                 liveStreamingTitle = title
@@ -60,7 +67,7 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
-    fun onClickStartLiveStreamingButton() = intent {
+    private fun onClickStartLiveStreamingButton() = intent {
         startLiveStreamingUseCase(state.liveStreamingTitle).collect { result ->
             result.onSuccess { videoTrack ->
                 reduce {
@@ -76,36 +83,20 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
-    fun onClickBackButtonDuringLiveStreaming() = intent {
+    private fun onClickBackButtonDuringLiveStreaming() = intent {
         reduce {
             state.copy(isExitDialog = true)
         }
     }
 
-    fun onDismissRequest() = intent {
+    private fun onDismissRequest() = intent {
         reduce {
             state.copy(isExitDialog = false)
         }
     }
 
-    fun onExitRequest() = intent {
+    private fun onExitRequest() = intent {
         stopLiveStreamingUseCase()
         postSideEffect(AddLiveStreamingSideEffect.SuccessStopLiveStreaming)
     }
-}
-
-@Immutable
-data class AddLiveStreamingState(
-    val userProfileUrl: String = "",
-    val liveStreamingTitle: String = "",
-    val isLiveStreaming: Boolean = false,
-    val isExitDialog: Boolean = false,
-    val videoTrack: VideoTrack? = null
-)
-
-sealed interface AddLiveStreamingSideEffect {
-    data object FailGetUserProfile : AddLiveStreamingSideEffect
-    data class FailCamera(val errorMessage: String) : AddLiveStreamingSideEffect
-    data object SuccessStartLiveStreaming : AddLiveStreamingSideEffect
-    data object SuccessStopLiveStreaming : AddLiveStreamingSideEffect
 }

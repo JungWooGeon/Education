@@ -22,8 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pass.presentation.intent.SignInIntent
+import com.pass.presentation.sideeffect.SignInSideEffect
 import com.pass.presentation.view.component.SignInInputTextField
-import com.pass.presentation.viewmodel.SignInSideEffect
 import com.pass.presentation.viewmodel.SignInViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -50,9 +51,9 @@ fun SignInScreen(
     SignInScreen(
         id = signInState.id,
         password = signInState.password,
-        onChangeId = viewModel::onChangeId,
-        onChangePassword = viewModel::onChangePassword,
-        onClickSignIn = viewModel::onClickSignIn,
+        onChangeId = { viewModel.processIntent(SignInIntent.OnChangeId(it)) },
+        onChangePassword = { viewModel.processIntent(SignInIntent.OnChangePassword(it)) },
+        onClickSignIn = { viewModel.processIntent(SignInIntent.OnClickSignIn) },
         onNavigateToSignUpScreen = onNavigateToSignUpScreen
     )
 }

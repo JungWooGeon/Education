@@ -1,27 +1,47 @@
 package com.pass.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.pass.domain.usecase.IsSignedInUseCase
+import com.pass.presentation.intent.MyIntent
+import com.pass.presentation.sideeffect.MyScreenSideEffect
+import com.pass.presentation.state.screen.MyScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
 
 @HiltViewModel
 class MyViewModel @Inject constructor(
     private val isSignedInUseCase: IsSignedInUseCase
-) : ViewModel() {
+) : ViewModel(), ContainerHost<MyScreenState, MyScreenSideEffect> {
 
-    private val _isSignedInState = MutableStateFlow<Boolean?>(null)
-    val isSignedInState: StateFlow<Boolean?> = _isSignedInState
+    override val container: Container<MyScreenState, MyScreenSideEffect> = container(
+        initialState = MyScreenState()
+    )
 
     init {
-        viewModelScope.launch {
-            isSignedInUseCase().collect { signedIn ->
-                _isSignedInState.value = signedIn
+        getIsSinged()
+    }
+
+    fun processIntent(intent: MyIntent) {
+        when(intent) {
+            is MyIntent.NavigateScreenRoute -> { navigateScreenRoute(intent.screenRoute) }
+        }
+    }
+
+    private fun getIsSinged() = intent {
+        isSignedInUseCase().collect { isSignedIn ->
+            reduce {
+                state.copy(isSignedInState = isSignedIn)
             }
         }
+    }
+
+    private fun navigateScreenRoute(screeRoute: String) = intent {
+        postSideEffect(MyScreenSideEffect.NavigateScreenRoute(screeRoute))
     }
 }

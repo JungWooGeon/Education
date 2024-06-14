@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.pass.domain.model.Video
 import com.pass.domain.usecase.GetAllVideoListUseCase
 import com.pass.domain.usecase.IsSignedInUseCase
+import com.pass.presentation.intent.VideoListIntent
+import com.pass.presentation.sideeffect.VideoListSideEffect
+import com.pass.presentation.state.screen.VideoListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
@@ -15,7 +18,6 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,7 +30,14 @@ class VideoListViewModel @Inject constructor(
         initialState = VideoListState()
     )
 
-    fun readVideoList() = intent {
+    fun processIntent(intent: VideoListIntent) {
+        when(intent) {
+            is VideoListIntent.ReadVideoList -> readVideoList()
+            is VideoListIntent.OnClickVideoItem -> onClickVideoItem(intent.video)
+        }
+    }
+
+    private fun readVideoList() = intent {
 
         viewModelScope.launch {
             // 비디오 리스트 조회
@@ -70,7 +79,7 @@ class VideoListViewModel @Inject constructor(
         }
     }
 
-    fun onClickVideoItem(video: Video) = intent {
+    private fun onClickVideoItem(video: Video) = intent {
         if (state.isLoggedIn) {
             postSideEffect(VideoListSideEffect.ShowVideoStreamingPlayer(video))
         } else {
@@ -78,16 +87,4 @@ class VideoListViewModel @Inject constructor(
             postSideEffect(VideoListSideEffect.NavigateLogInScreen)
         }
     }
-}
-
-@Immutable
-data class VideoListState(
-    val videoList: List<Video> = emptyList(),
-    val isLoggedIn: Boolean = false
-)
-
-sealed interface VideoListSideEffect {
-    data class Toast(val message: String) : VideoListSideEffect
-    data class ShowVideoStreamingPlayer(val video: Video) : VideoListSideEffect
-    data object NavigateLogInScreen : VideoListSideEffect
 }
