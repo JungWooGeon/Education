@@ -1,9 +1,9 @@
 package com.pass.data.repository
 
-import com.google.firebase.auth.FirebaseAuth
+import com.pass.data.service.auth.AuthenticationService
 import com.pass.data.service.database.LiveStreamingService
-import com.pass.data.service.webrtc.WebRtcBroadCasterServiceImpl
-import com.pass.data.service.webrtc.WebRtcViewerServiceImpl
+import com.pass.data.service.webrtc.WebRtcBroadCasterService
+import com.pass.data.service.webrtc.WebRtcViewerService
 import com.pass.domain.model.LiveStreaming
 import com.pass.domain.repository.LiveStreamingRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -13,10 +13,10 @@ import org.webrtc.VideoTrack
 import javax.inject.Inject
 
 class LiveStreamingRepositoryImpl @Inject constructor(
-    private val auth: FirebaseAuth,
-    private val webRtcBroadCasterService: WebRtcBroadCasterServiceImpl,
-    private val webRtcViewerService: WebRtcViewerServiceImpl,
-    private val liveStreamingService: LiveStreamingService
+    private val webRtcBroadCasterService: WebRtcBroadCasterService,
+    private val webRtcViewerService: WebRtcViewerService,
+    private val liveStreamingService: LiveStreamingService,
+    private val authenticationService: AuthenticationService
 ) : LiveStreamingRepository<VideoTrack> {
 
     override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> = callbackFlow {
@@ -35,7 +35,7 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         // TODO cameraX 가 촬영하고 있다가 방송 시작하기를 누른 시점 캡처한 이미지를 썸네일 이미지로 저장 (presentation layer 에서 캡처 후 파라미터로 전달 필요)
 
         // 방송 시작 시 고유한 방송 ID 생성 및 Firebase에 저장
-        val uid = auth.currentUser?.uid
+        val uid = authenticationService.getCurrentUserId()
         val broadcastId = uid.toString()
 
         if (uid == null) {
@@ -46,17 +46,15 @@ class LiveStreamingRepositoryImpl @Inject constructor(
                 title = title
             ).collect { result ->
                 result.onSuccess {
-                    // 연결 실패한 경우
-                    webRtcBroadCasterService.onFailureConnected = {
-                        trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
-                    }
-
-                    // 연결 성공한 경우
-                    webRtcBroadCasterService.onSuccessConnected = { videoTrack ->
-                        trySend(Result.success(videoTrack))
-                    }
-
-                    webRtcBroadCasterService.startBroadcast(broadcastId)
+                    webRtcBroadCasterService.startBroadcast(
+                        broadcastId = broadcastId,
+                        callbackOnFailureConnected = {
+                            trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
+                        },
+                        callbackOnSuccessConnected = { videoTrack ->
+                            trySend(Result.success(videoTrack))
+                        }
+                    )
                 }.onFailure {
                     trySend(Result.failure(it))
                 }
@@ -68,23 +66,21 @@ class LiveStreamingRepositoryImpl @Inject constructor(
 
     override suspend fun watchLiveStreaming(broadcastId: String): Flow<Result<VideoTrack>> = callbackFlow {
         // 방송 시청 시작
-        webRtcViewerService.startViewing(broadcastId)
-
-        // 연결 실패한 경우
-        webRtcViewerService.onFailureConnected = {
-            trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
-        }
-
-        // 연결 성공한 경우
-        webRtcViewerService.onSuccessConnected = { videoTrack ->
-            trySend(Result.success(videoTrack))
-        }
+        webRtcViewerService.startViewing(
+            broadcastId = broadcastId,
+            callbackOnFailureConnected = {
+                trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
+            },
+            callbackOnSuccessConnected = { videoTrack ->
+                trySend(Result.success(videoTrack))
+            }
+        )
 
         awaitClose()
     }
 
     override suspend fun stopLiveStreaming() {
-        val broadcastId = auth.currentUser?.uid.toString()
+        val broadcastId = authenticationService.getCurrentUserId().toString()
 
         // delete broadcast data
         liveStreamingService.deleteLiveStreamingData(broadcastId)

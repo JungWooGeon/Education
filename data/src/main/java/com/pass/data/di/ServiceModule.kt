@@ -1,11 +1,15 @@
 package com.pass.data.di
 
+import com.pass.data.service.auth.AuthenticationService
+import com.pass.data.service.auth.AuthenticationServiceImpl
 import com.pass.data.service.auth.SignService
 import com.pass.data.service.auth.SignServiceImpl
 import com.pass.data.service.database.LiveStreamingService
 import com.pass.data.service.database.LiveStreamingServiceImpl
 import com.pass.data.service.database.UserService
 import com.pass.data.service.database.UserServiceImpl
+import com.pass.data.service.database.VideoService
+import com.pass.data.service.database.VideoServiceImpl
 import com.pass.data.service.webrtc.WebRtcBaseService
 import com.pass.data.service.webrtc.WebRtcBaseServiceImpl
 import com.pass.data.service.webrtc.WebRtcBroadCasterService
@@ -45,4 +49,12 @@ abstract class ServiceModule {
     @Singleton
     @Binds
     abstract fun bindsUserService(service: UserServiceImpl): UserService
+
+    @Singleton
+    @Binds
+    abstract fun bindsVideoService(service: VideoServiceImpl): VideoService
+
+    @Singleton
+    @Binds
+    abstract fun bindsAuthenticationService(service: AuthenticationServiceImpl): AuthenticationService
 }

@@ -9,6 +9,7 @@ import com.pass.data.manager.webrtc.PeerConnectionManager
 import com.pass.data.manager.webrtc.SdpManager
 import org.json.JSONObject
 import org.webrtc.SessionDescription
+import org.webrtc.VideoTrack
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,13 +27,13 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
     private var isBroadCasterConnected = false
     private val iceCandidateList = mutableListOf<JSONObject>()
 
-    override fun startBroadcast(broadcastId: String) {
+    override fun startBroadcast(broadcastId: String, callbackOnFailureConnected: () -> Unit, callbackOnSuccessConnected: (VideoTrack) -> Unit) {
         // 소켓 초기화 (방송자용)
         socketConnectionManager.initializeSocket(
             isBroadCaster = true,
             handleOffer = { },
-            handleAnswer = { handleAnswer(broadcastId, it) },
-            handleError = { handleError() },
+            handleAnswer = { handleAnswer(broadcastId = broadcastId, json = it, callbackOnFailureConnected = callbackOnFailureConnected) },
+            handleError = { handleError(callbackOnFailureConnected) },
             handleRemoteIceCandidate = { handleRemoteIceCandidate(it) }
         )
 
@@ -47,9 +48,9 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
                 }
             },
             callbackOnReceiveVideoTrack = { videoTrack ->
-                onSuccessConnected?.invoke(videoTrack)
+                callbackOnSuccessConnected(videoTrack)
             },
-            callbackOnFailure = { onFailureConnected?.invoke() }
+            callbackOnFailure = callbackOnFailureConnected
         )
 
         // 캡처 완료한 VideoTrack 과 AudioTrack 을 PeerConnection 에 추가
@@ -64,7 +65,7 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
                     // callbackOnSetSuccess
                     socketMessageManager.emitMessage("start", broadcastId, sessionDescription = peerConnectionLocalDescription)
                 },
-                callbackOnFailure = { onFailureConnected?.invoke() }
+                callbackOnFailure = callbackOnFailureConnected
             )
         })
     }
@@ -76,7 +77,7 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
         socketConnectionManager.disconnect()
     }
 
-    override fun handleAnswer(broadcastId: String, json: JSONObject) {
+    override fun handleAnswer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit) {
         iceCandidateManager.setRemoteDescriptionPeerConnection(
             json = json,
             sessionDescriptionType = SessionDescription.Type.ANSWER,
@@ -88,7 +89,7 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
                 iceCandidateList.clear()
                 isBroadCasterConnected = true
             },
-            callbackOnFailure = { onFailureConnected?.invoke() }
+            callbackOnFailure = callbackOnFailureConnected
         )
     }
 }

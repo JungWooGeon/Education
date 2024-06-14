@@ -4,6 +4,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.domain.model.LiveStreaming
 import com.pass.domain.model.Profile
 import com.pass.domain.model.Video
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,10 +41,10 @@ class FireStoreUtil @Inject constructor() {
     }
 
     fun extractLiveStreamingListInfoFromIdMapAndDocuments(videoDocumentSnapShotList: List<DocumentSnapshot>, idOfProfileMap: Map<String, Profile>, calculateAgoTime: (String?) -> String): List<LiveStreaming> {
-        // 결과 video list
+        // 결과 livestreaming list
         val resultLiveStreamingList = mutableListOf<LiveStreaming>()
 
-        // user 정보를 포함하여 video 정보 반영
+        // user 정보를 포함하여 livestreaming 정보 반영
         videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
             val broadcastId = videoDocumentSnapShot.id
             val title = videoDocumentSnapShot.getString("title")
@@ -112,6 +114,87 @@ class FireStoreUtil @Inject constructor() {
                 Result.failure(Exception("name or picture null"))
             }
 
+        }
+    }
+
+    fun extractVideoListInfoFromIdMapAndDocuments(videoDocumentSnapShotList: List<DocumentSnapshot>, idOfProfileMap: Map<String, Profile>, calculateAgoTime: (String?) -> String): List<Video> {
+        // 결과 video list
+        val resultVideoList = mutableListOf<Video>()
+
+        // user 정보를 포함하여 video 정보 반영
+        videoDocumentSnapShotList.forEach { videoDocumentSnapShot ->
+            val videoId = videoDocumentSnapShot.id
+            val userId = videoDocumentSnapShot.getString("userId")
+            val title = videoDocumentSnapShot.getString("title")
+            val videoThumbnailUrl = videoDocumentSnapShot.getString("videoThumbnailUrl")
+            val videoUrl = videoDocumentSnapShot.getString("videoUrl")
+            val userName = idOfProfileMap[userId]?.name
+            val userProfileUrl = idOfProfileMap[userId]?.pictureUrl
+
+            val time = videoDocumentSnapShot.getString("time")
+            val agoTime = calculateAgoTime(time)
+
+            if (userId != null && title != null && videoThumbnailUrl != null && videoUrl != null) {
+                resultVideoList.add(
+                    Video(
+                        videoId = videoId,
+                        userId = userId,
+                        videoThumbnailUrl = videoThumbnailUrl,
+                        videoTitle = title,
+                        agoTime = agoTime,
+                        videoUrl = videoUrl,
+                        userName = userName,
+                        userProfileUrl = userProfileUrl
+                    )
+                )
+            }
+        }
+
+        return resultVideoList
+    }
+
+    fun createBroadcastData(broadcastId: String, title: String, startTime: String): HashMap<String, String> {
+        return hashMapOf(
+            "userId" to broadcastId,
+            "title" to title,
+            "startTime" to startTime
+        )
+    }
+
+    fun createUserProfileData(name: String, pictureUrl: String): HashMap<String, String> {
+        return hashMapOf(
+            "name" to name,
+            "pictureUrl" to pictureUrl
+        )
+    }
+
+    fun createVideoData(title: String, userId: String, videoThumbnailUri: String, videoUrl: String, time: String): HashMap<String, String> {
+        return hashMapOf(
+            "title" to title,
+            "userId" to userId,
+            "videoThumbnailUrl" to URLDecoder.decode(
+                videoThumbnailUri,
+                StandardCharsets.UTF_8.toString()
+            ),
+            "videoUrl" to videoUrl,
+            "time" to time
+        )
+    }
+
+    fun createProfileFromDocumentSnapShot(documentSnapShot: DocumentSnapshot): Result<Profile> {
+        val name = documentSnapShot.getString("name")
+        val pictureUrl = documentSnapShot.getString("pictureUrl")
+
+        return if (name != null && pictureUrl != null) {
+            val profile = Profile(
+                name = name,
+                pictureUrl = pictureUrl,
+                videoList = emptyList()
+            )
+
+            Result.success(profile)
+        } else {
+            Result.failure(Exception("프로필을 조회할 수 없습니다."))
         }
     }
 }

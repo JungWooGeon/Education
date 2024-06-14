@@ -1,12 +1,13 @@
 package com.pass.data.service.webrtc
 
 import org.json.JSONObject
+import org.webrtc.VideoTrack
 
 interface WebRtcViewerService {
 
-    fun startViewing(broadcastId: String)
+    fun startViewing(broadcastId: String, callbackOnFailureConnected: () -> Unit, callbackOnSuccessConnected: (VideoTrack) -> Unit)
 
     fun stopViewing()
 
-    fun handleOffer(broadcastId: String, json: JSONObject)
+    fun handleOffer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit)
 }

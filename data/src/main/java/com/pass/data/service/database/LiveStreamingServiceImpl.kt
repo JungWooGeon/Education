@@ -12,15 +12,24 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
+/**
+ * LiveStreaming 관련 데이터 가공(생성, 수정, 추출 등) 및 비지니스 로직 구현
+ */
 class LiveStreamingServiceImpl @Inject constructor(
-    private val firebaseDatabaseManager: DatabaseManager<DocumentSnapshot>,
+    firebaseDatabaseManager: DatabaseManager<DocumentSnapshot>,
+    fireStoreUtil: FireStoreUtil,
     private val calculateUtil: CalculateUtil,
-    private val fireStoreUtil: FireStoreUtil,
     private val dateTimeProvider: DateTimeProvider
-) : LiveStreamingService {
+) : LiveStreamingService, MediaBaseServiceImpl(firebaseDatabaseManager, fireStoreUtil) {
 
+    /**
+     * 순차적 처리를 위해 flow collect 중첩
+     * 1. Flow<Result<Pair<DocumentSnapshot, List<String>> : Firestore에서 전체 livestreaming list 조회 + id 추출 결과
+     * 2. Flow<Result<DocumentSnapshot>> : id 추출 결과를 토대로 id user 정보 조회 결과
+     * 3. resultLiveStreamingList: 1번과 2번의 결과를 조합하여 데이터 가공 후 return
+     */
     override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> = callbackFlow {
-        getLiveStreamingAndIdList().collect { resultPair ->
+        getMediaAndIdList("liveStreams").collect { resultPair ->
             resultPair.onSuccess { pair ->
                 val videoDocumentSnapShotList = pair.first
                 val idList = pair.second
@@ -50,14 +59,18 @@ class LiveStreamingServiceImpl @Inject constructor(
         awaitClose()
     }
 
+    /**
+     * 1. broadcastData : livestreaming 으로 추가할 데이터 생성
+     * 2. Flow<Result<Unit>> : FireStore에 livestreaming 데이터 추가
+     */
     override suspend fun createLiveStreamingData(broadcastId: String, title: String): Flow<Result<Unit>> = callbackFlow {
         val nowDateTime = dateTimeProvider.localDateTimeNowFormat()
 
         // TODO 추후 Thumbnail 추가
-        val broadcastData = hashMapOf(
-            "userId" to broadcastId,
-            "title" to title,
-            "startTime" to nowDateTime
+        val broadcastData = fireStoreUtil.createBroadcastData(
+            broadcastId = broadcastId,
+            title = title,
+            startTime = nowDateTime
         )
 
         firebaseDatabaseManager.createData(
@@ -79,39 +92,14 @@ class LiveStreamingServiceImpl @Inject constructor(
         awaitClose()
     }
 
+    /**
+     * livestreaming 데이터 삭제
+     */
     override suspend fun deleteLiveStreamingData(broadcastId: String) {
         // firebase delete
         firebaseDatabaseManager.deleteData(
             collectionPath = "liveStreams",
             documentPath = broadcastId
         ).first()
-    }
-
-    private suspend fun getLiveStreamingAndIdList(): Flow<Result<Pair<List<DocumentSnapshot>, List<String>>>> = callbackFlow {
-        // 라이브 목록 조회
-        firebaseDatabaseManager.readDataList("liveStreams").collect { readDataListResult ->
-            readDataListResult.onSuccess { videoDocumentSnapShotList ->
-                // idList 추출
-                val idList = fireStoreUtil.extractUserIdsFromDocuments(videoDocumentSnapShotList)
-                trySend(Result.success(videoDocumentSnapShotList to idList))
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
-        }
-
-        awaitClose()
-    }
-
-    private suspend fun getIdList(idList: List<String>): Flow<Result<List<DocumentSnapshot>>> = callbackFlow {
-        // id 목록 조회
-        firebaseDatabaseManager.readIdList(idList).collect { readIdListResult ->
-            readIdListResult.onSuccess { readIdDocumentSnapShotList ->
-                trySend(Result.success(readIdDocumentSnapShotList))
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
-        }
-
-        awaitClose()
     }
 }

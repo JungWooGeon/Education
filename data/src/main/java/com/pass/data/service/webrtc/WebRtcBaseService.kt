@@ -6,5 +6,5 @@ interface WebRtcBaseService {
 
     fun handleRemoteIceCandidate(json: JSONObject)
 
-    fun handleError()
+    fun handleError(callbackOnFailureConnected: (() -> Unit))
 }

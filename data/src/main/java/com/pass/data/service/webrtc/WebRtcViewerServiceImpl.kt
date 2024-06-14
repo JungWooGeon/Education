@@ -7,6 +7,7 @@ import com.pass.data.manager.webrtc.PeerConnectionManager
 import com.pass.data.manager.webrtc.SdpManager
 import org.json.JSONObject
 import org.webrtc.SessionDescription
+import org.webrtc.VideoTrack
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,13 +20,13 @@ class WebRtcViewerServiceImpl @Inject constructor(
     sdpManager: SdpManager,
 ): WebRtcBaseServiceImpl(peerConnectionManager, iceCandidateManager, sdpManager, socketConnectionManager, socketMessageManager), WebRtcViewerService {
 
-    override fun startViewing(broadcastId: String) {
+    override fun startViewing(broadcastId: String, callbackOnFailureConnected: () -> Unit, callbackOnSuccessConnected: (VideoTrack) -> Unit) {
         // 소켓 초기화 (시청자용)
         socketConnectionManager.initializeSocket(
             isBroadCaster = false,
-            handleOffer = { handleOffer(broadcastId, it) },
+            handleOffer = { handleOffer(broadcastId = broadcastId, json = it, callbackOnFailureConnected = callbackOnFailureConnected) },
             handleAnswer = { },
-            handleError = { handleError() },
+            handleError = { handleError(callbackOnFailureConnected = callbackOnFailureConnected) },
             handleRemoteIceCandidate = { handleRemoteIceCandidate(it) }
         )
 
@@ -36,9 +37,9 @@ class WebRtcViewerServiceImpl @Inject constructor(
                 socketMessageManager.emitMessage("iceCandidate", broadcastId, iceCandidate = json)
             },
             callbackOnReceiveVideoTrack = { videoTrack ->
-                onSuccessConnected?.invoke(videoTrack)
+                callbackOnSuccessConnected(videoTrack)
             },
-            callbackOnFailure = { onFailureConnected?.invoke() }
+            callbackOnFailure = callbackOnFailureConnected
         )
 
         // 소켓 연결
@@ -53,7 +54,7 @@ class WebRtcViewerServiceImpl @Inject constructor(
         socketConnectionManager.disconnect()
     }
 
-    override fun handleOffer(broadcastId: String, json: JSONObject) {
+    override fun handleOffer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit) {
         iceCandidateManager.setRemoteDescriptionPeerConnection(
             json = json,
             sessionDescriptionType = SessionDescription.Type.OFFER,
@@ -64,10 +65,10 @@ class WebRtcViewerServiceImpl @Inject constructor(
                         // callbackOnSetSuccess, answer 생성 후 서버로 전송
                         socketMessageManager.emitMessage("answer", broadcastId, peerConnectionLocalDescription)
                     },
-                    callbackOnFailure = { onFailureConnected?.invoke() }
+                    callbackOnFailure = callbackOnFailureConnected
                 )
             },
-            callbackOnFailure = { onFailureConnected?.invoke() }
+            callbackOnFailure = callbackOnFailureConnected
         )
     }
 }

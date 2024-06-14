@@ -1,6 +1,6 @@
 package com.pass.data.repository
 
-import com.google.firebase.auth.FirebaseAuth
+import com.pass.data.service.auth.AuthenticationService
 import com.pass.data.service.auth.SignService
 import com.pass.data.service.database.UserService
 import com.pass.domain.model.Profile
@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
-    private val auth: FirebaseAuth,
     private val signService: SignService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val authenticationService: AuthenticationService
 ) : ProfileRepository {
 
     override suspend fun isSignedIn(): Flow<Boolean> {
@@ -32,7 +32,7 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserProfile(): Flow<Result<Profile>> {
-        val userId = auth.currentUser?.uid
+        val userId = authenticationService.getCurrentUserId()
 
         return if (userId != null) {
             userService.getUserProfile(userId)
@@ -46,7 +46,7 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateUserProfilePicture(pictureUri: String): Flow<Result<String>> {
-        val userId = auth.currentUser?.uid
+        val userId = authenticationService.getCurrentUserId()
 
         return if (userId != null) {
             userService.updateUserProfilePicture(

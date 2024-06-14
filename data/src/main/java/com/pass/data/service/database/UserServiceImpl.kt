@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.zip
 import javax.inject.Inject
 
+/**
+ * User 관련 데이터 가공(생성, 수정, 추출 등) 및 비지니스 로직 구현
+ */
 class UserServiceImpl @Inject constructor(
     private val firebaseDatabaseManager: DatabaseManager<DocumentSnapshot>,
     private val firebaseStorageManager: StorageManager,
@@ -19,11 +22,12 @@ class UserServiceImpl @Inject constructor(
     private val fireStoreUtil: FireStoreUtil
 ) : UserService {
 
+    /**
+     * 1. Flow<Result<DocumentSnapshot>> : 프로필 정보 조회
+     * 2. Flow<Result<List<DocumentSnapshot>>> : 내 프로필 동영상 목록 조회
+     * 3. 1번과 2번 결과를 조합하여 Profile 데이터 생성 후 return
+     */
     override suspend fun getUserProfile(userId: String): Flow<Result<Profile>> = callbackFlow {
-        // 1. 프로필 정보 조회
-        // 2. 내 프로필 동영상 목록 조회
-        // 1 ~ 2 플로우를 동시에 실행하여 모두 성공 시 성공으로 반환
-
         // 프로필 정보 조회
         val readProfileInfoFlow = firebaseDatabaseManager.readData(
             collectionPath = "profiles",
@@ -66,10 +70,17 @@ class UserServiceImpl @Inject constructor(
         awaitClose()
     }
 
+    /**
+     * Flow<Result<Unit>> : User 정보 수정
+     */
     override suspend fun updateUserProfile(name: String, field: String): Flow<Result<Unit>> {
         return firebaseDatabaseManager.updateData(name, field, "profiles")
     }
 
+    /**
+     * 1. Flow<Result<String>> : firestorage 사진 파일 수정
+     * 2. Flow<Result<Unit>> : firestore 사진 url 정보 업데이트
+     */
     override suspend fun updateUserProfilePicture(userId: String, pictureUri: String): Flow<Result<String>> = callbackFlow {
         // 사진 업데이트 + 새로운 사진 url 업데이트
         firebaseStorageManager.updateFile(pictureUri, "user_profile/${userId}").collect { result ->
@@ -89,26 +100,16 @@ class UserServiceImpl @Inject constructor(
         awaitClose()
     }
 
+    /**
+     * Flow<Result<DocumentSnapshot>> : firestore 전체 사용자 정보 조회
+     */
     override suspend fun getOtherUserProfile(userId: String): Flow<Result<Profile>> = callbackFlow {
         firebaseDatabaseManager.readData(
             collectionPath =  "profiles",
             documentPath = userId
         ).collect { result ->
             result.onSuccess { documentSnapShot ->
-                val name = documentSnapShot.getString("name")
-                val pictureUrl = documentSnapShot.getString("pictureUrl")
-
-                if (name != null && pictureUrl != null) {
-                    val profile = Profile(
-                        name = name,
-                        pictureUrl = pictureUrl,
-                        videoList = emptyList()
-                    )
-
-                    trySend(Result.success(profile))
-                } else {
-                    trySend(Result.failure(Exception("프로필을 조회할 수 없습니다.")))
-                }
+                trySend(fireStoreUtil.createProfileFromDocumentSnapShot(documentSnapShot))
             }.onFailure {
                 trySend(Result.failure(it))
             }
