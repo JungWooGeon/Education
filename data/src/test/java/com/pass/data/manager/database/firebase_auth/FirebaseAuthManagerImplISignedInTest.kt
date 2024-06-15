@@ -1,4 +1,4 @@
-package com.pass.data.util.firebase_auth
+package com.pass.data.manager.database.firebase_auth
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser

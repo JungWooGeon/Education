@@ -1,8 +1,10 @@
 package com.pass.presentation.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.model.Video
 import com.pass.domain.usecase.GetOtherUserProfileUseCase
+import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.VideoStreamingIntent
 import com.pass.presentation.sideeffect.VideoStreamingSideEffect
 import com.pass.presentation.state.screen.VideoStreamingState
@@ -13,13 +15,12 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 @HiltViewModel
 class VideoStreamingViewModel @Inject constructor(
-    val getOtherUserProfileUseCase: GetOtherUserProfileUseCase
+    private val getOtherUserProfileUseCase: GetOtherUserProfileUseCase,
+    private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<VideoStreamingState, VideoStreamingSideEffect> {
 
     override val container: Container<VideoStreamingState, VideoStreamingSideEffect> = container(
@@ -43,8 +44,8 @@ class VideoStreamingViewModel @Inject constructor(
                     state.copy(
                         isMinimized = false,
                         videoTitle = video.videoTitle,
-                        videoUrl = URLDecoder.decode(video.videoUrl, StandardCharsets.UTF_8.toString()),
-                        userProfileURL = URLDecoder.decode(profile.pictureUrl, StandardCharsets.UTF_8.toString()),
+                        videoUrl = urlCodec.urlDecode(video.videoUrl),
+                        userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
                         userName = profile.name
                     )
                 }

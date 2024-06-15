@@ -1,4 +1,4 @@
-package com.pass.data.util.calculate
+package com.pass.data.util
 
 import com.pass.data.di.DateTimeProvider
 import com.pass.data.util.CalculateUtil

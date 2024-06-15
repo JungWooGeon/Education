@@ -1,9 +1,11 @@
 package com.pass.presentation.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.StartLiveStreamingUseCase
 import com.pass.domain.usecase.StopLiveStreamingUseCase
+import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.AddLiveStreamingIntent
 import com.pass.presentation.sideeffect.AddLiveStreamingSideEffect
 import com.pass.presentation.state.screen.AddLiveStreamingState
@@ -15,15 +17,14 @@ import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import org.webrtc.VideoTrack
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 @HiltViewModel
 class AddLiveStreamingViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val startLiveStreamingUseCase: StartLiveStreamingUseCase<VideoTrack>,
-    private val stopLiveStreamingUseCase: StopLiveStreamingUseCase<VideoTrack>
+    private val stopLiveStreamingUseCase: StopLiveStreamingUseCase<VideoTrack>,
+    private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<AddLiveStreamingState, AddLiveStreamingSideEffect> {
 
     override val container: Container<AddLiveStreamingState, AddLiveStreamingSideEffect> = container (
@@ -49,7 +50,7 @@ class AddLiveStreamingViewModel @Inject constructor(
             result.onSuccess { profile ->
                 reduce {
                     state.copy(
-                        userProfileUrl = URLDecoder.decode(profile.pictureUrl, StandardCharsets.UTF_8.toString()),
+                        userProfileUrl = urlCodec.urlDecode(profile.pictureUrl),
                         liveStreamingTitle = "${profile.name}의 방송을 시작합니다."
                     )
                 }

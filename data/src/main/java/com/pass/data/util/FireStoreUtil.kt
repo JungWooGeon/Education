@@ -1,16 +1,18 @@
 package com.pass.data.util
 
+import android.net.Uri
 import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.domain.model.LiveStreaming
 import com.pass.domain.model.Profile
 import com.pass.domain.model.Video
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
+import com.pass.domain.util.URLCodec
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FireStoreUtil @Inject constructor() {
+class FireStoreUtil @Inject constructor(
+    private val urlCodec: URLCodec<Uri>
+) {
 
     fun extractUserIdsFromDocuments(videoDocumentSnapShotList: List<DocumentSnapshot>): List<String> {
         val idSetList = mutableSetOf<String>()
@@ -172,10 +174,7 @@ class FireStoreUtil @Inject constructor() {
         return hashMapOf(
             "title" to title,
             "userId" to userId,
-            "videoThumbnailUrl" to URLDecoder.decode(
-                videoThumbnailUri,
-                StandardCharsets.UTF_8.toString()
-            ),
+            "videoThumbnailUrl" to urlCodec.urlDecode(videoThumbnailUri),
             "videoUrl" to videoUrl,
             "time" to time
         )

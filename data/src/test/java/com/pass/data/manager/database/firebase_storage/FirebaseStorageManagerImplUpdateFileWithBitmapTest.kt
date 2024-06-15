@@ -1,5 +1,6 @@
-package com.pass.data.util.firebase_storage
+package com.pass.data.manager.database.firebase_storage
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.core.net.toUri
 import com.google.android.gms.tasks.OnFailureListener
@@ -8,12 +9,14 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.UploadTask
 import com.pass.data.manager.database.FirebaseStorageManagerImpl
+import com.pass.data.util.MediaUtil
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -23,6 +26,8 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
 
     // firebase 모킹
     private val mockFirebaseStorage = mockk<FirebaseStorage>()
+    private val mockMediaUtil = mockk<MediaUtil>()
+    private val mockBitmap = mockk<Bitmap>()
 
     // Task 객체 모킹
     private val mockTaskUri = mockk<Task<Uri>>()
@@ -32,8 +37,15 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
     private val testUri = "testUri".toUri()
     private val testBitmapString = "testBitmapString"
     private val testVideoId = "testVideoId"
+    private val testByteArray = byteArrayOf()
 
-    private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage)
+    private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage, mockMediaUtil)
+
+    @Before
+    fun setup() {
+        every { mockMediaUtil.convertStringToBitmap(any()) } returns mockBitmap
+        every { mockMediaUtil.convertBitmapToByteArray(any()) } returns testByteArray
+    }
 
     @Test
     fun testSuccessUpdateFileWithBitmap() = runBlocking {

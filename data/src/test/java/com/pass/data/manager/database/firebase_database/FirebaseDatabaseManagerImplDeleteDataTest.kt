@@ -1,4 +1,4 @@
-package com.pass.data.util.firebase_database
+package com.pass.data.manager.database.firebase_database
 
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Test
 
-class FirebaseDatabaseManagerImplCreateDataTest {
+class FirebaseDatabaseManagerImplDeleteDataTest {
 
     // firebase 모킹
     private val mockFirebaseAuth = mockk<FirebaseAuth>()
@@ -24,65 +24,46 @@ class FirebaseDatabaseManagerImplCreateDataTest {
 
     private val testCollectionPath = "videos"
     private val testDocumentPath = "test"
-    private val testTitle = "test title"
-    private val testUid = "test uid"
-    private val testVideoThumbnailUrl = "test video thumbnail url"
-    private val testVideoUrl = "test video url"
-    private val testTime = "2024060200431212"
 
     private val firebaseDatabaseService = FirebaseDatabaseManagerImpl(mockFirebaseAuth, mockFirebaseFireStore)
 
     @Test
-    fun testSuccessCreateData() = runBlocking {
-        val testHashMap = hashMapOf(
-            "title" to testTitle,
-            "userId" to testUid,
-            "videoThumbnailUrl" to testVideoThumbnailUrl,
-            "videoUrl" to testVideoUrl,
-            "time" to testTime
-        )
-
+    fun testSuccessDeleteData() = runBlocking {
         every { mockTaskVoid.isSuccessful } returns true
-        every { mockFirebaseFireStore.collection(any()).document(any()).set(any()) } answers { mockTaskVoid }
+        every { mockFirebaseFireStore.collection(any()).document(any()).delete() } answers { mockTaskVoid }
+
         every { mockTaskVoid.addOnSuccessListener(any()) } answers {
             firstArg<OnSuccessListener<Void>>().onSuccess(null)
             mockTaskVoid
         }
+
         every { mockTaskVoid.addOnFailureListener(any()) } answers {
             mockTaskVoid
         }
 
-        val result = firebaseDatabaseService.createData(
-            dataMap = testHashMap,
+        val result = firebaseDatabaseService.deleteData(
             collectionPath = testCollectionPath,
-            documentPath = testDocumentPath,
+            documentPath = testDocumentPath
         ).first()
 
         Assert.assertTrue(result.isSuccess)
     }
 
     @Test
-    fun testSuccessCreateDataWithCollection2AndDocument2() = runBlocking {
-        val testHashMap = hashMapOf(
-            "title" to testTitle,
-            "userId" to testUid,
-            "videoThumbnailUrl" to testVideoThumbnailUrl,
-            "videoUrl" to testVideoUrl,
-            "time" to testTime
-        )
-
+    fun testSuccessDeleteDataWithCollection2AndDocument2() = runBlocking {
         every { mockTaskVoid.isSuccessful } returns true
-        every { mockFirebaseFireStore.collection(any()).document(any()).collection(any()).document(any()).set(any()) } answers { mockTaskVoid }
+        every { mockFirebaseFireStore.collection(any()).document(any()).collection(any()).document(any()).delete() } answers { mockTaskVoid }
+
         every { mockTaskVoid.addOnSuccessListener(any()) } answers {
             firstArg<OnSuccessListener<Void>>().onSuccess(null)
             mockTaskVoid
         }
+
         every { mockTaskVoid.addOnFailureListener(any()) } answers {
             mockTaskVoid
         }
 
-        val result = firebaseDatabaseService.createData(
-            dataMap = testHashMap,
+        val result = firebaseDatabaseService.deleteData(
             collectionPath = testCollectionPath,
             documentPath = testDocumentPath,
             collectionPath2 = testCollectionPath,
@@ -93,29 +74,22 @@ class FirebaseDatabaseManagerImplCreateDataTest {
     }
 
     @Test
-    fun testFailCreateData() = runBlocking {
+    fun testFailDeleteData() = runBlocking {
         val testException = Exception("test fail")
-        val testHashMap = hashMapOf(
-            "title" to testTitle,
-            "userId" to testUid,
-            "videoThumbnailUrl" to testVideoThumbnailUrl,
-            "videoUrl" to testVideoUrl,
-            "time" to testTime
-        )
 
-        every { mockTaskVoid.exception } returns testException
         every { mockTaskVoid.isSuccessful } returns false
-        every { mockFirebaseFireStore.collection(any()).document(any()).set(any()) } answers { mockTaskVoid }
+        every { mockFirebaseFireStore.collection(any()).document(any()).delete() } answers { mockTaskVoid }
+
         every { mockTaskVoid.addOnSuccessListener(any()) } answers {
             mockTaskVoid
         }
+
         every { mockTaskVoid.addOnFailureListener(any()) } answers {
             firstArg<OnFailureListener>().onFailure(testException)
             mockTaskVoid
         }
 
-        val result = firebaseDatabaseService.createData(
-            dataMap = testHashMap,
+        val result = firebaseDatabaseService.deleteData(
             collectionPath = testCollectionPath,
             documentPath = testDocumentPath
         ).first()
@@ -125,29 +99,22 @@ class FirebaseDatabaseManagerImplCreateDataTest {
     }
 
     @Test
-    fun testFailCreateDataWithCollection2AndDocument2() = runBlocking {
+    fun testFailDeleteDataWithCollection2AndDocument2() = runBlocking {
         val testException = Exception("test fail")
-        val testHashMap = hashMapOf(
-            "title" to testTitle,
-            "userId" to testUid,
-            "videoThumbnailUrl" to testVideoThumbnailUrl,
-            "videoUrl" to testVideoUrl,
-            "time" to testTime
-        )
 
-        every { mockTaskVoid.exception } returns testException
         every { mockTaskVoid.isSuccessful } returns false
-        every { mockFirebaseFireStore.collection(any()).document(any()).collection(any()).document(any()).set(any()) } answers { mockTaskVoid }
+        every { mockFirebaseFireStore.collection(any()).document(any()).collection(any()).document(any()).delete() } answers { mockTaskVoid }
+
         every { mockTaskVoid.addOnSuccessListener(any()) } answers {
             mockTaskVoid
         }
+
         every { mockTaskVoid.addOnFailureListener(any()) } answers {
             firstArg<OnFailureListener>().onFailure(testException)
             mockTaskVoid
         }
 
-        val result = firebaseDatabaseService.createData(
-            dataMap = testHashMap,
+        val result = firebaseDatabaseService.deleteData(
             collectionPath = testCollectionPath,
             documentPath = testDocumentPath,
             collectionPath2 = testCollectionPath,

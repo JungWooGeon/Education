@@ -51,8 +51,6 @@ import com.pass.presentation.view.component.VideoListItem
 import com.pass.presentation.viewmodel.ProfileViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -84,6 +82,8 @@ fun ProfileScreen(
                 onNavigateToSignInScreen()
                 Toast.makeText(context, "로그아웃을 완료하였습니다.", Toast.LENGTH_SHORT).show()
             }
+
+            is ProfileSideEffect.NavigateToAddVideoScreen -> { onNavigateToAddVideoScreen(sideEffect.uri) }
         }
     }
 
@@ -96,7 +96,9 @@ fun ProfileScreen(
     // 동영상 사진 선택 런처
     val singleVideoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri -> uri?.let{ onNavigateToAddVideoScreen(URLEncoder.encode(uri.toString(), StandardCharsets.UTF_8.toString())) } }
+        onResult = { uri ->
+            uri?.let { viewModel.processIntent(ProfileIntent.OnNavigateToAddVideoScreen(uri)) }
+        }
     )
 
     // 권한 허용 - OS 버전에 따른 이미지 읽기 권한 목록

@@ -1,6 +1,5 @@
 package com.pass.data.manager.database
 
-import android.graphics.Bitmap
 import androidx.core.net.toUri
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.util.MediaUtil
@@ -10,10 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import java.net.URLDecoder
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 class FirebaseStorageManagerImpl @Inject constructor(
@@ -24,7 +19,7 @@ class FirebaseStorageManagerImpl @Inject constructor(
     override suspend fun updateFile(fileUri: String, pathString: String): Flow<Result<String>> =
         callbackFlow {
             val file = withContext(Dispatchers.IO) {
-                URLDecoder.decode(fileUri, StandardCharsets.UTF_8.toString())
+                mediaUtil.urlDecode(fileUri)
             }.toUri()
             storage.reference.child(pathString).putFile(file)
                 .addOnSuccessListener { taskSnapshot ->
@@ -33,10 +28,7 @@ class FirebaseStorageManagerImpl @Inject constructor(
                         ?.addOnSuccessListener { downloadUrl ->
                             launch {
                                 val uriString = withContext(Dispatchers.IO) {
-                                    URLEncoder.encode(
-                                        downloadUrl.toString(),
-                                        StandardCharsets.UTF_8.toString()
-                                    )
+                                    mediaUtil.urlEncode(downloadUrl)
                                 }
                                 trySend(Result.success(uriString))
                             }
@@ -55,9 +47,7 @@ class FirebaseStorageManagerImpl @Inject constructor(
         videoId: String
     ): Flow<Result<String>> = callbackFlow {
         val bitmap = mediaUtil.convertStringToBitmap(bitmapString)
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-        val data = baos.toByteArray()
+        val data = mediaUtil.convertBitmapToByteArray(bitmap)
 
         val uploadTask = storage.reference.child("video_thumbnail/${videoId}").putBytes(data)
         uploadTask.addOnSuccessListener { taskSnapshot ->
@@ -65,10 +55,7 @@ class FirebaseStorageManagerImpl @Inject constructor(
                 ?.addOnSuccessListener { downloadUrl ->
                     launch {
                         val uriString = withContext(Dispatchers.IO) {
-                            URLEncoder.encode(
-                                downloadUrl.toString(),
-                                StandardCharsets.UTF_8.toString()
-                            )
+                            mediaUtil.urlEncode(downloadUrl)
                         }
                         trySend(Result.success(uriString))
                     }

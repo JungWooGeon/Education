@@ -1,10 +1,12 @@
 package com.pass.presentation.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pass.domain.model.Video
 import com.pass.domain.usecase.GetAllVideoListUseCase
 import com.pass.domain.usecase.IsSignedInUseCase
+import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.VideoListIntent
 import com.pass.presentation.sideeffect.VideoListSideEffect
 import com.pass.presentation.state.screen.VideoListState
@@ -16,14 +18,13 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 @HiltViewModel
 class VideoListViewModel @Inject constructor(
     private val getAllVideoListUseCase: GetAllVideoListUseCase,
-    private val isSignedInUseCase: IsSignedInUseCase
+    private val isSignedInUseCase: IsSignedInUseCase,
+    private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<VideoListState, VideoListSideEffect> {
 
     override val container: Container<VideoListState, VideoListSideEffect> = container(
@@ -55,7 +56,7 @@ class VideoListViewModel @Inject constructor(
                                 agoTime = it.agoTime,
                                 videoUrl = it.videoUrl,
                                 userName = it.userName,
-                                userProfileUrl = URLDecoder.decode(it.userProfileUrl, StandardCharsets.UTF_8.toString())
+                                userProfileUrl = it.userProfileUrl?.let { it1 -> urlCodec.urlDecode(it1) }
                             )
                         )
                     }

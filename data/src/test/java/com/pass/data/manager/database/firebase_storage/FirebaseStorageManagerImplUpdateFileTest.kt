@@ -1,4 +1,4 @@
-package com.pass.data.util.firebase_storage
+package com.pass.data.manager.database.firebase_storage
 
 import android.net.Uri
 import androidx.core.net.toUri
@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.UploadTask
 import com.pass.data.manager.database.FirebaseStorageManagerImpl
+import com.pass.data.util.MediaUtil
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
@@ -28,12 +29,13 @@ class FirebaseStorageManagerImplUpdateFileTest {
     private val mockTaskUri = mockk<Task<Uri>>()
     private val mockUploadTask = mockk<UploadTask>()
     private val mockUploadTaskTaskSnapshot = mockk<UploadTask.TaskSnapshot>()
+    private val mockMediaUtil = mockk<MediaUtil>()
 
     private val testFileUri = "test file uri"
     private val testPathString = "test path string"
     private val testUri = "testUri".toUri()
 
-    private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage)
+    private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage, mockMediaUtil)
 
     @Test
     fun testSuccessUpdateFile() = runBlocking {

@@ -13,4 +13,5 @@ sealed class ProfileIntent {
     data class OpenDeleteModalBottomSheet(val videoIdx: Int) : ProfileIntent()
     data object CloseDeleteModalBottomSheet : ProfileIntent()
     data object DeleteVideoItem : ProfileIntent()
+    data class OnNavigateToAddVideoScreen(val uri: Uri) : ProfileIntent()
 }

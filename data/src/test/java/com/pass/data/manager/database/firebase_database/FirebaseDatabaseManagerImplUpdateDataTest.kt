@@ -1,4 +1,4 @@
-package com.pass.data.util.firebase_database
+package com.pass.data.manager.database.firebase_database
 
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
@@ -36,7 +36,7 @@ class FirebaseDatabaseManagerImplUpdateDataTest {
         every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
         every { mockFirebaseUser.uid } returns "test1234"
 
-        every { mockFirebaseFireStore.runTransaction<Any>(any()) }answers { mockTaskAny }
+        every { mockFirebaseFireStore.runTransaction<Any>(any()) } answers { mockTaskAny }
 
         every { mockTaskAny.addOnSuccessListener(any()) } answers {
             firstArg<OnSuccessListener<Void>>().onSuccess(null)

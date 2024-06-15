@@ -7,6 +7,7 @@ import com.pass.domain.usecase.GetUserProfileUseCase
 import com.pass.domain.usecase.SignOutUseCase
 import com.pass.domain.usecase.UpdateUserProfileNameUseCase
 import com.pass.domain.usecase.UpdateUserProfilePictureUseCase
+import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.ProfileIntent
 import com.pass.presentation.sideeffect.ProfileSideEffect
 import com.pass.presentation.state.screen.ProfileState
@@ -19,9 +20,6 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.net.URLDecoder
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,7 +28,8 @@ class ProfileViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val updateUserProfileNameUseCase: UpdateUserProfileNameUseCase,
     private val updateUserProfilePicture: UpdateUserProfilePictureUseCase,
-    private val deleteVideoUseCase: DeleteVideoUseCase
+    private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<ProfileState, ProfileSideEffect> {
 
     override val container: Container<ProfileState, ProfileSideEffect> = container(
@@ -49,6 +48,7 @@ class ProfileViewModel @Inject constructor(
             is ProfileIntent.OpenDeleteModalBottomSheet -> openDeleteModalBottomSheet(intent.videoIdx)
             is ProfileIntent.CloseDeleteModalBottomSheet -> closeDeleteModalBottomSheet()
             is ProfileIntent.DeleteVideoItem -> deleteVideoItem()
+            is ProfileIntent.OnNavigateToAddVideoScreen -> navigateToAddVideoScreen(intent.uri)
         }
     }
 
@@ -57,7 +57,7 @@ class ProfileViewModel @Inject constructor(
             result.onSuccess { profile ->
                 reduce {
                     state.copy(
-                        userProfileURL = URLDecoder.decode(profile.pictureUrl, StandardCharsets.UTF_8.toString()),
+                        userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
                         userName = profile.name,
                         editDialogUserName = profile.name,
                         videoList = profile.videoList
@@ -127,11 +127,11 @@ class ProfileViewModel @Inject constructor(
             postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경을 취소하였습니다."))
         } else {
             updateUserProfilePicture(withContext(Dispatchers.IO) {
-                URLEncoder.encode(uri.toString(), StandardCharsets.UTF_8.toString())
+                urlCodec.urlEncode(uri)
             }).collect { result ->
                 result.onSuccess { pictureUrl ->
                     reduce {
-                        state.copy(userProfileURL = URLDecoder.decode(pictureUrl, StandardCharsets.UTF_8.toString()))
+                        state.copy(userProfileURL = urlCodec.urlDecode(pictureUrl))
                     }
                     postSideEffect(ProfileSideEffect.Toast("프로필 사진을 변경하였습니다."))
                 }.onFailure {
@@ -181,5 +181,10 @@ class ProfileViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun navigateToAddVideoScreen(uri: Uri) = intent {
+        val uriString = urlCodec.urlEncode(uri)
+        postSideEffect(ProfileSideEffect.NavigateToAddVideoScreen(uriString))
     }
 }

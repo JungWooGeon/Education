@@ -1,10 +1,11 @@
-package com.pass.data.util.firebase_storage
+package com.pass.data.manager.database.firebase_storage
 
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.manager.database.FirebaseStorageManagerImpl
+import com.pass.data.util.MediaUtil
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
@@ -19,10 +20,11 @@ class FirebaseStorageManagerImplDeleteFileTest {
 
     // Task 객체 모킹
     private val mockTaskVoid = mockk<Task<Void>>()
+    private val mockMediaUtil = mockk<MediaUtil>()
 
     private val testPathString = "video_thumbnail/test1234_202406020224"
 
-    private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage)
+    private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage, mockMediaUtil)
 
     @Test
     fun testSuccessDeleteFile() = runBlocking {

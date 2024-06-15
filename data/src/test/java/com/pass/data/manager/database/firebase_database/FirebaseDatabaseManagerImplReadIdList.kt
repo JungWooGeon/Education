@@ -1,4 +1,4 @@
-package com.pass.data.util.firebase_database
+package com.pass.data.manager.database.firebase_database
 
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
@@ -75,5 +75,15 @@ class FirebaseDatabaseManagerImplReadIdList {
 
         assertTrue(result.isFailure)
         Assert.assertEquals(result.exceptionOrNull()?.message, testException.message)
+    }
+
+    @Test
+    fun testFailReadIdListWithEmptyUserIdList() = runBlocking {
+        val result = firebaseDatabaseService.readIdList(userIdList = emptyList()).first()
+
+        assertTrue(result.isSuccess)
+
+        val resultList = result.getOrNull()
+        assertTrue(resultList != null && resultList.isEmpty())
     }
 }

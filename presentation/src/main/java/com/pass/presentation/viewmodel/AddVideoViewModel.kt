@@ -1,10 +1,12 @@
 package com.pass.presentation.viewmodel
 
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.AddVideoUseCase
 import com.pass.domain.usecase.CreateVideoThumbnailUseCase
 import com.pass.domain.util.BitmapConverter
+import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.AddVideoIntent
 import com.pass.presentation.sideeffect.AddVideoSideEffect
 import com.pass.presentation.state.screen.AddVideoState
@@ -16,15 +18,14 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 @HiltViewModel
 class AddVideoViewModel @Inject constructor(
     private val createVideoThumbnailUseCase: CreateVideoThumbnailUseCase,
     private val addVideoUseCase: AddVideoUseCase,
-    private val bitmapConverter: BitmapConverter<Bitmap>
+    private val bitmapConverter: BitmapConverter<Bitmap>,
+    private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<AddVideoState, AddVideoSideEffect> {
 
     override val container: Container<AddVideoState, AddVideoSideEffect> = container(
@@ -42,7 +43,7 @@ class AddVideoViewModel @Inject constructor(
     private fun createVideoThumbnail(videoUri: String) = intent {
         // uri 상태 복사
         reduce {
-            state.copy(videoUri = URLDecoder.decode(videoUri, StandardCharsets.UTF_8.toString()))
+            state.copy(videoUri = urlCodec.urlDecode(videoUri))
         }
 
         // thumbnail 생성 후 상태 저장

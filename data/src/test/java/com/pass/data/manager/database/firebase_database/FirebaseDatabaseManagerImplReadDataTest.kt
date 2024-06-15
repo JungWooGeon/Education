@@ -1,4 +1,4 @@
-package com.pass.data.util.firebase_database
+package com.pass.data.manager.database.firebase_database
 
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
