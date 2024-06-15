@@ -15,9 +15,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @RunWith(RobolectricTestRunner::class)
 class FirebaseStorageManagerImplUpdateFileTest {
@@ -36,6 +40,22 @@ class FirebaseStorageManagerImplUpdateFileTest {
     private val testUri = "testUri".toUri()
 
     private val firebaseStorageService = FirebaseStorageManagerImpl(mockFirebaseStorage, mockMediaUtil)
+
+    @Before
+    fun setup() {
+        every { mockMediaUtil.urlDecode(any()) } answers {
+            URLDecoder.decode(firstArg(), StandardCharsets.UTF_8.toString())
+        }
+
+        every { mockMediaUtil.urlEncode(any()) } answers {
+            val inputUri = firstArg<Uri>()
+
+            URLEncoder.encode(
+                inputUri.toString(),
+                StandardCharsets.UTF_8.toString()
+            )
+        }
+    }
 
     @Test
     fun testSuccessUpdateFile() = runBlocking {

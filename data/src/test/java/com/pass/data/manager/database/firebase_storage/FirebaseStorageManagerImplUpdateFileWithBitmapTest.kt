@@ -20,6 +20,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @RunWith(RobolectricTestRunner::class)
 class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
@@ -45,6 +47,14 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
     fun setup() {
         every { mockMediaUtil.convertStringToBitmap(any()) } returns mockBitmap
         every { mockMediaUtil.convertBitmapToByteArray(any()) } returns testByteArray
+        every { mockMediaUtil.urlEncode(any()) } answers {
+            val inputUri = firstArg<Uri>()
+
+            URLEncoder.encode(
+                inputUri.toString(),
+                StandardCharsets.UTF_8.toString()
+            )
+        }
     }
 
     @Test
