@@ -1,7 +1,6 @@
 package com.pass.data.util
 
 import com.pass.data.di.DateTimeProvider
-import com.pass.data.util.CalculateUtil
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -60,5 +59,41 @@ class CalculateUtilTest {
 
         val result = calculateUtil.calculateAgoTime(mockTime)
         assertEquals(result, "10분 전")
+    }
+
+    @Test
+    fun testSuccessCalculateAgoTime1Hours() {
+        val testParseTime = LocalDateTime.parse("20240601234430", mockFormatter)
+
+        every { mockLocalDateTimeParse(any()) } returns LocalDateTime.parse(mockTime, mockFormatter)
+        every { mockDurationBetween(any(), any()) } returns Duration.between(
+            mockLocalDateTimeParse(mockTime),
+            testParseTime
+        )
+
+        every { mockDateTimeProvider.durationBetweenNow(any()) } answers {
+            Duration.between(mockParseTime, testParseTime)
+        }
+
+        val result = calculateUtil.calculateAgoTime(mockTime)
+        assertEquals(result, "1시간 전")
+    }
+
+    @Test
+    fun testSuccessCalculateAgoTime1Days() {
+        val testParseTime = LocalDateTime.parse("20240602224430", mockFormatter)
+
+        every { mockLocalDateTimeParse(any()) } returns LocalDateTime.parse(mockTime, mockFormatter)
+        every { mockDurationBetween(any(), any()) } returns Duration.between(
+            mockLocalDateTimeParse(mockTime),
+            testParseTime
+        )
+
+        every { mockDateTimeProvider.durationBetweenNow(any()) } answers {
+            Duration.between(mockParseTime, testParseTime)
+        }
+
+        val result = calculateUtil.calculateAgoTime(mockTime)
+        assertEquals(result, "1일 전")
     }
 }

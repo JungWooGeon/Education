@@ -9,8 +9,10 @@ import android.graphics.Paint
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Base64
-import androidx.test.platform.app.InstrumentationRegistry
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -90,20 +92,53 @@ class MediaUtilTest {
     }
 
     @Test
-    fun testFailExtractFirstFrame() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val mediaMetadataRetriever = MediaMetadataRetriever()
+    fun testSuccessExtractFirstFrame() {
+        // 임의의 Bitmap 생성
+        val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+        paint.color = Color.BLUE
+        canvas.drawRect(0f, 0f, 100f, 100f, paint)
 
-        val extractMediaUtil = MediaUtil(context, mediaMetadataRetriever, byteArrayOutputStream)
+        // Bitmap To String 기대값
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
 
-        // 테스트용 비디오 파일을 포함하는 URI (웹 URL)
-//        val videoUri = Uri.parse("https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4")
+        every { mockMediaMetadataRetriever.setDataSource(mockContext, any()) } just runs
+        every { mockMediaMetadataRetriever.frameAtTime } returns bitmap
+        every { mockMediaMetadataRetriever.release() } just runs
+
+        val testVideoUri = "https://example.com"
+        val result = mediaUtil.extractFirstFrameFromVideoUri(testVideoUri)
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun testFailExtractFirstFrameWithException() {
+        every { mockMediaMetadataRetriever.setDataSource(mockContext, any()) } throws Exception("Test Fail")
+        every { mockMediaMetadataRetriever.release() } just runs
+
+        val testVideoUri = "https://example.com"
+        val result = mediaUtil.extractFirstFrameFromVideoUri(testVideoUri)
+
+        assertTrue(result.isFailure)
+        assertEquals(result.exceptionOrNull()?.message, "Test Fail")
+    }
+
+    @Test
+    fun testFailExtractFirstFrameWithFrameNull() {
+        every { mockMediaMetadataRetriever.setDataSource(mockContext, any()) } just runs
+        every { mockMediaMetadataRetriever.frameAtTime } returns null
+        every { mockMediaMetadataRetriever.release() } just runs
 
         val videoUri = Uri.parse("https://example.com")
         val resultVideoUri = mediaUtil.urlEncode(videoUri)
 
-        val result = extractMediaUtil.extractFirstFrameFromVideoUri(resultVideoUri)
+        val result = mediaUtil.extractFirstFrameFromVideoUri(resultVideoUri)
+
         assertTrue(result.isFailure)
+        assertEquals(result.exceptionOrNull()?.message, "동영상 선택에 실패하였습니다.")
     }
 
     @Test

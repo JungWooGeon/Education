@@ -115,7 +115,6 @@ class FireStoreUtil @Inject constructor(
             } else {
                 Result.failure(Exception("name or picture null"))
             }
-
         }
     }
 
