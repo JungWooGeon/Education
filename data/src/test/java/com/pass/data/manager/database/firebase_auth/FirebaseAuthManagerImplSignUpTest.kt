@@ -6,8 +6,11 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.pass.data.manager.database.FirebaseAuthManagerImpl
+import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -89,5 +92,54 @@ class FirebaseAuthManagerImplSignUpTest {
         val result = firebaseAuthService.signUp("test1234", "test1234", "t").first()
         assertTrue(result.isFailure)
         assertEquals(result.exceptionOrNull()?.message, "비밀번호가 맞지 않습니다.")
+    }
+
+    @Test
+    fun testFailSignUpWithUidNull() = runBlocking {
+        val testId = "test1234"
+        val testPassword = "test1234"
+
+        every { mockFirebaseAuth.currentUser } returns null
+        every { mockTask.result } returns mockAuthResult
+        every { mockTaskVoid.isSuccessful } returns true
+
+        every { mockTask.addOnCompleteListener(any()) } answers {
+            firstArg<OnCompleteListener<Void>>().onComplete(mockTaskVoid)
+            mockTask
+        }
+
+        every { mockFirebaseAuth.createUserWithEmailAndPassword(any(), any()) } answers { mockTask }
+
+        val result = firebaseAuthService.signUp(testId, testPassword, testPassword).first()
+        assertTrue(result.isFailure)
+        assertEquals(result.exceptionOrNull()?.message, "사용자 ID를 얻을 수 없습니다.")
+    }
+
+    @Test
+    fun testFailSignUpWithTaskExceptionNull() = runBlocking {
+        val testId = "test1234"
+        val testPassword = "test1234"
+
+        every { mockTaskVoid.exception } returns null
+        every { mockTaskVoid.isSuccessful } returns false
+
+        every { mockTask.addOnCompleteListener(any()) } answers {
+            firstArg<OnCompleteListener<Void>>().onComplete(mockTaskVoid)
+            mockTask
+        }
+
+        every { mockFirebaseAuth.createUserWithEmailAndPassword(any(), any()) } answers { mockTask }
+
+        val result = firebaseAuthService.signUp(testId, testPassword, testPassword).first()
+        assertTrue(result.isFailure)
+        assertEquals(result.exceptionOrNull()?.message, "Unknown Error")
+    }
+
+    @Test
+    fun testSuccessSignOut() = runBlocking {
+        every { mockFirebaseAuth.signOut() } just runs
+        firebaseAuthService.signOut()
+
+        coVerify { firebaseAuthService.signOut() }
     }
 }

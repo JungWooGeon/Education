@@ -79,4 +79,25 @@ class FirebaseAuthManagerImplSignInTest {
         Assert.assertTrue(result3.isFailure)
         Assert.assertEquals(result3.exceptionOrNull()?.message, "아이디와 비밀번호를 입력해주세요.")
     }
+
+    @Test
+    fun testFailSignInWithTaskExceptionNull() = runBlocking {
+        val testId = "test1234"
+        val testPassword = "test1234"
+
+        every { mockTask.result } returns mockAuthResult
+        every { mockTaskVoid.isSuccessful } returns false
+        every { mockTaskVoid.exception } returns null
+
+        every { mockTask.addOnCompleteListener(any()) } answers {
+            firstArg<OnCompleteListener<Void>>().onComplete(mockTaskVoid)
+            mockTask
+        }
+
+        every { mockFirebaseAuth.signInWithEmailAndPassword(any(), any()) } answers { mockTask }
+
+        val result = firebaseAuthService.signIn(testId, testPassword).first()
+        Assert.assertTrue(result.isFailure)
+        Assert.assertEquals(result.exceptionOrNull()?.message, "Unknown Error")
+    }
 }

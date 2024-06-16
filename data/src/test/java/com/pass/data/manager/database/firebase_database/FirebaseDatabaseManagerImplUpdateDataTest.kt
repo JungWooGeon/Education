@@ -6,6 +6,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Transaction
 import com.pass.data.manager.database.FirebaseDatabaseManagerImpl
 import io.mockk.every
 import io.mockk.mockk
@@ -33,18 +34,29 @@ class FirebaseDatabaseManagerImplUpdateDataTest {
 
     @Test
     fun testSuccessUpdateData() = runBlocking {
+        val mockTaskTransaction = mockk<Task<Transaction>>()
+        val mockTransaction = mockk<Transaction>()
+
         every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
         every { mockFirebaseUser.uid } returns "test1234"
 
-        every { mockFirebaseFireStore.runTransaction<Any>(any()) } answers { mockTaskAny }
+        every { mockFirebaseFireStore.collection(any()).document(any()) } returns mockk(relaxed = true)
+        every { mockTransaction.update(any(), testField, testName) } returns mockTransaction
+        every { mockTaskTransaction.result } returns mockTransaction
 
-        every { mockTaskAny.addOnSuccessListener(any()) } answers {
-            firstArg<OnSuccessListener<Void>>().onSuccess(null)
-            mockTaskAny
+        every { mockFirebaseFireStore.runTransaction<Transaction>(any()) } answers {
+            val function = firstArg<Transaction.Function<Transaction>>()
+            function.apply(mockTransaction)
+            mockTaskTransaction
         }
 
-        every { mockTaskAny.addOnFailureListener(any()) } answers {
-            mockTaskAny
+        every { mockTaskTransaction.addOnSuccessListener(any()) } answers {
+            firstArg<OnSuccessListener<Void>>().onSuccess(null)
+            mockTaskTransaction
+        }
+
+        every { mockTaskTransaction.addOnFailureListener(any()) } answers {
+            mockTaskTransaction
         }
 
         val result = firebaseDatabaseService.updateData(
@@ -63,7 +75,7 @@ class FirebaseDatabaseManagerImplUpdateDataTest {
         every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
         every { mockFirebaseUser.uid } returns "test1234"
 
-        every { mockFirebaseFireStore.runTransaction<Any>(any()) }answers { mockTaskAny }
+        every { mockFirebaseFireStore.runTransaction<Any>(any()) } answers { mockTaskAny }
 
         every { mockTaskAny.addOnSuccessListener(any()) } answers {
 

@@ -56,10 +56,6 @@ class FirebaseAuthManagerImpl @Inject constructor(
                             trySend(Result.success(uid))
                         }
                     } else {
-                        launch {
-                            signOut()
-                            deleteUser()
-                        }
                         trySend(Result.failure(Exception("사용자 ID를 얻을 수 없습니다.")))
                     }
                 } else {
@@ -76,10 +72,5 @@ class FirebaseAuthManagerImpl @Inject constructor(
 
     override suspend fun signOut() {
         return auth.signOut()
-    }
-
-    private fun deleteUser() {
-        val user = auth.currentUser
-        user?.delete()
     }
 }
