@@ -18,6 +18,7 @@ import com.pass.presentation.state.loading.VideoTrackState
 import com.pass.presentation.view.component.ExitDialog
 import com.pass.presentation.viewmodel.WatchBroadCastViewModel
 import io.getstream.webrtc.android.compose.VideoRenderer
+import io.getstream.webrtc.android.compose.VideoScalingType
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import org.webrtc.EglBase
@@ -89,6 +90,8 @@ fun WatchBroadCastScreen(
             videoTrack = videoTrack,
             modifier = Modifier.fillMaxSize(),
             eglBaseContext = eglBaseContext,
+            videoScalingType = VideoScalingType.SCALE_ASPECT_FILL,
+            onTextureViewCreated = { it.setMirror(true) },
             rendererEvents = object : RendererCommon.RendererEvents {
                 override fun onFirstFrameRendered() {  }
                 override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }

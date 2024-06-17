@@ -111,12 +111,15 @@ dependencies {
     implementation("com.github.SimformSolutionsPvtLtd:SSJetPackComposeProgressButton:1.0.8")
 
     // camerax
-    implementation("androidx.camera:camera-core:1.3.3")
-    implementation("androidx.camera:camera-camera2:1.3.3")
-    implementation("androidx.camera:camera-lifecycle:1.3.3")
-    implementation("androidx.camera:camera-view:1.4.0-beta01")
-    implementation("androidx.camera:camera-extensions:1.4.0-beta01")
+    implementation("androidx.camera:camera-core:1.3.4")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.4.0-beta02")
+    implementation("androidx.camera:camera-extensions:1.4.0-beta02")
 
     // webrtc
     implementation("io.getstream:stream-webrtc-android-compose:1.1.3")
+
+    // lottie
+    implementation("com.airbnb.android:lottie-compose:6.4.1")
 }

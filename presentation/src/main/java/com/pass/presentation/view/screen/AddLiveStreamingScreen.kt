@@ -5,22 +5,20 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -31,6 +29,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.pass.presentation.intent.AddLiveStreamingIntent
 import com.pass.presentation.sideeffect.AddLiveStreamingSideEffect
 import com.pass.presentation.view.component.ExitDialog
+import com.pass.presentation.view.component.LottieAnimationLive
 import com.pass.presentation.view.component.PreviewCameraX
 import com.pass.presentation.view.component.ProfileImageView
 import com.pass.presentation.view.component.SignInInputTextField
@@ -169,18 +168,20 @@ fun AddLiveStreamingScreen(
                 videoTrack = videoTrack,
                 modifier = Modifier.fillMaxSize(),
                 eglBaseContext = eglBaseContext,
+                onTextureViewCreated = { it.setMirror(true) },
                 rendererEvents = object : RendererCommon.RendererEvents {
                     override fun onFirstFrameRendered() {  }
                     override fun onFrameResolutionChanged(videoWidth: Int, videoHeight: Int, rotation: Int) {  }
                 }
             )
 
-            Box(modifier = Modifier
-                .clip(shape = CircleShape)
-                .padding(top = 30.dp)
-                .size(20.dp)
-                .background(Color.Red)
-                .align(Alignment.TopCenter))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                LottieAnimationLive(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+            }
         }
     }
 }

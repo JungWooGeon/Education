@@ -10,6 +10,11 @@ import com.pass.presentation.intent.AddLiveStreamingIntent
 import com.pass.presentation.sideeffect.AddLiveStreamingSideEffect
 import com.pass.presentation.state.screen.AddLiveStreamingState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -34,6 +39,8 @@ class AddLiveStreamingViewModel @Inject constructor(
     init {
         getUserProfile()
     }
+
+    val startStreamingScope = CoroutineScope(Dispatchers.IO)
 
     fun processIntent(intent: AddLiveStreamingIntent) {
         when(intent) {
@@ -69,17 +76,21 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     private fun onClickStartLiveStreamingButton() = intent {
-        startLiveStreamingUseCase(state.liveStreamingTitle).collect { result ->
-            result.onSuccess { videoTrack ->
-                reduce {
-                    state.copy(
-                        isLiveStreaming = true,
-                        videoTrack = videoTrack
-                    )
+        startStreamingScope.launch {
+            startLiveStreamingUseCase(state.liveStreamingTitle).collect { result ->
+                result.onSuccess { videoTrack ->
+                    reduce {
+                        state.copy(
+                            isLiveStreaming = true,
+                            videoTrack = videoTrack
+                        )
+                    }
+
+                    delay(1000)
+                    postSideEffect(AddLiveStreamingSideEffect.SuccessStartLiveStreaming)
+                }.onFailure { e ->
+                    postSideEffect(AddLiveStreamingSideEffect.FailCamera(e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
                 }
-                postSideEffect(AddLiveStreamingSideEffect.SuccessStartLiveStreaming)
-            }.onFailure { e ->
-                postSideEffect(AddLiveStreamingSideEffect.FailCamera(e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
             }
         }
     }
@@ -97,6 +108,7 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     private fun onExitRequest() = intent {
+        startStreamingScope.cancel()
         stopLiveStreamingUseCase()
         postSideEffect(AddLiveStreamingSideEffect.SuccessStopLiveStreaming)
     }

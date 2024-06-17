@@ -46,6 +46,5 @@ class VideoCaptureManagerImpl @Inject constructor(
      */
     override fun stopVideoCapture() {
         videoCapturer?.stopCapture()
-        videoCapturer = null
     }
 }

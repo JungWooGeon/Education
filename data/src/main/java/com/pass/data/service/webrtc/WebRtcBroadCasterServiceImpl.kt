@@ -47,15 +47,16 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
                     iceCandidateList.add(json)
                 }
             },
-            callbackOnReceiveVideoTrack = { videoTrack ->
-                callbackOnSuccessConnected(videoTrack)
-            },
+            callbackOnReceiveVideoTrack = { },
             callbackOnFailure = callbackOnFailureConnected
         )
 
         // 캡처 완료한 VideoTrack 과 AudioTrack 을 PeerConnection 에 추가
         val videoTrack = videoCaptureManager.startVideoCapture()
         val audioTrack = audioCaptureManager.startAudioCapture()
+
+        callbackOnSuccessConnected(videoTrack)
+
         peerConnectionManager.addTrackPeerConnection(videoTrack, audioTrack)
 
         // 소켓 연결
@@ -72,8 +73,8 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
 
     override fun stopBroadcast(broadcastId: String) {
         videoCaptureManager.stopVideoCapture()
-        peerConnectionManager.disposePeerConnection()
         socketMessageManager.emitMessage("stop", broadcastId)
+        peerConnectionManager.disposePeerConnection()
         socketConnectionManager.disconnect()
     }
 
