@@ -75,9 +75,9 @@ fun AddVideoScreen(
     context: Context,
     videoUri: String,
     title: String,
+    progressButtonState: SSButtonState,
     onChangeTitle: (String) -> Unit,
-    onClickUploadButton: () -> Unit,
-    progressButtonState: SSButtonState
+    onClickUploadButton: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
@@ -88,7 +88,8 @@ fun AddVideoScreen(
                     .fillMaxWidth()
                     .aspectRatio(1.5f)
                     .padding(horizontal = 20.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(10.dp)),
+                onChangeIsFullScreen = { }
             )
 
             TextField(

@@ -35,10 +35,6 @@ class CalculateUtilTest {
             Duration.between(mockParseTime, testParseTime)
         }
 
-        println(mockParseTime)
-        println(testParseTime)
-        println(Duration.between(mockParseTime, testParseTime))
-
         val result = calculateUtil.calculateAgoTime(mockTime)
         assertEquals(result, "10초 전")
     }

@@ -123,7 +123,6 @@ fun MainScreen(
         },
         bottomBar = {
             BottomNavigationBar(
-                navController = navController,
                 currentRoute = currentRoute,
                 onNavigateScreenRoute = onNavigateScreenRoute
             )
@@ -133,7 +132,8 @@ fun MainScreen(
             NavigationGraph(
                 navController = navController,
                 showVideoStreamingPlayer = showVideoStreamingPlayer,
-                onCloseVideoPlayer = onCloseVideoPlayer
+                onCloseVideoPlayer = onCloseVideoPlayer,
+                onNavigateScreenRoute = onNavigateScreenRoute
             )
         }
 
@@ -149,7 +149,6 @@ fun MainScreen(
 
 @Composable
 fun BottomNavigationBar(
-    navController: NavHostController,
     currentRoute: String?,
     onNavigateScreenRoute: (screenRoute: String) -> Unit
 ) {
@@ -192,35 +191,20 @@ fun BottomNavigationBar(
 fun NavigationGraph(
     navController: NavHostController,
     showVideoStreamingPlayer: (Video) -> Unit,
-    onCloseVideoPlayer: () -> Unit
+    onCloseVideoPlayer: () -> Unit,
+    onNavigateScreenRoute: (screenRoute: String) -> Unit
 ) {
     NavHost(navController = navController, startDestination =  MainScreenRoute.LiveListScreen.screenRoute) {
         composable(MainScreenRoute.LiveListScreen.screenRoute) {
             LiveListScreen(
-                onNavigateLogInScreen = {
-                    navController.navigate(MainScreenRoute.MyScreen.screenRoute) {
-                        navController.graph.startDestinationRoute?.let {
-                            popUpTo(it) { saveState = true }
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
+                onNavigateLogInScreen = { onNavigateScreenRoute(MainScreenRoute.MyScreen.screenRoute) }
             )
         }
 
         composable(MainScreenRoute.VideoListScreen.screenRoute) {
             VideoListScreen(
                 showVideoStreamingPlayer = showVideoStreamingPlayer,
-                onNavigateLogInScreen = {
-                    navController.navigate(MainScreenRoute.MyScreen.screenRoute) {
-                        navController.graph.startDestinationRoute?.let {
-                            popUpTo(it) { saveState = true }
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
+                onNavigateLogInScreen = { onNavigateScreenRoute(MainScreenRoute.MyScreen.screenRoute) }
             )
         }
 

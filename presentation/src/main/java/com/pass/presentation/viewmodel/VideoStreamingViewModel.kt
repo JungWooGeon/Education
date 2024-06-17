@@ -23,15 +23,15 @@ class VideoStreamingViewModel @Inject constructor(
     private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<VideoStreamingState, VideoStreamingSideEffect> {
 
-    override val container: Container<VideoStreamingState, VideoStreamingSideEffect> = container(
-        initialState = VideoStreamingState()
-    )
+    override val container: Container<VideoStreamingState, VideoStreamingSideEffect> = container(initialState = VideoStreamingState())
 
     fun processIntent(intent: VideoStreamingIntent) {
         when(intent) {
             is VideoStreamingIntent.InitContent -> initContent(intent.video)
             is VideoStreamingIntent.OnChangeMiniPlayer -> onChangeMiniPlayer()
-            is VideoStreamingIntent.OnChangeFullScreenPlayer -> onChangeFullScreenPlayer()
+            is VideoStreamingIntent.OnChangeDefaultPlayer -> onChangeDefaultPlayer()
+            is VideoStreamingIntent.OnChangeIsFullScreen -> onChangeIsFullScreen(intent.currentPosition)
+            is VideoStreamingIntent.UpdatePlaybackPosition -> updatePlaybackPosition(intent.currentPosition)
         }
     }
 
@@ -56,19 +56,18 @@ class VideoStreamingViewModel @Inject constructor(
         }
     }
 
-    private fun onChangeMiniPlayer() = intent {
+    private fun onChangeMiniPlayer() = intent { reduce { state.copy(isMinimized = true) } }
+
+    private fun onChangeDefaultPlayer() = intent { reduce { state.copy(isMinimized = false) } }
+
+    private fun onChangeIsFullScreen(currentPosition: Long?) = intent {
         reduce {
             state.copy(
-                isMinimized = true
+                isFullScreen = !state.isFullScreen,
+                currentPosition = currentPosition ?: state.currentPosition
             )
         }
     }
 
-    private fun onChangeFullScreenPlayer() = intent {
-        reduce {
-            state.copy(
-                isMinimized = false
-            )
-        }
-    }
+    private fun updatePlaybackPosition(currentPosition: Long) = intent { reduce { state.copy(currentPosition = currentPosition) } }
 }
