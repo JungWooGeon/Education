@@ -57,6 +57,7 @@ class FireStoreUtilTest {
         every { mockDocumentSnapShot.getString("startTime") } returns "testStartTime"
         every { mockDocumentSnapShot.getString("userId") } returns "testUserId"
         every { mockDocumentSnapShot.getString("time") } returns "testTime"
+        every { mockDocumentSnapShot.getString("liveThumbnailUri") } returns "testLiveThumbnailUri"
 
         val testProfile = Profile(
             name = "testName",

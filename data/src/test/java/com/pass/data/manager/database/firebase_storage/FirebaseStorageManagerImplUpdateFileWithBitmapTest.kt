@@ -110,7 +110,7 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
         ).first()
 
         assertTrue(result.isFailure)
-        assertEquals(result.exceptionOrNull()?.message, "동영상 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")
+        assertEquals(result.exceptionOrNull()?.message, "업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")
     }
 
     @Test
@@ -139,6 +139,6 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
         ).first()
 
         assertTrue(result.isFailure)
-        assertEquals(result.exceptionOrNull()?.message, "동영상 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")
+        assertEquals(result.exceptionOrNull()?.message, "업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")
     }
 }
