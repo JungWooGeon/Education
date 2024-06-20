@@ -43,9 +43,12 @@ class WebRtcViewerServiceImpl @Inject constructor(
         )
 
         // 소켓 연결
-        socketConnectionManager.connect(onEventConnect = {
-            socketMessageManager.emitMessage("join", broadcastId)
-        })
+        socketConnectionManager.connect(
+            onEventConnect = {
+                socketMessageManager.emitMessage("join", broadcastId)
+            },
+            callbackOnFailureConnected = callbackOnFailureConnected
+        )
     }
 
     override fun stopViewing() {

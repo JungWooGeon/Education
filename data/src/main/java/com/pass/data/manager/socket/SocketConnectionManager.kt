@@ -13,7 +13,7 @@ interface SocketConnectionManager {
         handleOffer: (JSONObject) -> Unit
     )
 
-    fun connect(onEventConnect: () -> Unit)
+    fun connect(onEventConnect: () -> Unit, callbackOnFailureConnected: () -> Unit)
 
     fun disconnect()
 

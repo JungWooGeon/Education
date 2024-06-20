@@ -39,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -133,28 +132,21 @@ fun VideoStreamingPlayer(
 ) {
     val transition = updateTransition(targetState = isMinimized, label = "Transition")
 
+    // 전체 스크린 dp 정의
     val fullScreenWidthDp = LocalConfiguration.current.screenWidthDp.dp
     val fullScreenHeightDp = LocalConfiguration.current.screenHeightDp.dp
 
+    // 비디오 플레이어의 Y 좌표 정의 - paddingValues : MainScreen의 Scaffold paddingValues
     val videoPlayerOffsetY by transition.animateDp(
         transitionSpec = { spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow) },
         label = "OffsetY"
     ) { state -> if (state) fullScreenHeightDp - paddingValues.calculateBottomPadding() - paddingValues.calculateTopPadding() else 0.dp }
 
+    // 비디오 플레이어의 크기 정의
     val videoPlayerScale by transition.animateFloat(
         transitionSpec = { spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow) },
         label = "Scale"
     ) { state -> if (state) 0.3f else 1f }
-
-    val fullScreenContentAlpha by transition.animateFloat(
-        transitionSpec = { spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow) },
-        label = "FullScreenContentAlpha"
-    ) { state -> if (!state) 1f else 0f }
-
-    val miniScreenContentAlpha by transition.animateFloat(
-        transitionSpec = { spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow) },
-        label = "MiniScreenContentAlpha"
-    ) { state -> if (state) 1f else 0f }
 
     Box(
         modifier = Modifier
@@ -235,7 +227,6 @@ fun VideoStreamingPlayer(
                             bottom = 16.dp
                         )
                         .fillMaxHeight()
-                        .alpha(fullScreenContentAlpha)
                 ) {
                     Text(text = videoTitle, fontSize = 20.sp)
                     Row(
@@ -273,7 +264,6 @@ fun VideoStreamingPlayer(
                             end = 16.dp,
                             top = 16.dp
                         )
-                        .alpha(miniScreenContentAlpha)
                 ) {
                     Column(
                         modifier = Modifier

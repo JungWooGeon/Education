@@ -60,15 +60,18 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
         peerConnectionManager.addTrackPeerConnection(videoTrack, audioTrack)
 
         // 소켓 연결
-        socketConnectionManager.connect(onEventConnect = {
-            sdpManager.createOfferPeerConnection(
-                callbackOnSetSuccess = { peerConnectionLocalDescription ->
-                    // callbackOnSetSuccess
-                    socketMessageManager.emitMessage("start", broadcastId, sessionDescription = peerConnectionLocalDescription)
-                },
-                callbackOnFailure = callbackOnFailureConnected
-            )
-        })
+        socketConnectionManager.connect(
+            onEventConnect = {
+                sdpManager.createOfferPeerConnection(
+                    callbackOnSetSuccess = { peerConnectionLocalDescription ->
+                        // callbackOnSetSuccess
+                        socketMessageManager.emitMessage("start", broadcastId, sessionDescription = peerConnectionLocalDescription)
+                    },
+                    callbackOnFailure = callbackOnFailureConnected
+                )
+            },
+            callbackOnFailureConnected = callbackOnFailureConnected
+        )
     }
 
     override fun stopBroadcast(broadcastId: String) {

@@ -46,10 +46,12 @@ class SocketConnectionManagerImpl @Inject constructor(
         }
     }
 
-    override fun connect(onEventConnect: () -> Unit) {
+    override fun connect(onEventConnect: () -> Unit, callbackOnFailureConnected: () -> Unit) {
         socket?.connect()
         socket?.on(Socket.EVENT_CONNECT) {
             onEventConnect()
+        }?.on(Socket.EVENT_DISCONNECT) {
+            callbackOnFailureConnected()
         }
     }
 

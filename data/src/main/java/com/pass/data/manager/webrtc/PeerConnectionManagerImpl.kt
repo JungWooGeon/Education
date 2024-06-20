@@ -40,8 +40,6 @@ class PeerConnectionManagerImpl @Inject constructor(
                 if (transceiver?.receiver?.track()?.kind() == "video") {
                     val videoTrack = (transceiver.receiver?.track() as VideoTrack).apply { setEnabled(true) }
                     callbackOnReceiveVideoTrack(videoTrack)
-                } else {
-                    // TODO Audio Track
                 }
             }
 
