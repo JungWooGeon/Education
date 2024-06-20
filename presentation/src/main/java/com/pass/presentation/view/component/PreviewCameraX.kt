@@ -15,16 +15,15 @@ import com.google.common.util.concurrent.ListenableFuture
 fun PreviewCameraX(
     modifier: Modifier,
     lifecycleOwner: LifecycleOwner,
+    previewView: PreviewView,
     cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
     cameraProvider: ProcessCameraProvider
 ) {
     AndroidView(
         factory = { ctx ->
-            val previewView = PreviewView(ctx)
-
             cameraProviderFuture.addListener({
                 val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
+                    it.surfaceProvider = previewView.surfaceProvider
                 }
 
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA

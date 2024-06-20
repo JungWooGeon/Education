@@ -1,9 +1,13 @@
 package com.pass.presentation.viewmodel
 
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pass.domain.model.LiveStreaming
 import com.pass.domain.usecase.GetLiveStreamingListUseCase
 import com.pass.domain.usecase.IsSignedInUseCase
+import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.LiveListIntent
 import com.pass.presentation.sideeffect.LiveListSideEffect
 import com.pass.presentation.state.screen.LiveListState
@@ -21,7 +25,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LiveListViewModel @Inject constructor(
     private val isSignedInUseCase: IsSignedInUseCase,
-    private val getLiveStreamingListUseCase: GetLiveStreamingListUseCase<VideoTrack>
+    private val getLiveStreamingListUseCase: GetLiveStreamingListUseCase<VideoTrack, Bitmap>,
+    private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<LiveListState, LiveListSideEffect> {
 
     override val container: Container<LiveListState, LiveListSideEffect> = container(
@@ -41,8 +46,22 @@ class LiveListViewModel @Inject constructor(
             // 라이브 리스트 정보 확인
             getLiveStreamingListUseCase().collect { result ->
                 result.onSuccess { liveStreamingList ->
+                    val mutableLiveList = mutableListOf<LiveStreaming>()
+
+                    liveStreamingList.forEach {
+                        mutableLiveList.add(
+                            LiveStreaming(
+                                broadcastId = it.broadcastId,
+                                thumbnailURL = urlCodec.urlDecode(it.thumbnailURL),
+                                title = it.title,
+                                userProfileURL = it.userProfileURL,
+                                userName = it.userName
+                            )
+                        )
+                    }
+
                     reduce {
-                        state.copy(liveStreamingList = liveStreamingList)
+                        state.copy(liveStreamingList = mutableLiveList.toList())
                     }
                 }.onFailure {
                     postSideEffect(LiveListSideEffect.Toast(it.message ?: "라이브 중인 방송이 없습니다."))

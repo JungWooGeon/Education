@@ -1,5 +1,6 @@
 package com.pass.presentation.viewmodel
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class VideoListViewModel @Inject constructor(
-    private val getAllVideoListUseCase: GetAllVideoListUseCase,
+    private val getAllVideoListUseCase: GetAllVideoListUseCase<Bitmap>,
     private val isSignedInUseCase: IsSignedInUseCase,
     private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<VideoListState, VideoListSideEffect> {

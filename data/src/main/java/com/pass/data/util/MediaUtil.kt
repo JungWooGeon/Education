@@ -34,7 +34,7 @@ class MediaUtil @Inject constructor(
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
     }
 
-    fun extractFirstFrameFromVideoUri(videoUri: String): Result<String> {
+    fun extractFirstFrameFromVideoUri(videoUri: String): Result<Bitmap> {
         return try {
             // 미디어 파일로부터 데이터를 추출하기 위해 setDataSource를 호출
             mediaMetadataRetriever.setDataSource(context, urlDecode(videoUri).toUri())
@@ -43,7 +43,7 @@ class MediaUtil @Inject constructor(
 
             if (thumbnailBitmap != null) {
                 // 첫 번째 프레임을 비트맵으로 가져옴
-                Result.success(convertBitmapToString(thumbnailBitmap))
+                Result.success(thumbnailBitmap)
             } else {
                 Result.failure(Exception("동영상 선택에 실패하였습니다."))
             }

@@ -1,5 +1,6 @@
 package com.pass.data.repository
 
+import android.graphics.Bitmap
 import com.pass.data.service.auth.AuthenticationService
 import com.pass.data.service.database.LiveStreamingService
 import com.pass.data.service.webrtc.WebRtcBroadCasterService
@@ -17,7 +18,7 @@ class LiveStreamingRepositoryImpl @Inject constructor(
     private val webRtcViewerService: WebRtcViewerService,
     private val liveStreamingService: LiveStreamingService,
     private val authenticationService: AuthenticationService
-) : LiveStreamingRepository<VideoTrack> {
+) : LiveStreamingRepository<VideoTrack, Bitmap> {
 
     override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> = callbackFlow {
         liveStreamingService.getLiveStreamingList().collect { resultLiveStreamingList ->
@@ -31,7 +32,7 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         awaitClose()
     }
 
-    override suspend fun startLiveStreaming(title: String): Flow<Result<VideoTrack>> = callbackFlow {
+    override suspend fun startLiveStreaming(title: String, thumbnailImage: Bitmap): Flow<Result<VideoTrack>> = callbackFlow {
         // TODO cameraX 가 촬영하고 있다가 방송 시작하기를 누른 시점 캡처한 이미지를 썸네일 이미지로 저장 (presentation layer 에서 캡처 후 파라미터로 전달 필요)
 
         // 방송 시작 시 고유한 방송 ID 생성 및 Firebase에 저장
@@ -43,7 +44,8 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         } else {
             liveStreamingService.createLiveStreamingData(
                 broadcastId = broadcastId,
-                title = title
+                title = title,
+                thumbnailImage = thumbnailImage
             ).collect { result ->
                 result.onSuccess {
                     webRtcBroadCasterService.startBroadcast(

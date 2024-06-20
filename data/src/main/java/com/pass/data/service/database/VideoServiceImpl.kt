@@ -1,5 +1,6 @@
 package com.pass.data.service.database
 
+import android.graphics.Bitmap
 import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.data.di.DateTimeProvider
 import com.pass.data.manager.database.DatabaseManager
@@ -36,7 +37,7 @@ class VideoServiceImpl @Inject constructor(
      */
     override suspend fun addVideo(
         videoUri: String,
-        videoThumbnailBitmap: String,
+        videoThumbnailBitmap: Bitmap,
         title: String,
         userId: String
     ): Flow<Result<Unit>> = flow {
@@ -45,8 +46,7 @@ class VideoServiceImpl @Inject constructor(
         val videoId = "${userId}_${nowDateTime}"
 
         val uploadVideoFileFlow = firebaseStorageManager.updateFile(videoUri, "video/${videoId}")
-        val uploadVideoThumbnailFileFlow =
-            firebaseStorageManager.updateFileWithBitmap(videoThumbnailBitmap, videoId)
+        val uploadVideoThumbnailFileFlow = firebaseStorageManager.updateFileWithBitmap(videoThumbnailBitmap, "video_thumbnail/${videoId}")
 
         val result =
             uploadVideoFileFlow.zip(uploadVideoThumbnailFileFlow) { videoResult, thumbnailResult ->

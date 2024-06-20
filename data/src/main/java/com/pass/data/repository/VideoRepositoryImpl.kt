@@ -1,5 +1,6 @@
 package com.pass.data.repository
 
+import android.graphics.Bitmap
 import com.google.firebase.auth.FirebaseAuth
 import com.pass.data.service.database.VideoService
 import com.pass.data.util.MediaUtil
@@ -13,13 +14,13 @@ class VideoRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val mediaUtil: MediaUtil,
     private val videoService: VideoService
-) : VideoRepository {
+) : VideoRepository<Bitmap> {
 
-    override fun createVideoThumbnail(videoUri: String): Result<String> {
+    override fun createVideoThumbnail(videoUri: String): Result<Bitmap> {
         return mediaUtil.extractFirstFrameFromVideoUri(videoUri)
     }
 
-    override suspend fun addVideo(videoUri: String, videoThumbnailBitmap: String, title: String): Flow<Result<Unit>> {
+    override suspend fun addVideo(videoUri: String, videoThumbnailBitmap: Bitmap, title: String): Flow<Result<Unit>> {
         val uid = auth.currentUser?.uid
 
         return if (uid == null) {

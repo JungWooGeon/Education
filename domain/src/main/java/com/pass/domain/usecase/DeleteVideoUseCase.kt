@@ -5,7 +5,7 @@ import com.pass.domain.repository.VideoRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class DeleteVideoUseCase @Inject constructor(private val videoRepository: VideoRepository) {
+class DeleteVideoUseCase<T> @Inject constructor(private val videoRepository: VideoRepository<T>) {
     suspend operator fun invoke(video: Video): Flow<Result<Unit>> {
         return videoRepository.deleteVideo(video)
     }

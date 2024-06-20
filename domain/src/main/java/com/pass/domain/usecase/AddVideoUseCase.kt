@@ -4,8 +4,8 @@ import com.pass.domain.repository.VideoRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class AddVideoUseCase @Inject constructor(private val videoRepository: VideoRepository) {
-    suspend operator fun invoke(videoUri: String, videoThumbnailBitmap: String, title: String): Flow<Result<Unit>> {
+class AddVideoUseCase<T> @Inject constructor(private val videoRepository: VideoRepository<T>) {
+    suspend operator fun invoke(videoUri: String, videoThumbnailBitmap: T, title: String): Flow<Result<Unit>> {
         return videoRepository.addVideo(videoUri, videoThumbnailBitmap, title)
     }
 }

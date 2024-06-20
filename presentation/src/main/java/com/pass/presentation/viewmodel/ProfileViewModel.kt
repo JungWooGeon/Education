@@ -1,5 +1,6 @@
 package com.pass.presentation.viewmodel
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.DeleteVideoUseCase
@@ -28,7 +29,7 @@ class ProfileViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val updateUserProfileNameUseCase: UpdateUserProfileNameUseCase,
     private val updateUserProfilePicture: UpdateUserProfilePictureUseCase,
-    private val deleteVideoUseCase: DeleteVideoUseCase,
+    private val deleteVideoUseCase: DeleteVideoUseCase<Bitmap>,
     private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<ProfileState, ProfileSideEffect> {
 

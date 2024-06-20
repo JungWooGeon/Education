@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.AddVideoUseCase
 import com.pass.domain.usecase.CreateVideoThumbnailUseCase
-import com.pass.domain.util.BitmapConverter
 import com.pass.domain.util.URLCodec
 import com.pass.presentation.intent.AddVideoIntent
 import com.pass.presentation.sideeffect.AddVideoSideEffect
@@ -22,9 +21,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddVideoViewModel @Inject constructor(
-    private val createVideoThumbnailUseCase: CreateVideoThumbnailUseCase,
-    private val addVideoUseCase: AddVideoUseCase,
-    private val bitmapConverter: BitmapConverter<Bitmap>,
+    private val createVideoThumbnailUseCase: CreateVideoThumbnailUseCase<Bitmap>,
+    private val addVideoUseCase: AddVideoUseCase<Bitmap>,
     private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<AddVideoState, AddVideoSideEffect> {
 
@@ -49,9 +47,9 @@ class AddVideoViewModel @Inject constructor(
         // thumbnail 생성 후 상태 저장
         val result = createVideoThumbnailUseCase(videoUri)
 
-        result.onSuccess { bitmapString ->
+        result.onSuccess { bitmap ->
             reduce {
-                state.copy(videoThumbnailBitmap = bitmapConverter.convertStringToBitmap(bitmapString))
+                state.copy(videoThumbnailBitmap = bitmap)
             }
         }.onFailure { e ->
             postSideEffect(AddVideoSideEffect.Toast(e.message ?: "동영상 선택을 취소하였습니다."))
@@ -66,44 +64,34 @@ class AddVideoViewModel @Inject constructor(
 
     private fun onClickUploadButton() = intent {
         reduce {
-            state.copy(
-                progressButtonState = SSButtonState.LOADING
-            )
+            state.copy(progressButtonState = SSButtonState.LOADING)
         }
 
         if (state.videoThumbnailBitmap == null) {
             postSideEffect(AddVideoSideEffect.Toast("동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
             reduce {
-                state.copy(
-                    progressButtonState = SSButtonState.FAILURE
-                )
+                state.copy(progressButtonState = SSButtonState.FAILURE)
             }
         } else if (state.title == "") {
             postSideEffect(AddVideoSideEffect.Toast("제목을 입력해주세요."))
             reduce {
-                state.copy(
-                    progressButtonState = SSButtonState.FAILURE
-                )
+                state.copy(progressButtonState = SSButtonState.FAILURE)
             }
         } else {
             addVideoUseCase(
                 videoUri = state.videoUri,
-                videoThumbnailBitmap = bitmapConverter.convertBitmapToString(state.videoThumbnailBitmap!!),
+                videoThumbnailBitmap = state.videoThumbnailBitmap!!,
                 title = state.title
             ).collect { result ->
                 result.onSuccess {
                     reduce {
-                        state.copy(
-                            progressButtonState = SSButtonState.SUCCESS
-                        )
+                        state.copy(progressButtonState = SSButtonState.SUCCESS)
                     }
                     postSideEffect(AddVideoSideEffect.Toast("동영상을 업로드하였습니다."))
                     postSideEffect(AddVideoSideEffect.NavigateProfileScreen)
                 }.onFailure { e ->
                     reduce {
-                        state.copy(
-                            progressButtonState = SSButtonState.FAILURE
-                        )
+                        state.copy(progressButtonState = SSButtonState.FAILURE)
                     }
                     postSideEffect(AddVideoSideEffect.Toast(e.message ?: "동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
                 }

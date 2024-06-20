@@ -5,7 +5,7 @@ import com.pass.domain.repository.VideoRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class GetAllVideoListUseCase @Inject constructor(private val videoRepository: VideoRepository) {
+class GetAllVideoListUseCase<T> @Inject constructor(private val videoRepository: VideoRepository<T>) {
     suspend operator fun invoke(): Flow<Result<List<Video>>> {
         return videoRepository.getAllVideoList()
     }

@@ -1,8 +1,10 @@
 package com.pass.data.service.database
 
+import android.graphics.Bitmap
 import com.google.firebase.firestore.DocumentSnapshot
 import com.pass.data.di.DateTimeProvider
 import com.pass.data.manager.database.DatabaseManager
+import com.pass.data.manager.database.StorageManager
 import com.pass.data.util.CalculateUtil
 import com.pass.data.util.FireStoreUtil
 import com.pass.domain.model.LiveStreaming
@@ -18,6 +20,7 @@ import javax.inject.Inject
 class LiveStreamingServiceImpl @Inject constructor(
     firebaseDatabaseManager: DatabaseManager<DocumentSnapshot>,
     fireStoreUtil: FireStoreUtil,
+    private val firebaseStorageManager: StorageManager,
     private val calculateUtil: CalculateUtil,
     private val dateTimeProvider: DateTimeProvider
 ) : LiveStreamingService, MediaBaseServiceImpl(firebaseDatabaseManager, fireStoreUtil) {
@@ -60,29 +63,40 @@ class LiveStreamingServiceImpl @Inject constructor(
     }
 
     /**
-     * 1. broadcastData : livestreaming 으로 추가할 데이터 생성
-     * 2. Flow<Result<Unit>> : FireStore에 livestreaming 데이터 추가
+     * 1. Flow<Result<String> : FireStorage에 썸네일 이미지 저장 후 URI 반환
+     * 2. broadcastData : livestreaming 으로 추가할 데이터 생성
+     * 3. Flow<Result<Unit>> : FireStore에 livestreaming 데이터 추가
      */
-    override suspend fun createLiveStreamingData(broadcastId: String, title: String): Flow<Result<Unit>> = callbackFlow {
-        val nowDateTime = dateTimeProvider.localDateTimeNowFormat()
+    override suspend fun createLiveStreamingData(broadcastId: String, title: String, thumbnailImage: Bitmap): Flow<Result<Unit>> = callbackFlow {
 
-        // TODO 추후 Thumbnail 추가
-        val broadcastData = fireStoreUtil.createBroadcastData(
-            broadcastId = broadcastId,
-            title = title,
-            startTime = nowDateTime
-        )
+        firebaseStorageManager.updateFileWithBitmap(thumbnailImage, "live_streaming_thumbnail/${broadcastId}").collect { thumbnailResult ->
+            thumbnailResult.onSuccess {
+                val liveStreamingThumbnailUri = thumbnailResult.getOrDefault("")
 
-        firebaseDatabaseManager.createData(
-            dataMap = broadcastData,
-            collectionPath = "liveStreams",
-            documentPath = broadcastId
-        ).collect { result ->
-            result.onSuccess {
-                try {
-                    trySend(Result.success(Unit))
-                } catch (e: Exception) {
-                    trySend(Result.failure(e))
+                val nowDateTime = dateTimeProvider.localDateTimeNowFormat()
+
+                // TODO 추후 Thumbnail 추가
+                val broadcastData = fireStoreUtil.createBroadcastData(
+                    broadcastId = broadcastId,
+                    title = title,
+                    startTime = nowDateTime,
+                    liveThumbnailUri = liveStreamingThumbnailUri
+                )
+
+                firebaseDatabaseManager.createData(
+                    dataMap = broadcastData,
+                    collectionPath = "liveStreams",
+                    documentPath = broadcastId
+                ).collect { result ->
+                    result.onSuccess {
+                        try {
+                            trySend(Result.success(Unit))
+                        } catch (e: Exception) {
+                            trySend(Result.failure(e))
+                        }
+                    }.onFailure {
+                        trySend(Result.failure(it))
+                    }
                 }
             }.onFailure {
                 trySend(Result.failure(it))

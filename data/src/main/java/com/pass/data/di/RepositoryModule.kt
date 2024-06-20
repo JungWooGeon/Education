@@ -1,5 +1,6 @@
 package com.pass.data.di
 
+import android.graphics.Bitmap
 import com.pass.data.repository.LiveStreamingRepositoryImpl
 import com.pass.data.repository.ProfileRepositoryImpl
 import com.pass.data.repository.VideoRepositoryImpl
@@ -20,8 +21,8 @@ abstract class RepositoryModule {
     abstract fun bindsProfileRepository(repository: ProfileRepositoryImpl): ProfileRepository
 
     @Binds
-    abstract fun bindsVideoRepository(repository: VideoRepositoryImpl): VideoRepository
+    abstract fun bindsVideoRepository(repository: VideoRepositoryImpl): VideoRepository<Bitmap>
 
     @Binds
-    abstract fun bindsLiveStreamingRepository(repository: LiveStreamingRepositoryImpl): LiveStreamingRepository<VideoTrack>
+    abstract fun bindsLiveStreamingRepository(repository: LiveStreamingRepositoryImpl): LiveStreamingRepository<VideoTrack, Bitmap>
 }

@@ -1,5 +1,6 @@
 package com.pass.data.manager.database
 
+import android.graphics.Bitmap
 import androidx.core.net.toUri
 import com.google.firebase.storage.FirebaseStorage
 import com.pass.data.util.MediaUtil
@@ -43,13 +44,12 @@ class FirebaseStorageManagerImpl @Inject constructor(
         }
 
     override suspend fun updateFileWithBitmap(
-        bitmapString: String,
-        videoId: String
+        bitmap: Bitmap,
+        pathString: String
     ): Flow<Result<String>> = callbackFlow {
-        val bitmap = mediaUtil.convertStringToBitmap(bitmapString)
         val data = mediaUtil.convertBitmapToByteArray(bitmap)
 
-        val uploadTask = storage.reference.child("video_thumbnail/${videoId}").putBytes(data)
+        val uploadTask = storage.reference.child(pathString).putBytes(data)
         uploadTask.addOnSuccessListener { taskSnapshot ->
             taskSnapshot.metadata?.reference?.downloadUrl
                 ?.addOnSuccessListener { downloadUrl ->
@@ -60,10 +60,10 @@ class FirebaseStorageManagerImpl @Inject constructor(
                         trySend(Result.success(uriString))
                     }
                 }?.addOnFailureListener {
-                    trySend(Result.failure(Exception("동영상 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
+                    trySend(Result.failure(Exception("업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
                 }
         }.addOnFailureListener {
-            trySend(Result.failure(Exception("동영상 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
+            trySend(Result.failure(Exception("업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
         }
 
         awaitClose()

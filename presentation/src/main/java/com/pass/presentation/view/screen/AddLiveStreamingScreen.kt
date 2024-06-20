@@ -5,6 +5,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ fun AddLiveStreamingScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // CameraX
+    val previewView = remember { PreviewView(context) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val cameraProvider = remember(cameraProviderFuture) { cameraProviderFuture.get() }
 
@@ -89,14 +91,17 @@ fun AddLiveStreamingScreen(
         isLiveStreaming = addLiveStreamingState.isLiveStreaming,
         context = context,
         lifecycleOwner = lifecycleOwner,
+        previewView = previewView,
         cameraProviderFuture = cameraProviderFuture,
         cameraProvider = cameraProvider,
         userProfileUrl = addLiveStreamingState.userProfileUrl,
         liveStreamingTitle = addLiveStreamingState.liveStreamingTitle,
         onChangeLiveStreamingTitle = { viewModel.processIntent(AddLiveStreamingIntent.OnChangeLiveStreamingTitle(it)) },
         onClickStartLiveStreamingButton = {
+            val thumbnailImage = previewView.bitmap
+
             cameraProvider.unbindAll()
-            viewModel.processIntent(AddLiveStreamingIntent.OnClickStartLiveStreamingButton)
+            viewModel.processIntent(AddLiveStreamingIntent.OnClickStartLiveStreamingButton(thumbnailImage))
         }
     )
 
@@ -118,6 +123,7 @@ fun AddLiveStreamingScreen(
     lifecycleOwner : LifecycleOwner,
     userProfileUrl: String,
     liveStreamingTitle: String,
+    previewView: PreviewView,
     cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
     cameraProvider: ProcessCameraProvider,
     onChangeLiveStreamingTitle: (String) -> Unit,
@@ -128,6 +134,7 @@ fun AddLiveStreamingScreen(
             PreviewCameraX(
                 modifier = Modifier.fillMaxSize(),
                 lifecycleOwner = lifecycleOwner,
+                previewView = previewView,
                 cameraProviderFuture = cameraProviderFuture,
                 cameraProvider = cameraProvider
             )

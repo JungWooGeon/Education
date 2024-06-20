@@ -52,20 +52,20 @@ class FireStoreUtil @Inject constructor(
             val title = videoDocumentSnapShot.getString("title")
             val startTime = videoDocumentSnapShot.getString("startTime")
             val userId = videoDocumentSnapShot.getString("userId")
+            val liveThumbnailUri = videoDocumentSnapShot.getString("liveThumbnailUri")
             val userName = idOfProfileMap[userId]?.name
             val userProfileUrl = idOfProfileMap[userId]?.pictureUrl
             val time = videoDocumentSnapShot.getString("time")
             val agoTime = calculateAgoTime(time)
-            // TODO ThumbnailUrl 추가
 
-            if (userId != null && title != null && userProfileUrl != null && userName != null) {
+            if (userId != null && title != null && userProfileUrl != null && userName != null && liveThumbnailUri != null) {
                 resultLiveStreamingList.add(
                     LiveStreaming(
                         broadcastId = broadcastId,
-                        thumbnailURL = "",
+                        thumbnailURL = liveThumbnailUri,
                         title = title,
                         userProfileURL = userProfileUrl,
-                        userName = userName
+                        userName = userName,
                     )
                 )
             }
@@ -154,11 +154,12 @@ class FireStoreUtil @Inject constructor(
         return resultVideoList
     }
 
-    fun createBroadcastData(broadcastId: String, title: String, startTime: String): HashMap<String, String> {
+    fun createBroadcastData(broadcastId: String, title: String, startTime: String, liveThumbnailUri: String): HashMap<String, String> {
         return hashMapOf(
             "userId" to broadcastId,
             "title" to title,
-            "startTime" to startTime
+            "startTime" to startTime,
+            "liveThumbnailUri" to liveThumbnailUri,
         )
     }
 

@@ -1,5 +1,6 @@
 package com.pass.presentation.viewmodel
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.GetUserProfileUseCase
@@ -27,8 +28,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AddLiveStreamingViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
-    private val startLiveStreamingUseCase: StartLiveStreamingUseCase<VideoTrack>,
-    private val stopLiveStreamingUseCase: StopLiveStreamingUseCase<VideoTrack>,
+    private val startLiveStreamingUseCase: StartLiveStreamingUseCase<VideoTrack, Bitmap>,
+    private val stopLiveStreamingUseCase: StopLiveStreamingUseCase<VideoTrack, Bitmap>,
     private val urlCodec: URLCodec<Uri>
 ) : ViewModel(), ContainerHost<AddLiveStreamingState, AddLiveStreamingSideEffect> {
 
@@ -45,7 +46,9 @@ class AddLiveStreamingViewModel @Inject constructor(
     fun processIntent(intent: AddLiveStreamingIntent) {
         when(intent) {
             is AddLiveStreamingIntent.OnChangeLiveStreamingTitle -> onChangeLiveStreamingTitle(intent.title)
-            is AddLiveStreamingIntent.OnClickStartLiveStreamingButton -> onClickStartLiveStreamingButton()
+            is AddLiveStreamingIntent.OnClickStartLiveStreamingButton -> {
+                onClickStartLiveStreamingButton(intent.thumbnailImage)
+            }
             is AddLiveStreamingIntent.OnClickBackButtonDuringLiveStreaming -> onClickBackButtonDuringLiveStreaming()
             is AddLiveStreamingIntent.OnDismissRequest -> onDismissRequest()
             is AddLiveStreamingIntent.OnExitRequest -> onExitRequest()
@@ -75,21 +78,28 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
-    private fun onClickStartLiveStreamingButton() = intent {
-        startStreamingScope.launch {
-            startLiveStreamingUseCase(state.liveStreamingTitle).collect { result ->
-                result.onSuccess { videoTrack ->
-                    reduce {
-                        state.copy(
-                            isLiveStreaming = true,
-                            videoTrack = videoTrack
-                        )
-                    }
+    private fun onClickStartLiveStreamingButton(thumbnailImage: Bitmap?) = intent {
+        if (thumbnailImage == null) {
+            postSideEffect(AddLiveStreamingSideEffect.FailCamera("라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+        } else {
+            startStreamingScope.launch {
+                startLiveStreamingUseCase(
+                    title = state.liveStreamingTitle,
+                    thumbnailImage = thumbnailImage
+                ).collect { result ->
+                    result.onSuccess { videoTrack ->
+                        reduce {
+                            state.copy(
+                                isLiveStreaming = true,
+                                videoTrack = videoTrack
+                            )
+                        }
 
-                    delay(1000)
-                    postSideEffect(AddLiveStreamingSideEffect.SuccessStartLiveStreaming)
-                }.onFailure { e ->
-                    postSideEffect(AddLiveStreamingSideEffect.FailCamera(e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+                        delay(1000)
+                        postSideEffect(AddLiveStreamingSideEffect.SuccessStartLiveStreaming)
+                    }.onFailure { e ->
+                        postSideEffect(AddLiveStreamingSideEffect.FailCamera(e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+                    }
                 }
             }
         }

@@ -37,7 +37,6 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
     private val mockUploadTaskTaskSnapshot = mockk<UploadTask.TaskSnapshot>()
 
     private val testUri = "testUri".toUri()
-    private val testBitmapString = "testBitmapString"
     private val testVideoId = "testVideoId"
     private val testByteArray = byteArrayOf()
 
@@ -78,8 +77,8 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
         }
 
         val result = firebaseStorageService.updateFileWithBitmap(
-            bitmapString = testBitmapString,
-            videoId = testVideoId
+            bitmap = mockBitmap,
+            pathString = testVideoId
         ).first()
 
         assertTrue(result.isSuccess)
@@ -106,8 +105,8 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
         }
 
         val result = firebaseStorageService.updateFileWithBitmap(
-            bitmapString = testBitmapString,
-            videoId = testVideoId
+            bitmap = mockBitmap,
+            pathString = testVideoId
         ).first()
 
         assertTrue(result.isFailure)
@@ -135,8 +134,8 @@ class FirebaseStorageManagerImplUpdateFileWithBitmapTest {
         }
 
         val result = firebaseStorageService.updateFileWithBitmap(
-            bitmapString = testBitmapString,
-            videoId = testVideoId
+            bitmap = mockBitmap,
+            pathString = testVideoId
         ).first()
 
         assertTrue(result.isFailure)

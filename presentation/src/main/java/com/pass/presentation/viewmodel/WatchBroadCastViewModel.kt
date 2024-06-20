@@ -1,5 +1,6 @@
 package com.pass.presentation.viewmodel
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.pass.domain.usecase.StopViewingUseCase
 import com.pass.domain.usecase.WatchLiveStreamingUseCase
@@ -19,8 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WatchBroadCastViewModel @Inject constructor(
-    private val watchLiveStreamingUseCase: WatchLiveStreamingUseCase<VideoTrack>,
-    private val stopViewingUseCase: StopViewingUseCase<VideoTrack>
+    private val watchLiveStreamingUseCase: WatchLiveStreamingUseCase<VideoTrack, Bitmap>,
+    private val stopViewingUseCase: StopViewingUseCase<VideoTrack, Bitmap>
 ) : ViewModel(), ContainerHost<WatchBroadCastState, WatchBroadCastSideEffect> {
 
     override val container: Container<WatchBroadCastState, WatchBroadCastSideEffect> = container(

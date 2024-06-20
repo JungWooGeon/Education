@@ -179,7 +179,8 @@ class FireStoreUtilTest {
         val result = fireStoreUtil.createBroadcastData(
             broadcastId = "testBroadcastId",
             title = "testTitle",
-            startTime = "testStartTime"
+            startTime = "testStartTime",
+            liveThumbnailUri = "testThumbnail"
         )
 
         assertEquals(result["userId"], "testBroadcastId")
