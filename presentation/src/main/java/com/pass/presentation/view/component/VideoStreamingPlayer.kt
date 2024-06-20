@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo
 import android.os.Build
 import android.view.View
 import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
@@ -172,9 +173,12 @@ fun VideoStreamingPlayer(
             // 상태 바 숨기기
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 context.window.setDecorFitsSystemWindows(false)
-                context.window.insetsController?.hide(WindowInsets.Type.statusBars())
+                context.window.insetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                context.window.insetsController?.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             } else {
-                context.window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+                context.window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
             }
 
             // 동영상 플레이어
