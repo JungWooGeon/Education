@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pass.presentation.intent.AddVideoIntent
 import com.pass.presentation.sideeffect.AddVideoSideEffect
+import com.pass.presentation.view.component.CodeBridgeTextField
 import com.pass.presentation.view.component.ExoPlayerView
 import com.pass.presentation.viewmodel.AddVideoViewModel
 import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonState
@@ -43,6 +44,9 @@ fun AddVideoScreen(
 ) {
     val addVideoState = viewModel.collectAsState().value
     val context = LocalContext.current
+
+    // TextField 한글 자소 분리 현상 완화를 위해 UI 상태로 적용
+    var title by remember { mutableStateOf("") }
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
@@ -62,14 +66,13 @@ fun AddVideoScreen(
     AddVideoScreen(
         context = context,
         videoUri = addVideoState.videoUri,
-        title = addVideoState.title,
-        onChangeTitle = { viewModel.processIntent(AddVideoIntent.OnChangeTitle(it)) },
-        onClickUploadButton = { viewModel.processIntent(AddVideoIntent.OnClickUploadButton) },
+        title = title,
+        onChangeTitle = { title = it },
+        onClickUploadButton = { viewModel.processIntent(AddVideoIntent.OnClickUploadButton(title)) },
         progressButtonState = addVideoState.progressButtonState
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddVideoScreen(
     context: Context,
@@ -92,22 +95,14 @@ fun AddVideoScreen(
                 onChangeIsFullScreen = { }
             )
 
-            TextField(
+            CodeBridgeTextField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(15.dp),
                 value = title,
-                onValueChange = onChangeTitle,
-                placeholder = {
-                    Text(text = "동영상 제목 추가")
-                },
-                shape = RoundedCornerShape(8.dp),
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
-                )
+                onChangeValue = onChangeTitle,
+                placeHolderValue = "동영상 제목 추가",
+                containerColor = Color.Transparent
             )
         }
 

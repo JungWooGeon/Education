@@ -27,14 +27,13 @@ class AddVideoViewModel @Inject constructor(
 ) : ViewModel(), ContainerHost<AddVideoState, AddVideoSideEffect> {
 
     override val container: Container<AddVideoState, AddVideoSideEffect> = container(
-        initialState = AddVideoState(null, "", "", SSButtonState.IDLE)
+        initialState = AddVideoState(null, "", SSButtonState.IDLE)
     )
 
     fun processIntent(intent: AddVideoIntent) {
         when(intent) {
             is AddVideoIntent.CreateVideoThumbnail -> createVideoThumbnail(intent.videoUri)
-            is AddVideoIntent.OnChangeTitle -> onChangeTitle(intent.title)
-            is AddVideoIntent.OnClickUploadButton -> onClickUploadButton()
+            is AddVideoIntent.OnClickUploadButton -> onClickUploadButton(intent.title)
         }
     }
 
@@ -56,13 +55,7 @@ class AddVideoViewModel @Inject constructor(
         }
     }
 
-    private fun onChangeTitle(title: String) = intent {
-        reduce {
-            state.copy(title = title)
-        }
-    }
-
-    private fun onClickUploadButton() = intent {
+    private fun onClickUploadButton(title: String) = intent {
         reduce {
             state.copy(progressButtonState = SSButtonState.LOADING)
         }
@@ -72,7 +65,7 @@ class AddVideoViewModel @Inject constructor(
             reduce {
                 state.copy(progressButtonState = SSButtonState.FAILURE)
             }
-        } else if (state.title == "") {
+        } else if (title == "") {
             postSideEffect(AddVideoSideEffect.Toast("제목을 입력해주세요."))
             reduce {
                 state.copy(progressButtonState = SSButtonState.FAILURE)
@@ -81,7 +74,7 @@ class AddVideoViewModel @Inject constructor(
             addVideoUseCase(
                 videoUri = state.videoUri,
                 videoThumbnailBitmap = state.videoThumbnailBitmap!!,
-                title = state.title
+                title = title
             ).collect { result ->
                 result.onSuccess {
                     reduce {

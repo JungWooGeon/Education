@@ -8,10 +8,7 @@ data class ProfileState(
     val userProfileURL: String = "",
     val userName: String = "",
     val videoList: List<Video> = listOf(),
-
     val onEditDialog: Boolean = false,
-    val editDialogUserName: String = "",
-
     val isOpenDeleteModalBottomSheet: Boolean = false,
     val deleteVideoIdx: Int? = null
 )

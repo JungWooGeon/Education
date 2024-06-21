@@ -1,8 +1,5 @@
 package com.pass.presentation.intent
 
 sealed class SignUpIntent {
-    data object OnClickSignUp : SignUpIntent()
-    data class OnChangeId(val id: String) : SignUpIntent()
-    data class OnChangePassword(val password: String) : SignUpIntent()
-    data class OnChangeVerifyPassword(val verifyPassword: String) : SignUpIntent()
+    data class OnClickSignUp(val id: String, val password: String, val verifyPassword: String) : SignUpIntent()
 }

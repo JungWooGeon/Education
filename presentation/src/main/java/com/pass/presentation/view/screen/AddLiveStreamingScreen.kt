@@ -17,7 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,7 +37,7 @@ import com.pass.presentation.view.component.ExitDialog
 import com.pass.presentation.view.component.LottieAnimationLive
 import com.pass.presentation.view.component.PreviewCameraX
 import com.pass.presentation.view.component.ProfileImageView
-import com.pass.presentation.view.component.SignInInputTextField
+import com.pass.presentation.view.component.CodeBridgeTextField
 import com.pass.presentation.viewmodel.AddLiveStreamingViewModel
 import io.getstream.webrtc.android.compose.VideoRenderer
 import org.orbitmvi.orbit.compose.collectAsState
@@ -47,7 +51,6 @@ fun AddLiveStreamingScreen(
     viewModel: AddLiveStreamingViewModel = hiltViewModel(),
     eglBaseContext: EglBase.Context
 ) {
-
     val addLiveStreamingState = viewModel.collectAsState().value
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -56,6 +59,13 @@ fun AddLiveStreamingScreen(
     val previewView = remember { PreviewView(context) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val cameraProvider = remember(cameraProviderFuture) { cameraProviderFuture.get() }
+
+    // TextField 한글 자소 분리 현상 완화를 위해 UI 상태로 적용
+    var title by remember { mutableStateOf("") }
+
+    LaunchedEffect(addLiveStreamingState.profileName) {
+        title = "${addLiveStreamingState.profileName}님의 방송을 시작합니다."
+    }
 
     // 뒤로 가기 이벤트 - 라이브 스트리밍 중에는 종료 다이얼로그 띄우기
     BackHandler(enabled = addLiveStreamingState.isLiveStreaming) {
@@ -95,13 +105,13 @@ fun AddLiveStreamingScreen(
         cameraProviderFuture = cameraProviderFuture,
         cameraProvider = cameraProvider,
         userProfileUrl = addLiveStreamingState.userProfileUrl,
-        liveStreamingTitle = addLiveStreamingState.liveStreamingTitle,
-        onChangeLiveStreamingTitle = { viewModel.processIntent(AddLiveStreamingIntent.OnChangeLiveStreamingTitle(it)) },
+        liveStreamingTitle = title,
+        onChangeLiveStreamingTitle = { title = it },
         onClickStartLiveStreamingButton = {
             val thumbnailImage = previewView.bitmap
 
             cameraProvider.unbindAll()
-            viewModel.processIntent(AddLiveStreamingIntent.OnClickStartLiveStreamingButton(thumbnailImage))
+            viewModel.processIntent(AddLiveStreamingIntent.OnClickStartLiveStreamingButton(thumbnailImage, title))
         }
     )
 
@@ -152,7 +162,7 @@ fun AddLiveStreamingScreen(
                     onClickProfileImage = {}
                 )
 
-                SignInInputTextField(
+                CodeBridgeTextField(
                     modifier = Modifier.padding(end = 30.dp),
                     value = liveStreamingTitle,
                     onChangeValue = onChangeLiveStreamingTitle,

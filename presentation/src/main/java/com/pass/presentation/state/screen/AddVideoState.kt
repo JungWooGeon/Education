@@ -8,6 +8,5 @@ import javax.annotation.concurrent.Immutable
 data class AddVideoState(
     val videoThumbnailBitmap: Bitmap?,
     val videoUri: String,
-    val title: String,
     val progressButtonState: SSButtonState
 )

@@ -12,6 +12,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,9 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pass.presentation.intent.SignUpIntent
 import com.pass.presentation.sideeffect.SignUpSideEffect
-import com.pass.presentation.view.component.SignInInputTextField
+import com.pass.presentation.view.component.CodeBridgeTextField
 import com.pass.presentation.viewmodel.SignUpViewModel
-import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
@@ -33,8 +36,12 @@ fun SignUpScreen(
     onNavigateToSignInScreen: () -> Unit,
     onNavigateToProfileScreen: () -> Unit
 ) {
-    val signUpState = viewModel.collectAsState().value
     val context = LocalContext.current
+
+    // TextField 한글 자소 분리 현상 완화를 위해 UI 상태로 적용
+    var id by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var verifyPassword by remember { mutableStateOf("") }
 
     viewModel.collectSideEffect { sideEffect ->
         when(sideEffect) {
@@ -48,13 +55,13 @@ fun SignUpScreen(
     }
 
     SignUpScreen(
-        id = signUpState.id,
-        password = signUpState.password,
-        verifyPassword = signUpState.verifyPassword,
-        onChangeId = { viewModel.processIntent(SignUpIntent.OnChangeId(it)) },
-        onChangePassword = { viewModel.processIntent(SignUpIntent.OnChangePassword(it)) },
-        onChangeVerifyPassword = { viewModel.processIntent(SignUpIntent.OnChangeVerifyPassword(it)) },
-        onClickSignUp = { viewModel.processIntent(SignUpIntent.OnClickSignUp) },
+        id = id,
+        password = password,
+        verifyPassword = verifyPassword,
+        onChangeId = { id = it },
+        onChangePassword = { password = it },
+        onChangeVerifyPassword = { verifyPassword = it },
+        onClickSignUp = { viewModel.processIntent(SignUpIntent.OnClickSignUp(id, password, verifyPassword)) },
         onClickCancel = onNavigateToSignInScreen
     )
 }
@@ -78,14 +85,14 @@ fun SignUpScreen(
             .padding(horizontal = 40.dp)
     ) {
 
-        SignInInputTextField(
+        CodeBridgeTextField(
             modifier = Modifier,
             value = id,
             onChangeValue = onChangeId,
             placeHolderValue = "id"
         )
 
-        SignInInputTextField(
+        CodeBridgeTextField(
             modifier = Modifier.padding(top = 20.dp),
             value = password,
             onChangeValue = onChangePassword,
@@ -93,7 +100,7 @@ fun SignUpScreen(
             visualTransformation = PasswordVisualTransformation()
         )
 
-        SignInInputTextField(
+        CodeBridgeTextField(
             modifier = Modifier.padding(top = 20.dp),
             value = verifyPassword,
             onChangeValue = onChangeVerifyPassword,

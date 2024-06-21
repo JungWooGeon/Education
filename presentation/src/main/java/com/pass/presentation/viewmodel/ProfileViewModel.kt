@@ -43,8 +43,7 @@ class ProfileViewModel @Inject constructor(
             is ProfileIntent.OnClickSignOut -> onClickSignOut()
             is ProfileIntent.OnClickEditButton -> onClickEditButton()
             is ProfileIntent.OnCancelEditPopUp -> onCancelEditPopUp()
-            is ProfileIntent.OnChangeEditDialogUserName -> onChangeEditDialogUserName(intent.editDialogUserName)
-            is ProfileIntent.OnClickSaveEditDialogButton -> onClickSaveEditDialogButton()
+            is ProfileIntent.OnClickSaveEditDialogButton -> onClickSaveEditDialogButton(intent.editDialogUserName)
             is ProfileIntent.OnChangeUserProfilePicture -> onChangeUserProfilePicture(intent.uri)
             is ProfileIntent.OpenDeleteModalBottomSheet -> openDeleteModalBottomSheet(intent.videoIdx)
             is ProfileIntent.CloseDeleteModalBottomSheet -> closeDeleteModalBottomSheet()
@@ -60,7 +59,6 @@ class ProfileViewModel @Inject constructor(
                     state.copy(
                         userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
                         userName = profile.name,
-                        editDialogUserName = profile.name,
                         videoList = profile.videoList
                     )
                 }
@@ -90,26 +88,17 @@ class ProfileViewModel @Inject constructor(
     private fun onCancelEditPopUp() = intent {
         reduce {
             state.copy(
-                onEditDialog = false,
-                editDialogUserName = state.userName
+                onEditDialog = false
             )
         }
     }
 
-    private fun onChangeEditDialogUserName(editDialogUserName: String) = intent {
-        reduce {
-            state.copy(
-                editDialogUserName = editDialogUserName
-            )
-        }
-    }
-
-    private fun onClickSaveEditDialogButton() = intent {
-        updateUserProfileNameUseCase(name = state.editDialogUserName).collect { result ->
+    private fun onClickSaveEditDialogButton(editDialogUserName: String) = intent {
+        updateUserProfileNameUseCase(name = editDialogUserName).collect { result ->
             result.onSuccess {
                 reduce {
                     state.copy(
-                        userName = state.editDialogUserName,
+                        userName = editDialogUserName,
                         onEditDialog = false
                     )
                 }

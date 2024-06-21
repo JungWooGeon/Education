@@ -45,9 +45,8 @@ class AddLiveStreamingViewModel @Inject constructor(
 
     fun processIntent(intent: AddLiveStreamingIntent) {
         when(intent) {
-            is AddLiveStreamingIntent.OnChangeLiveStreamingTitle -> onChangeLiveStreamingTitle(intent.title)
             is AddLiveStreamingIntent.OnClickStartLiveStreamingButton -> {
-                onClickStartLiveStreamingButton(intent.thumbnailImage)
+                onClickStartLiveStreamingButton(intent.thumbnailImage, intent.title)
             }
             is AddLiveStreamingIntent.OnClickBackButtonDuringLiveStreaming -> onClickBackButtonDuringLiveStreaming()
             is AddLiveStreamingIntent.OnDismissRequest -> onDismissRequest()
@@ -61,7 +60,7 @@ class AddLiveStreamingViewModel @Inject constructor(
                 reduce {
                     state.copy(
                         userProfileUrl = urlCodec.urlDecode(profile.pictureUrl),
-                        liveStreamingTitle = "${profile.name}의 방송을 시작합니다."
+                        profileName = profile.name
                     )
                 }
             }.onFailure {
@@ -70,21 +69,13 @@ class AddLiveStreamingViewModel @Inject constructor(
         }
     }
 
-    private fun onChangeLiveStreamingTitle(title: String) = intent {
-        reduce {
-            state.copy(
-                liveStreamingTitle = title
-            )
-        }
-    }
-
-    private fun onClickStartLiveStreamingButton(thumbnailImage: Bitmap?) = intent {
+    private fun onClickStartLiveStreamingButton(thumbnailImage: Bitmap?, title: String) = intent {
         if (thumbnailImage == null) {
             postSideEffect(AddLiveStreamingSideEffect.FailCamera("라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
         } else {
             startStreamingScope.launch {
                 startLiveStreamingUseCase(
-                    title = state.liveStreamingTitle,
+                    title = title,
                     thumbnailImage = thumbnailImage
                 ).collect { result ->
                     result.onSuccess { videoTrack ->

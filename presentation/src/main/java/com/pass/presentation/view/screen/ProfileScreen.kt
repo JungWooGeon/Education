@@ -30,6 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +68,14 @@ fun ProfileScreen(
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+
+    // TextField 한글 자소 분리 현상 완화를 위해 UI 상태로 적용
+    var editDialogUserName by remember { mutableStateOf("") }
+
+    // UserName 상태 변경 시마다 EditDialog의 상태에도 반영
+    LaunchedEffect(profileState.userName) {
+        editDialogUserName = profileState.userName
+    }
 
     LaunchedEffect(lifecycleState) {
         // onResume 생명 주기 감지 시 동영상 목록 업데이트
@@ -118,10 +129,13 @@ fun ProfileScreen(
         userName = profileState.userName,
         videoList = profileState.videoList,
         onEditDialog = profileState.onEditDialog,
-        editDialogUserName = profileState.editDialogUserName,
+        editDialogUserName = editDialogUserName,
         onClickSignOut = { viewModel.processIntent(ProfileIntent.OnClickSignOut) },
         onClickEditButton = { viewModel.processIntent(ProfileIntent.OnClickEditButton) },
-        onCancelEditPopUp = { viewModel.processIntent(ProfileIntent.OnCancelEditPopUp) },
+        onCancelEditPopUp = {
+            viewModel.processIntent(ProfileIntent.OnCancelEditPopUp)
+            editDialogUserName = profileState.userName
+        },
         isOpenDeleteModalBottomSheet = profileState.isOpenDeleteModalBottomSheet,
         onClickProfileImage = {
             if (multiplePermissionsState.allPermissionsGranted) {
@@ -135,8 +149,8 @@ fun ProfileScreen(
                 multiplePermissionsState.launchMultiplePermissionRequest()
             }
         },
-        onChangeEditDialogUserName = { viewModel.processIntent(ProfileIntent.OnChangeEditDialogUserName(it)) },
-        onClickSaveEditDialogButton = { viewModel.processIntent(ProfileIntent.OnClickSaveEditDialogButton) },
+        onChangeEditDialogUserName = { editDialogUserName = it },
+        onClickSaveEditDialogButton = { viewModel.processIntent(ProfileIntent.OnClickSaveEditDialogButton(editDialogUserName)) },
         onClickAddVideoButton = {
             if (multiplePermissionsState.allPermissionsGranted) {
                 // 권한 허용 - 비디오 선택
