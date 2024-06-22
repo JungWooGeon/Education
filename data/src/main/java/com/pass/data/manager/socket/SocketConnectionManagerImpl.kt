@@ -42,7 +42,7 @@ class SocketConnectionManagerImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            handleError()
         }
     }
 

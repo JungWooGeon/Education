@@ -32,9 +32,6 @@ class VideoCaptureManagerImpl @Inject constructor(
 
         // videoTrack 생성
         val videoTrack = peerConnectionFactory.createVideoTrack("Video${UUID.randomUUID()}", videoSource)
-
-
-
         videoTrack.setEnabled(true)
 
         return videoTrack
