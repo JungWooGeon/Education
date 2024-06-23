@@ -12,6 +12,7 @@ import com.pass.presentation.intent.LiveListIntent
 import com.pass.presentation.sideeffect.LiveListSideEffect
 import com.pass.presentation.state.screen.LiveListState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -44,37 +45,35 @@ class LiveListViewModel @Inject constructor(
     private fun getLiveList() = intent {
         viewModelScope.launch {
             // 라이브 리스트 정보 확인
-            getLiveStreamingListUseCase().collect { result ->
-                result.onSuccess { liveStreamingList ->
-                    val mutableLiveList = mutableListOf<LiveStreaming>()
+            val result = getLiveStreamingListUseCase().first()
+            result.onSuccess { liveStreamingList ->
+                val mutableLiveList = mutableListOf<LiveStreaming>()
 
-                    liveStreamingList.forEach {
-                        mutableLiveList.add(
-                            LiveStreaming(
-                                broadcastId = it.broadcastId,
-                                thumbnailURL = urlCodec.urlDecode(it.thumbnailURL),
-                                title = it.title,
-                                userProfileURL = it.userProfileURL,
-                                userName = it.userName
-                            )
+                liveStreamingList.forEach {
+                    mutableLiveList.add(
+                        LiveStreaming(
+                            broadcastId = it.broadcastId,
+                            thumbnailURL = urlCodec.urlDecode(it.thumbnailURL),
+                            title = it.title,
+                            userProfileURL = it.userProfileURL,
+                            userName = it.userName
                         )
-                    }
-
-                    reduce {
-                        state.copy(liveStreamingList = mutableLiveList.toList())
-                    }
-                }.onFailure {
-                    postSideEffect(LiveListSideEffect.Toast(it.message ?: "라이브 중인 방송이 없습니다."))
+                    )
                 }
+
+                reduce {
+                    state.copy(liveStreamingList = mutableLiveList.toList())
+                }
+            }.onFailure {
+                postSideEffect(LiveListSideEffect.Toast(it.message ?: "라이브 중인 방송이 없습니다."))
             }
         }
 
         viewModelScope.launch {
             // 로그인 정보 확인
-            isSignedInUseCase().collect { result ->
-                reduce {
-                    state.copy(isLoggedIn = result)
-                }
+            val result = isSignedInUseCase().first()
+            reduce {
+                state.copy(isLoggedIn = result)
             }
         }
     }

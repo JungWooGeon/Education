@@ -52,6 +52,8 @@ class SocketConnectionManagerImpl @Inject constructor(
             onEventConnect()
         }?.on(Socket.EVENT_DISCONNECT) {
             callbackOnFailureConnected()
+        }?.on(Socket.EVENT_CONNECT_ERROR) {
+            callbackOnFailureConnected()
         }
     }
 

@@ -33,7 +33,6 @@ class VideoServiceImpl @Inject constructor(
      * 2. Flow<Result<String>> : firestorage 비디오 썸네일 업로드
      * 3. Flow<Result<Unit>> : firestore user 비디오 목록 추가
      * 4. Flow<Result<Unit>> : firestore 전체 비디오 목록 추가
-     * 1, 2(zip) -> 3, 4(zip) : 순차 실행과 병렬 실행을 위해 중첩 collect 와 zip 사용
      */
     override suspend fun addVideo(
         videoUri: String,
@@ -95,8 +94,7 @@ class VideoServiceImpl @Inject constructor(
      * 4. flow : 전체 동영상 목록에서 삭제
      * 1 ~ 4 번 병렬적 실행 후 모두 성공 시에만 성공으로 반환, 중간 실패 시 return
      */
-    override suspend fun deleteVideo(video: Video, userId: String): Flow<Result<Unit>> =
-        callbackFlow {
+    override suspend fun deleteVideo(video: Video, userId: String): Flow<Result<Unit>> = callbackFlow {
             val deleteVideoFromStorageFlow = firebaseStorageManager.deleteFile(
                 pathString = "video/${video.videoId}"
             )
@@ -117,7 +115,7 @@ class VideoServiceImpl @Inject constructor(
                 documentPath = video.videoId
             )
 
-            combine(
+            val combinedResult = combine(
                 deleteVideoFromStorageFlow,
                 deleteVideoThumbnailFromStorageFlow,
                 deleteVideoFromProfileFlow,
@@ -128,48 +126,43 @@ class VideoServiceImpl @Inject constructor(
                 } else {
                     Result.failure(Exception("동영상 삭제에 실패하였습니다."))
                 }
-            }.collect { combinedResult ->
-                trySend(combinedResult)
-                close()
-            }
+            }.first()
 
+            trySend(combinedResult)
             awaitClose()
         }
 
     /**
-     * 순차적 처리를 위해 flow collect 중첩
      * 1. Flow<Result<Pair<DocumentSnapshot, List<String>> : Firestore에서 전체 video list 조회 + id 추출 결과
      * 2. Flow<Result<DocumentSnapshot>> : id 추출 결과를 토대로 id user 정보 조회 결과
      * 3. resultLiveStreamingList: 1번과 2번의 결과를 조합하여 데이터 가공 후 return
      */
     override suspend fun getAllVideoList(): Flow<Result<List<Video>>> = callbackFlow {
         // 비디오 목록 조회
-        getMediaAndIdList("videos").collect { pairResult ->
-            pairResult.onSuccess { pair ->
-                val videoDocumentSnapShotList = pair.first
-                val idSetList = pair.second
+        val pairResult = getMediaAndIdList("videos").first()
+        pairResult.onSuccess { pair ->
+            val videoDocumentSnapShotList = pair.first
+            val idSetList = pair.second
 
-                getIdList(idSetList).collect { readIdListResult ->
-                    readIdListResult.onSuccess { readIdDocumentSnapShotList ->
-                        // id에 대한 프로필 정보 변수
-                        val idOfProfileMap = fireStoreUtil.extractIdOfProfileMapFromDocuments(readIdDocumentSnapShotList)
+            val readIdListResult = getIdList(idSetList).first()
+            readIdListResult.onSuccess { readIdDocumentSnapShotList ->
+                // id에 대한 프로필 정보 변수
+                val idOfProfileMap = fireStoreUtil.extractIdOfProfileMapFromDocuments(readIdDocumentSnapShotList)
 
-                        // 결과 video list
-                        val resultVideoList = fireStoreUtil.extractVideoListInfoFromIdMapAndDocuments(
-                            videoDocumentSnapShotList = videoDocumentSnapShotList,
-                            idOfProfileMap = idOfProfileMap,
-                            calculateAgoTime = { calculateUtil.calculateAgoTime(it) }
-                        )
+                // 결과 video list
+                val resultVideoList = fireStoreUtil.extractVideoListInfoFromIdMapAndDocuments(
+                    videoDocumentSnapShotList = videoDocumentSnapShotList,
+                    idOfProfileMap = idOfProfileMap,
+                    calculateAgoTime = { calculateUtil.calculateAgoTime(it) }
+                )
 
-                        // return 결과 list
-                        trySend(Result.success(resultVideoList))
-                    }.onFailure {
-                        trySend(Result.failure(it))
-                    }
-                }
+                // return 결과 list
+                trySend(Result.success(resultVideoList))
             }.onFailure {
                 trySend(Result.failure(it))
             }
+        }.onFailure {
+            trySend(Result.failure(it))
         }
 
         awaitClose()

@@ -9,6 +9,7 @@ import com.pass.domain.model.Profile
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.zip
 import javax.inject.Inject
 
@@ -27,7 +28,7 @@ class UserServiceImpl @Inject constructor(
      * 2. Flow<Result<List<DocumentSnapshot>>> : 내 프로필 동영상 목록 조회
      * 3. 1번과 2번 결과를 조합하여 Profile 데이터 생성 후 return
      */
-    override suspend fun getUserProfile(userId: String): Flow<Result<Profile>> = callbackFlow {
+    override suspend fun getUserProfile(userId: String): Flow<Result<Profile>> {
         // 프로필 정보 조회
         val readProfileInfoFlow = firebaseDatabaseManager.readData(
             collectionPath = "profiles",
@@ -42,7 +43,7 @@ class UserServiceImpl @Inject constructor(
         )
 
         // 두 flow 가 모두 성공했을 경우에만 Success
-        readProfileInfoFlow.zip(readProfileVideoListFlow) { readProfileInfoFlowResult, readProfileVideoListFlowResult ->
+        return readProfileInfoFlow.zip(readProfileVideoListFlow) { readProfileInfoFlowResult, readProfileVideoListFlowResult ->
             when {
                 readProfileInfoFlowResult.isSuccess && readProfileVideoListFlowResult.isSuccess -> {
                     val profileDocumentSnapshot = readProfileInfoFlowResult.getOrNull()
@@ -62,12 +63,7 @@ class UserServiceImpl @Inject constructor(
                 readProfileVideoListFlowResult.isFailure -> { Result.failure(readProfileVideoListFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류")) }
                 else -> { Result.failure(Exception("알 수 없는 오류")) }
             }
-        }.collect { combinedResult ->
-            trySend(combinedResult)
-            close()
         }
-
-        awaitClose()
     }
 
     /**
@@ -83,18 +79,16 @@ class UserServiceImpl @Inject constructor(
      */
     override suspend fun updateUserProfilePicture(userId: String, pictureUri: String): Flow<Result<String>> = callbackFlow {
         // 사진 업데이트 + 새로운 사진 url 업데이트
-        firebaseStorageManager.updateFile(pictureUri, "user_profile/${userId}").collect { result ->
-            result.onSuccess { uriString ->
-                updateUserProfile(uriString, "pictureUrl").collect {
-                    it.onSuccess {
-                        trySend(Result.success(uriString))
-                    }.onFailure {
-                        trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
-                    }
-                }
+        val updateFileResult = firebaseStorageManager.updateFile(pictureUri, "user_profile/${userId}").first()
+        updateFileResult.onSuccess { uriString ->
+            val updateProfileResult = updateUserProfile(uriString, "pictureUrl").first()
+            updateProfileResult.onSuccess {
+                trySend(Result.success(uriString))
             }.onFailure {
-                trySend(Result.failure(it))
+                trySend(Result.failure(Exception("프로필 사진 업로드를 시도하던 중 오류가 발생하였습니다. 잠시 후 시도해주세요.")))
             }
+        }.onFailure {
+            trySend(Result.failure(it))
         }
 
         awaitClose()
@@ -104,15 +98,15 @@ class UserServiceImpl @Inject constructor(
      * Flow<Result<DocumentSnapshot>> : firestore 전체 사용자 정보 조회
      */
     override suspend fun getOtherUserProfile(userId: String): Flow<Result<Profile>> = callbackFlow {
-        firebaseDatabaseManager.readData(
+        val readDataResult = firebaseDatabaseManager.readData(
             collectionPath =  "profiles",
             documentPath = userId
-        ).collect { result ->
-            result.onSuccess { documentSnapShot ->
-                trySend(fireStoreUtil.createProfileFromDocumentSnapShot(documentSnapShot))
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
+        ).first()
+
+        readDataResult.onSuccess { documentSnapShot ->
+            trySend(fireStoreUtil.createProfileFromDocumentSnapShot(documentSnapShot))
+        }.onFailure {
+            trySend(Result.failure(it))
         }
 
         awaitClose()

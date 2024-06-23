@@ -5,6 +5,7 @@ import com.pass.domain.usecase.SignInUseCase
 import com.pass.presentation.intent.SignInIntent
 import com.pass.presentation.sideeffect.SignInSideEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -26,12 +27,11 @@ class SignInViewModel @Inject constructor(
     }
 
     private fun onClickSignIn(id: String, password: String) = intent {
-        signInUseCase(id, password).collect { result ->
-            result.onSuccess {
-                postSideEffect(SignInSideEffect.NavigateToProfileScreen)
-            }.onFailure { exception ->
-                postSideEffect(SignInSideEffect.Toast(message = exception.message ?: "로그인 실패 : Unknown error"))
-            }
+        val result = signInUseCase(id, password).first()
+        result.onSuccess {
+            postSideEffect(SignInSideEffect.NavigateToProfileScreen)
+        }.onFailure { exception ->
+            postSideEffect(SignInSideEffect.Toast(message = exception.message ?: "로그인 실패 : Unknown error"))
         }
     }
 }

@@ -10,6 +10,7 @@ import com.pass.domain.repository.LiveStreamingRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import org.webrtc.VideoTrack
 import javax.inject.Inject
 
@@ -20,21 +21,11 @@ class LiveStreamingRepositoryImpl @Inject constructor(
     private val authenticationService: AuthenticationService
 ) : LiveStreamingRepository<VideoTrack, Bitmap> {
 
-    override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> = callbackFlow {
-        liveStreamingService.getLiveStreamingList().collect { resultLiveStreamingList ->
-            resultLiveStreamingList.onSuccess { liveStreamingList ->
-                trySend(Result.success(liveStreamingList))
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
-        }
-
-        awaitClose()
+    override suspend fun getLiveStreamingList(): Flow<Result<List<LiveStreaming>>> {
+        return liveStreamingService.getLiveStreamingList()
     }
 
     override suspend fun startLiveStreaming(title: String, thumbnailImage: Bitmap): Flow<Result<VideoTrack>> = callbackFlow {
-        // TODO cameraX 가 촬영하고 있다가 방송 시작하기를 누른 시점 캡처한 이미지를 썸네일 이미지로 저장 (presentation layer 에서 캡처 후 파라미터로 전달 필요)
-
         // 방송 시작 시 고유한 방송 ID 생성 및 Firebase에 저장
         val uid = authenticationService.getCurrentUserId()
         val broadcastId = uid.toString()
@@ -42,24 +33,26 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         if (uid == null) {
             trySend(Result.failure(Exception("오류가 발생하였습니다. 다시 로그인을 진행해주세요.")))
         } else {
-            liveStreamingService.createLiveStreamingData(
+            // 방송 시작하기 firebase 데이터 생성
+            val createLiveStreamingDataResult = liveStreamingService.createLiveStreamingData(
                 broadcastId = broadcastId,
                 title = title,
                 thumbnailImage = thumbnailImage
-            ).collect { result ->
-                result.onSuccess {
-                    webRtcBroadCasterService.startBroadcast(
-                        broadcastId = broadcastId,
-                        callbackOnFailureConnected = {
-                            trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
-                        },
-                        callbackOnSuccessConnected = { videoTrack ->
-                            trySend(Result.success(videoTrack))
-                        }
-                    )
-                }.onFailure {
-                    trySend(Result.failure(it))
-                }
+            ).first()
+
+            // webrtc 방송 시작 실행
+            createLiveStreamingDataResult.onSuccess {
+                webRtcBroadCasterService.startBroadcast(
+                    broadcastId = broadcastId,
+                    callbackOnFailureConnected = {
+                        trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
+                    },
+                    callbackOnSuccessConnected = { videoTrack ->
+                        trySend(Result.success(videoTrack))
+                    }
+                )
+            }.onFailure {
+                trySend(Result.failure(it))
             }
         }
 

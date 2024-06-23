@@ -7,6 +7,7 @@ import com.pass.data.util.FireStoreUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 /**
@@ -32,16 +33,12 @@ class SignServiceImpl @Inject constructor(
      * 3. Flow<Result<Unit>> : firestore User 데이터 추가
      */
     override suspend fun signUp(id: String, password: String, verifyPassword: String): Flow<Result<Unit>> = callbackFlow {
-        firebaseAuthManager.signUp(id, password, verifyPassword).collect { result ->
-            result.onSuccess { uid ->
-                val userProfile = fireStoreUtil.createUserProfileData(name = uid, pictureUrl = "")
-
-                firebaseDatabaseManager.createData(userProfile, "profiles", uid).collect {
-                    trySend(it)
-                }
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
+        val signUpFlowResult = firebaseAuthManager.signUp(id, password, verifyPassword).first()
+        signUpFlowResult.onSuccess { uid ->
+            val userProfile = fireStoreUtil.createUserProfileData(name = uid, pictureUrl = "")
+            trySend(firebaseDatabaseManager.createData(userProfile, "profiles", uid).first())
+        }.onFailure {
+            trySend(Result.failure(it))
         }
 
         awaitClose()

@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -55,17 +56,16 @@ class AddLiveStreamingViewModel @Inject constructor(
     }
 
     private fun getUserProfile() = intent {
-        getUserProfileUseCase().collect { result ->
-            result.onSuccess { profile ->
-                reduce {
-                    state.copy(
-                        userProfileUrl = urlCodec.urlDecode(profile.pictureUrl),
-                        profileName = profile.name
-                    )
-                }
-            }.onFailure {
-                postSideEffect(AddLiveStreamingSideEffect.FailGetUserProfile)
+        val result = getUserProfileUseCase().first()
+        result.onSuccess { profile ->
+            reduce {
+                state.copy(
+                    userProfileUrl = urlCodec.urlDecode(profile.pictureUrl),
+                    profileName = profile.name
+                )
             }
+        }.onFailure {
+            postSideEffect(AddLiveStreamingSideEffect.FailGetUserProfile)
         }
     }
 
@@ -77,7 +77,7 @@ class AddLiveStreamingViewModel @Inject constructor(
                 startLiveStreamingUseCase(
                     title = title,
                     thumbnailImage = thumbnailImage
-                ).collect { result ->
+                ).collect {result ->
                     result.onSuccess { videoTrack ->
                         reduce {
                             state.copy(
@@ -89,7 +89,11 @@ class AddLiveStreamingViewModel @Inject constructor(
                         delay(1000)
                         postSideEffect(AddLiveStreamingSideEffect.SuccessStartLiveStreaming)
                     }.onFailure { e ->
-                        postSideEffect(AddLiveStreamingSideEffect.FailCamera(e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+                        postSideEffect(
+                            AddLiveStreamingSideEffect.FailCamera(
+                                e.message ?: "라이브 방송 시작에 실패하였습니다. 잠시 후 다시 시도해주세요."
+                            )
+                        )
                     }
                 }
             }

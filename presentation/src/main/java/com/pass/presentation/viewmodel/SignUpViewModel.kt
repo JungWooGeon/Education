@@ -5,6 +5,7 @@ import com.pass.domain.usecase.SignUpUseCase
 import com.pass.presentation.intent.SignUpIntent
 import com.pass.presentation.sideeffect.SignUpSideEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -26,12 +27,11 @@ class SignUpViewModel @Inject constructor(
     }
 
     private fun onClickSignUp(id: String, password: String, verifyPassword: String) = intent {
-        signUpUseCase(id, password, verifyPassword).collect { result ->
-            result.onSuccess {
-                postSideEffect(SignUpSideEffect.NavigateToProfileScreen)
-            }.onFailure { exception ->
-                postSideEffect(SignUpSideEffect.Toast(message = exception.message ?: "회원가입 실패 : Unknown error"))
-            }
+        val result = signUpUseCase(id, password, verifyPassword).first()
+        result.onSuccess {
+            postSideEffect(SignUpSideEffect.NavigateToProfileScreen)
+        }.onFailure { exception ->
+            postSideEffect(SignUpSideEffect.Toast(message = exception.message ?: "회원가입 실패 : Unknown error"))
         }
     }
 }

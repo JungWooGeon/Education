@@ -11,6 +11,7 @@ import com.pass.presentation.sideeffect.AddVideoSideEffect
 import com.pass.presentation.state.screen.AddVideoState
 import com.simform.ssjetpackcomposeprogressbuttonlibrary.SSButtonState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -71,23 +72,22 @@ class AddVideoViewModel @Inject constructor(
                 state.copy(progressButtonState = SSButtonState.FAILURE)
             }
         } else {
-            addVideoUseCase(
+            val result = addVideoUseCase(
                 videoUri = state.videoUri,
                 videoThumbnailBitmap = state.videoThumbnailBitmap!!,
                 title = title
-            ).collect { result ->
-                result.onSuccess {
-                    reduce {
-                        state.copy(progressButtonState = SSButtonState.SUCCESS)
-                    }
-                    postSideEffect(AddVideoSideEffect.Toast("동영상을 업로드하였습니다."))
-                    postSideEffect(AddVideoSideEffect.NavigateProfileScreen)
-                }.onFailure { e ->
-                    reduce {
-                        state.copy(progressButtonState = SSButtonState.FAILURE)
-                    }
-                    postSideEffect(AddVideoSideEffect.Toast(e.message ?: "동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
+            ).first()
+            result.onSuccess {
+                reduce {
+                    state.copy(progressButtonState = SSButtonState.SUCCESS)
                 }
+                postSideEffect(AddVideoSideEffect.Toast("동영상을 업로드하였습니다."))
+                postSideEffect(AddVideoSideEffect.NavigateProfileScreen)
+            }.onFailure { e ->
+                reduce {
+                    state.copy(progressButtonState = SSButtonState.FAILURE)
+                }
+                postSideEffect(AddVideoSideEffect.Toast(e.message ?: "동영상 업로드에 실패하였습니다. 다시 시도해주세요."))
             }
         }
     }

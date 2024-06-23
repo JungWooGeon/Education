@@ -9,6 +9,7 @@ import com.pass.presentation.intent.VideoStreamingIntent
 import com.pass.presentation.sideeffect.VideoStreamingSideEffect
 import com.pass.presentation.state.screen.VideoStreamingState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -37,22 +38,21 @@ class VideoStreamingViewModel @Inject constructor(
 
     private fun initContent(video: Video) = intent {
         // video 사용자 프로필 조회
-        getOtherUserProfileUseCase(video.userId).collect { result ->
-            result.onSuccess { profile ->
-                // 프로필 조회 성공 시 video 상태 반영
-                reduce {
-                    state.copy(
-                        isMinimized = false,
-                        videoTitle = video.videoTitle,
-                        videoUrl = urlCodec.urlDecode(video.videoUrl),
-                        userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
-                        userName = profile.name
-                    )
-                }
-            }.onFailure {
-                // 프로필 조회 실패
-                postSideEffect(VideoStreamingSideEffect.FailVideoStreaming(it.message ?: "프로필 조회에 실패하였습니다."))
+        val result = getOtherUserProfileUseCase(video.userId).first()
+        result.onSuccess { profile ->
+            // 프로필 조회 성공 시 video 상태 반영
+            reduce {
+                state.copy(
+                    isMinimized = false,
+                    videoTitle = video.videoTitle,
+                    videoUrl = urlCodec.urlDecode(video.videoUrl),
+                    userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
+                    userName = profile.name
+                )
             }
+        }.onFailure {
+            // 프로필 조회 실패
+            postSideEffect(VideoStreamingSideEffect.FailVideoStreaming(it.message ?: "프로필 조회에 실패하였습니다."))
         }
     }
 

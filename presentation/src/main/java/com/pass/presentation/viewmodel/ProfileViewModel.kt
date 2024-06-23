@@ -14,6 +14,7 @@ import com.pass.presentation.sideeffect.ProfileSideEffect
 import com.pass.presentation.state.screen.ProfileState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -53,24 +54,23 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun readProfile() = intent {
-        getUserProfileUseCase().collect { result ->
-            result.onSuccess { profile ->
-                reduce {
-                    state.copy(
-                        userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
-                        userName = profile.name,
-                        videoList = profile.videoList
-                    )
-                }
-            }.onFailure { exception ->
-                // 프로필 조회 실패 시 토스트 메시지 출력 후 로그아웃
-                postSideEffect(
-                    ProfileSideEffect.Toast(
-                        message = exception.message ?: "프로필 조회에 실패하였습니다. 다시 로그인해주세요."
-                    )
+        val result = getUserProfileUseCase().first()
+        result.onSuccess { profile ->
+            reduce {
+                state.copy(
+                    userProfileURL = urlCodec.urlDecode(profile.pictureUrl),
+                    userName = profile.name,
+                    videoList = profile.videoList
                 )
-                onClickSignOut()
             }
+        }.onFailure { exception ->
+            // 프로필 조회 실패 시 토스트 메시지 출력 후 로그아웃
+            postSideEffect(
+                ProfileSideEffect.Toast(
+                    message = exception.message ?: "프로필 조회에 실패하였습니다. 다시 로그인해주세요."
+                )
+            )
+            onClickSignOut()
         }
     }
 
@@ -94,21 +94,20 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun onClickSaveEditDialogButton(editDialogUserName: String) = intent {
-        updateUserProfileNameUseCase(name = editDialogUserName).collect { result ->
-            result.onSuccess {
-                reduce {
-                    state.copy(
-                        userName = editDialogUserName,
-                        onEditDialog = false
-                    )
-                }
-                postSideEffect(ProfileSideEffect.Toast("닉네임을 변경하였습니다."))
-            }.onFailure {
-                reduce {
-                    state.copy(onEditDialog = false)
-                }
-                postSideEffect(ProfileSideEffect.Toast("닉네임 변경에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+        val result = updateUserProfileNameUseCase(name = editDialogUserName).first()
+        result.onSuccess {
+            reduce {
+                state.copy(
+                    userName = editDialogUserName,
+                    onEditDialog = false
+                )
             }
+            postSideEffect(ProfileSideEffect.Toast("닉네임을 변경하였습니다."))
+        }.onFailure {
+            reduce {
+                state.copy(onEditDialog = false)
+            }
+            postSideEffect(ProfileSideEffect.Toast("닉네임 변경에 실패하였습니다. 잠시 후 다시 시도해주세요."))
         }
     }
 
@@ -116,17 +115,16 @@ class ProfileViewModel @Inject constructor(
         if (uri == null) {
             postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경을 취소하였습니다."))
         } else {
-            updateUserProfilePicture(withContext(Dispatchers.IO) {
+            val result = updateUserProfilePicture(withContext(Dispatchers.IO) {
                 urlCodec.urlEncode(uri)
-            }).collect { result ->
-                result.onSuccess { pictureUrl ->
-                    reduce {
-                        state.copy(userProfileURL = urlCodec.urlDecode(pictureUrl))
-                    }
-                    postSideEffect(ProfileSideEffect.Toast("프로필 사진을 변경하였습니다."))
-                }.onFailure {
-                    postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경에 실패하였습니다."))
+            }).first()
+            result.onSuccess { pictureUrl ->
+                reduce {
+                    state.copy(userProfileURL = urlCodec.urlDecode(pictureUrl))
                 }
+                postSideEffect(ProfileSideEffect.Toast("프로필 사진을 변경하였습니다."))
+            }.onFailure {
+                postSideEffect(ProfileSideEffect.Toast("프로필 사진 변경에 실패하였습니다."))
             }
         }
     }
@@ -156,19 +154,18 @@ class ProfileViewModel @Inject constructor(
         }
 
         if (state.deleteVideoIdx != null) {
-            deleteVideoUseCase(state.videoList[state.deleteVideoIdx!!]).collect { result ->
-                result.onSuccess {
-                    reduce {
-                        state.copy(
-                            videoList = state.videoList.toMutableList().apply {
-                                state.deleteVideoIdx?.let { it1 -> this.removeAt(it1) }
-                            }.toList()
-                        )
-                    }
-                    postSideEffect(ProfileSideEffect.Toast("동영상을 삭제하였습니다."))
-                }.onFailure { e ->
-                    postSideEffect(ProfileSideEffect.Toast(e.message ?: "동영상 삭제에 실패하였습니다."))
+            val result = deleteVideoUseCase(state.videoList[state.deleteVideoIdx!!]).first()
+            result.onSuccess {
+                reduce {
+                    state.copy(
+                        videoList = state.videoList.toMutableList().apply {
+                            state.deleteVideoIdx?.let { it1 -> this.removeAt(it1) }
+                        }.toList()
+                    )
                 }
+                postSideEffect(ProfileSideEffect.Toast("동영상을 삭제하였습니다."))
+            }.onFailure { e ->
+                postSideEffect(ProfileSideEffect.Toast(e.message ?: "동영상 삭제에 실패하였습니다."))
             }
         }
     }

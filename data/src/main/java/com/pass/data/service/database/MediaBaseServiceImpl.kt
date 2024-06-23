@@ -6,6 +6,7 @@ import com.pass.data.util.FireStoreUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 open class MediaBaseServiceImpl @Inject constructor(
@@ -18,14 +19,13 @@ open class MediaBaseServiceImpl @Inject constructor(
      */
     override suspend fun getMediaAndIdList(collectionPath: String): Flow<Result<Pair<List<DocumentSnapshot>, List<String>>>> = callbackFlow {
         // 라이브 목록 조회
-        firebaseDatabaseManager.readDataList(collectionPath).collect { readDataListResult ->
-            readDataListResult.onSuccess { videoDocumentSnapShotList ->
-                // idList 추출
-                val idList = fireStoreUtil.extractUserIdsFromDocuments(videoDocumentSnapShotList)
-                trySend(Result.success(videoDocumentSnapShotList to idList))
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
+        val readDataListResult = firebaseDatabaseManager.readDataList(collectionPath).first()
+        readDataListResult.onSuccess { videoDocumentSnapShotList ->
+            // idList 추출
+            val idList = fireStoreUtil.extractUserIdsFromDocuments(videoDocumentSnapShotList)
+            trySend(Result.success(videoDocumentSnapShotList to idList))
+        }.onFailure {
+            trySend(Result.failure(it))
         }
 
         awaitClose()
@@ -36,12 +36,11 @@ open class MediaBaseServiceImpl @Inject constructor(
      */
     override suspend fun getIdList(idList: List<String>): Flow<Result<List<DocumentSnapshot>>> = callbackFlow {
         // id 목록 조회
-        firebaseDatabaseManager.readIdList(idList).collect { readIdListResult ->
-            readIdListResult.onSuccess { readIdDocumentSnapShotList ->
-                trySend(Result.success(readIdDocumentSnapShotList))
-            }.onFailure {
-                trySend(Result.failure(it))
-            }
+        val readIdListResult = firebaseDatabaseManager.readIdList(idList).first()
+        readIdListResult.onSuccess { readIdDocumentSnapShotList ->
+            trySend(Result.success(readIdDocumentSnapShotList))
+        }.onFailure {
+            trySend(Result.failure(it))
         }
 
         awaitClose()

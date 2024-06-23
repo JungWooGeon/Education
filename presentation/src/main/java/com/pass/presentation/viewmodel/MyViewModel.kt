@@ -6,6 +6,7 @@ import com.pass.presentation.intent.MyIntent
 import com.pass.presentation.sideeffect.MyScreenSideEffect
 import com.pass.presentation.state.screen.MyScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -34,10 +35,9 @@ class MyViewModel @Inject constructor(
     }
 
     private fun getIsSinged() = intent {
-        isSignedInUseCase().collect { isSignedIn ->
-            reduce {
-                state.copy(isSignedInState = isSignedIn)
-            }
+        val result = isSignedInUseCase().first()
+        reduce {
+            state.copy(isSignedInState = result)
         }
     }
 

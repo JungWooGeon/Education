@@ -12,6 +12,7 @@ import com.pass.presentation.intent.VideoListIntent
 import com.pass.presentation.sideeffect.VideoListSideEffect
 import com.pass.presentation.state.screen.VideoListState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -43,40 +44,38 @@ class VideoListViewModel @Inject constructor(
 
         viewModelScope.launch {
             // 비디오 리스트 조회
-            getAllVideoListUseCase().collect { result ->
-                result.onSuccess { videoList ->
-                    val mutableVideoList = mutableListOf<Video>()
+            val result = getAllVideoListUseCase().first()
+            result.onSuccess { videoList ->
+                val mutableVideoList = mutableListOf<Video>()
 
-                    videoList.forEach {
-                        mutableVideoList.add(
-                            Video(
-                                videoId = it.videoId,
-                                userId = it.userId,
-                                videoThumbnailUrl = it.videoThumbnailUrl,
-                                videoTitle = it.videoTitle,
-                                agoTime = it.agoTime,
-                                videoUrl = it.videoUrl,
-                                userName = it.userName,
-                                userProfileUrl = it.userProfileUrl?.let { it1 -> urlCodec.urlDecode(it1) }
-                            )
+                videoList.forEach {
+                    mutableVideoList.add(
+                        Video(
+                            videoId = it.videoId,
+                            userId = it.userId,
+                            videoThumbnailUrl = it.videoThumbnailUrl,
+                            videoTitle = it.videoTitle,
+                            agoTime = it.agoTime,
+                            videoUrl = it.videoUrl,
+                            userName = it.userName,
+                            userProfileUrl = it.userProfileUrl?.let { it1 -> urlCodec.urlDecode(it1) }
                         )
-                    }
-
-                    reduce {
-                        state.copy(videoList = mutableVideoList.toList())
-                    }
-                }.onFailure {
-                    postSideEffect(VideoListSideEffect.Toast(it.message ?: "동영상 조회에 실패하였습니다. 잠시 후 다시 시도해주세요."))
+                    )
                 }
+
+                reduce {
+                    state.copy(videoList = mutableVideoList.toList())
+                }
+            }.onFailure {
+                postSideEffect(VideoListSideEffect.Toast(it.message ?: "동영상 조회에 실패하였습니다. 잠시 후 다시 시도해주세요."))
             }
         }
 
         viewModelScope.launch {
             // 로그인 정보 확인
-            isSignedInUseCase().collect { result ->
-                reduce {
-                    state.copy(isLoggedIn = result)
-                }
+            val result = isSignedInUseCase().first()
+            reduce {
+                state.copy(isLoggedIn = result)
             }
         }
     }
