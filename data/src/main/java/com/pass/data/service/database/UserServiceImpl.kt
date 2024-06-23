@@ -60,8 +60,7 @@ class UserServiceImpl @Inject constructor(
                 }
 
                 readProfileInfoFlowResult.isFailure -> { Result.failure(readProfileInfoFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류")) }
-                readProfileVideoListFlowResult.isFailure -> { Result.failure(readProfileVideoListFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류")) }
-                else -> { Result.failure(Exception("알 수 없는 오류")) }
+                else -> { Result.failure(readProfileVideoListFlowResult.exceptionOrNull() ?: Exception("알 수 없는 오류")) }
             }
         }
     }

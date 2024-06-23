@@ -1,13 +1,9 @@
 package com.pass.data.manager.socket
 
 import android.annotation.SuppressLint
-import com.google.android.gms.tasks.OnCompleteListener
-import io.mockk.confirmVerified
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
 import io.socket.client.IO
@@ -123,24 +119,25 @@ class SocketConnectionManagerImplTest {
     fun testSuccessConnect() {
         testSuccessInitializeSocketFromBroadCaster()
 
+        val connectErrorSlot = slot<Emitter.Listener>()
+
         every { mockSocket.connect() } returns mockSocket
         every { mockSocket.on(Socket.EVENT_CONNECT, capture(connectSlot)) } answers { mockSocket }
         every { mockSocket.on(Socket.EVENT_DISCONNECT, capture(disconnectSlot)) } answers { mockSocket }
+        every { mockSocket.on(Socket.EVENT_CONNECT_ERROR, capture(connectErrorSlot)) } answers { mockSocket }
 
         socketConnectionManagerImpl.connect(
             onEventConnect = {},
             callbackOnFailureConnected = {}
         )
 
-        // Ensure the slots have captured the listeners
-        assert(connectSlot.isCaptured) { "Connect slot was not captured" }
-        assert(disconnectSlot.isCaptured) { "Disconnect slot was not captured" }
-
-        connectSlot.captured.call(JSONObject())
         disconnectSlot.captured.call(JSONObject())
+        connectSlot.captured.call(JSONObject())
+        connectErrorSlot.captured.call(JSONObject())
 
         verify { mockSocket.on(Socket.EVENT_CONNECT, any()) }
         verify { mockSocket.on(Socket.EVENT_DISCONNECT, any()) }
+        verify { mockSocket.on(Socket.EVENT_CONNECT_ERROR, any()) }
     }
 
     @Test

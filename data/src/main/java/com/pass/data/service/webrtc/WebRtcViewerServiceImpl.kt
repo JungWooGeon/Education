@@ -52,8 +52,7 @@ class WebRtcViewerServiceImpl @Inject constructor(
     }
 
     override fun stopViewing() {
-        peerConnectionManager.disposePeerConnection()
-//        socket.emit("disconnect", broadcastId)
+        peerConnectionManager.disposePeerConnection {}
         socketConnectionManager.disconnect()
     }
 

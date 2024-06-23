@@ -77,7 +77,7 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
     override fun stopBroadcast(broadcastId: String) {
         videoCaptureManager.stopVideoCapture()
         socketMessageManager.emitMessage("stop", broadcastId)
-        peerConnectionManager.disposePeerConnection()
+        peerConnectionManager.disposePeerConnection {}
         socketConnectionManager.disconnect()
     }
 

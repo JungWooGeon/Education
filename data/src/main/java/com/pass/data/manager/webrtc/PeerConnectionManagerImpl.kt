@@ -62,11 +62,12 @@ class PeerConnectionManagerImpl @Inject constructor(
         peerConnection?.addTrack(audioTrack)
     }
 
-    override fun disposePeerConnection() {
+    override fun disposePeerConnection(callbackOnFailure: () -> Unit) {
         try {
             peerConnection?.dispose()
         } catch(e: Exception) {
             e.printStackTrace()
+            callbackOnFailure()
         }
     }
 

@@ -20,7 +20,7 @@ open class WebRtcBaseServiceImpl @Inject constructor(
     }
 
     override fun handleError(callbackOnFailureConnected: (() -> Unit)) {
-        peerConnectionManager.disposePeerConnection()
+        peerConnectionManager.disposePeerConnection(callbackOnFailureConnected)
         socketConnectionManager.disconnect()
         callbackOnFailureConnected()
     }

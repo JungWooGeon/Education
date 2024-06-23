@@ -11,7 +11,7 @@ interface PeerConnectionManager {
 
     fun addTrackPeerConnection(videoTrack: VideoTrack, audioTrack: AudioTrack)
 
-    fun disposePeerConnection()
+    fun disposePeerConnection(callbackOnFailure: () -> Unit)
 
     fun getPeerConnection(): PeerConnection?
 }

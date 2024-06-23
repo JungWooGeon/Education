@@ -47,8 +47,7 @@ class VideoServiceImpl @Inject constructor(
         val uploadVideoFileFlow = firebaseStorageManager.updateFile(videoUri, "video/${videoId}")
         val uploadVideoThumbnailFileFlow = firebaseStorageManager.updateFileWithBitmap(videoThumbnailBitmap, "video_thumbnail/${videoId}")
 
-        val result =
-            uploadVideoFileFlow.zip(uploadVideoThumbnailFileFlow) { videoResult, thumbnailResult ->
+        val result = uploadVideoFileFlow.zip(uploadVideoThumbnailFileFlow) { videoResult, thumbnailResult ->
                 if (videoResult.isSuccess and thumbnailResult.isSuccess) {
                     val videoUriString = videoResult.getOrDefault("")
                     val videoThumbnailUri = thumbnailResult.getOrDefault("")
@@ -69,8 +68,7 @@ class VideoServiceImpl @Inject constructor(
                         "videos",
                         videoId
                     )
-                    val allVideoFlow =
-                        firebaseDatabaseManager.createData(videoData, "videos", videoId)
+                    val allVideoFlow = firebaseDatabaseManager.createData(videoData, "videos", videoId)
 
                     profileVideoFlow.zip(allVideoFlow) { profileVideoFlowResult, allVideoFlowResult ->
                         if (profileVideoFlowResult.isSuccess && allVideoFlowResult.isSuccess) {
@@ -95,42 +93,42 @@ class VideoServiceImpl @Inject constructor(
      * 1 ~ 4 번 병렬적 실행 후 모두 성공 시에만 성공으로 반환, 중간 실패 시 return
      */
     override suspend fun deleteVideo(video: Video, userId: String): Flow<Result<Unit>> = callbackFlow {
-            val deleteVideoFromStorageFlow = firebaseStorageManager.deleteFile(
-                pathString = "video/${video.videoId}"
-            )
+        val deleteVideoFromStorageFlow = firebaseStorageManager.deleteFile(
+            pathString = "video/${video.videoId}"
+        )
 
-            val deleteVideoThumbnailFromStorageFlow = firebaseStorageManager.deleteFile(
-                pathString = "video_thumbnail/${video.videoId}"
-            )
+        val deleteVideoThumbnailFromStorageFlow = firebaseStorageManager.deleteFile(
+            pathString = "video_thumbnail/${video.videoId}"
+        )
 
-            val deleteVideoFromProfileFlow = firebaseDatabaseManager.deleteData(
-                collectionPath = "profiles",
-                documentPath = userId,
-                collectionPath2 = "videos",
-                documentPath2 = video.videoId
-            )
+        val deleteVideoFromProfileFlow = firebaseDatabaseManager.deleteData(
+            collectionPath = "profiles",
+            documentPath = userId,
+            collectionPath2 = "videos",
+            documentPath2 = video.videoId
+        )
 
-            val deleteVideoFromTotalVideoListFlow = firebaseDatabaseManager.deleteData(
-                collectionPath = "videos",
-                documentPath = video.videoId
-            )
+        val deleteVideoFromTotalVideoListFlow = firebaseDatabaseManager.deleteData(
+            collectionPath = "videos",
+            documentPath = video.videoId
+        )
 
-            val combinedResult = combine(
-                deleteVideoFromStorageFlow,
-                deleteVideoThumbnailFromStorageFlow,
-                deleteVideoFromProfileFlow,
-                deleteVideoFromTotalVideoListFlow
-            ) { dvfStorageFlowResult, dvtfStorageFlowResult, dvfProfileFlowResult, dvfTotalVideoListFlowResult ->
-                if (dvfStorageFlowResult.isSuccess && dvtfStorageFlowResult.isSuccess && dvfProfileFlowResult.isSuccess && dvfTotalVideoListFlowResult.isSuccess) {
-                    Result.success(Unit)
-                } else {
-                    Result.failure(Exception("동영상 삭제에 실패하였습니다."))
-                }
-            }.first()
+        val combinedResult = combine(
+            deleteVideoFromStorageFlow,
+            deleteVideoThumbnailFromStorageFlow,
+            deleteVideoFromProfileFlow,
+            deleteVideoFromTotalVideoListFlow
+        ) { dvfStorageFlowResult, dvtfStorageFlowResult, dvfProfileFlowResult, dvfTotalVideoListFlowResult ->
+            if (dvfStorageFlowResult.isSuccess && dvtfStorageFlowResult.isSuccess && dvfProfileFlowResult.isSuccess && dvfTotalVideoListFlowResult.isSuccess) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("동영상 삭제에 실패하였습니다."))
+            }
+        }.first()
 
-            trySend(combinedResult)
-            awaitClose()
-        }
+        trySend(combinedResult)
+        awaitClose()
+    }
 
     /**
      * 1. Flow<Result<Pair<DocumentSnapshot, List<String>> : Firestore에서 전체 video list 조회 + id 추출 결과
