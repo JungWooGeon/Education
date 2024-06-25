@@ -31,10 +31,10 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
         // 소켓 초기화 (방송자용)
         socketConnectionManager.initializeSocket(
             isBroadCaster = true,
-            handleOffer = { },
-            handleAnswer = { handleAnswer(broadcastId = broadcastId, json = it, callbackOnFailureConnected = callbackOnFailureConnected) },
+            handleRemoteIceCandidate = { handleRemoteIceCandidate(it) },
             handleError = { handleError(callbackOnFailureConnected) },
-            handleRemoteIceCandidate = { handleRemoteIceCandidate(it) }
+            handleAnswer = { handleAnswer(broadcastId = broadcastId, json = it, callbackOnFailureConnected = callbackOnFailureConnected) },
+            handleOffer = { }
         )
 
         // PeerConnection 초기화
@@ -81,7 +81,7 @@ class WebRtcBroadCasterServiceImpl @Inject constructor(
         socketConnectionManager.disconnect()
     }
 
-    override fun handleAnswer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit) {
+    private fun handleAnswer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit) {
         iceCandidateManager.setRemoteDescriptionPeerConnection(
             json = json,
             sessionDescriptionType = SessionDescription.Type.ANSWER,

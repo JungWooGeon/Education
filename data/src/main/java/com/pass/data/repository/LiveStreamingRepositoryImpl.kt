@@ -45,7 +45,7 @@ class LiveStreamingRepositoryImpl @Inject constructor(
                 webRtcBroadCasterService.startBroadcast(
                     broadcastId = broadcastId,
                     callbackOnFailureConnected = {
-                        trySend(Result.failure(Exception("Failed to connect to the broadcast."))).isFailure
+                        trySend(Result.failure(Exception("Failed to connect to the broadcast.")))
                     },
                     callbackOnSuccessConnected = { videoTrack ->
                         trySend(Result.success(videoTrack))
@@ -64,7 +64,7 @@ class LiveStreamingRepositoryImpl @Inject constructor(
         webRtcViewerService.startViewing(
             broadcastId = broadcastId,
             callbackOnFailureConnected = {
-                trySend(Result.failure(Exception("방송이 종료되었습니다."))).isFailure
+                trySend(Result.failure(Exception("방송이 종료되었습니다.")))
             },
             callbackOnSuccessConnected = { videoTrack ->
                 trySend(Result.success(videoTrack))

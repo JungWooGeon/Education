@@ -24,10 +24,10 @@ class WebRtcViewerServiceImpl @Inject constructor(
         // 소켓 초기화 (시청자용)
         socketConnectionManager.initializeSocket(
             isBroadCaster = false,
-            handleOffer = { handleOffer(broadcastId = broadcastId, json = it, callbackOnFailureConnected = callbackOnFailureConnected) },
-            handleAnswer = { },
+            handleRemoteIceCandidate = { handleRemoteIceCandidate(it) },
             handleError = { handleError(callbackOnFailureConnected = callbackOnFailureConnected) },
-            handleRemoteIceCandidate = { handleRemoteIceCandidate(it) }
+            handleAnswer = { },
+            handleOffer = { handleOffer(broadcastId = broadcastId, json = it, callbackOnFailureConnected = callbackOnFailureConnected) }
         )
 
         // PeerConnection 초기화
@@ -56,7 +56,7 @@ class WebRtcViewerServiceImpl @Inject constructor(
         socketConnectionManager.disconnect()
     }
 
-    override fun handleOffer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit) {
+    private fun handleOffer(broadcastId: String, json: JSONObject, callbackOnFailureConnected: () -> Unit) {
         iceCandidateManager.setRemoteDescriptionPeerConnection(
             json = json,
             sessionDescriptionType = SessionDescription.Type.OFFER,

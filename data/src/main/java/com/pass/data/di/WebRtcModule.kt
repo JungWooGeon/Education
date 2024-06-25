@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.webrtc.Camera2Enumerator
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
@@ -39,5 +40,11 @@ object WebRtcModule {
             .setVideoDecoderFactory(videoDecoderFactory)
             .setVideoEncoderFactory(videoEncoderFactory)
             .createPeerConnectionFactory()
+    }
+
+    @Singleton
+    @Provides
+    fun providesCamera2Enumerator(context: Context): Camera2Enumerator {
+        return Camera2Enumerator(context)
     }
 }
