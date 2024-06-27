@@ -12,6 +12,20 @@
 
 <br><br>
 
+## 🚀 설계
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/2fbaf20f-a016-4fce-860f-db0b998af00d" width="550" height="700"/>
+
+- View: 사용자 인터페이스를 제공 및 사용자 입력 처리
+- Model: Intent 처리 및 뷰와 도메인 계층 사이의 상태와 사이드 이펙트 관리
+- UseCase: 도메인 계층의 비즈니스 로직 수행
+- Entity: 비즈니스 도메인 객체
+- Repository : 비지니스 로직 추상화
+- Service : 데이터 가공 및 데이터 로직을 순서대로 실행
+- Manager : 직접적인 데이터 로직 구현
+- Util : 반복적인 작업 수행
+
+<br><br>
+
 ## ⭐️ 기능
 - 라이브 스트리밍
   - 라이브 방송 켜기
