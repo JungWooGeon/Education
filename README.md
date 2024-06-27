@@ -1,3 +1,5 @@
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/72db6b38-2f93-4838-a0a6-0d7e7eed3b31" width="100" />
+
 ## 💡 Code Bridge
 라이브 스트리밍과 동영상 강의로 함께하는 코딩 교육 플랫폼
 
@@ -13,7 +15,8 @@
 <br><br>
 
 ## 🚀 설계
-<img src="https://github.com/JungWooGeon/Education/assets/61993128/2fbaf20f-a016-4fce-860f-db0b998af00d" width="550" height="700"/>
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/2fbaf20f-a016-4fce-860f-db0b998af00d" width="600" />
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/271d0e7c-9ad0-4a04-b1c7-46675f4ad672" width="600" />
 
 - View: 사용자 인터페이스를 제공 및 사용자 입력 처리
 - Model: Intent 처리 및 뷰와 도메인 계층 사이의 상태와 사이드 이펙트 관리
