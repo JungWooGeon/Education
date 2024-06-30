@@ -42,7 +42,7 @@ class AddLiveStreamingViewModel @Inject constructor(
         getUserProfile()
     }
 
-    val startStreamingScope = CoroutineScope(Dispatchers.IO)
+    private val startStreamingScope = CoroutineScope(Dispatchers.IO)
 
     fun processIntent(intent: AddLiveStreamingIntent) {
         when(intent) {

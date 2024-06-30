@@ -58,6 +58,8 @@ class WatchBroadCastViewModel @Inject constructor(
     }
 
     private fun onExitRequest() = intent {
+        // webrtc release
+        stopViewingUseCase()
         postSideEffect(WatchBroadCastSideEffect.SuccessStopLiveStreaming)
     }
 
@@ -65,8 +67,5 @@ class WatchBroadCastViewModel @Inject constructor(
         reduce {
             state.copy(isExitDialog = true)
         }
-
-        // webrtc release
-        stopViewingUseCase()
     }
 }

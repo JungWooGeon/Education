@@ -55,10 +55,12 @@ class LiveListViewModel @Inject constructor(
                             broadcastId = it.broadcastId,
                             thumbnailURL = urlCodec.urlDecode(it.thumbnailURL),
                             title = it.title,
-                            userProfileURL = it.userProfileURL,
+                            userProfileURL = urlCodec.urlDecode(it.userProfileURL),
                             userName = it.userName
                         )
                     )
+
+                    println("자 여기 : ${it.userProfileURL}")
                 }
 
                 reduce {

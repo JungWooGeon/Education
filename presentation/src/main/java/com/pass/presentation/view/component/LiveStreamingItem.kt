@@ -1,8 +1,10 @@
 package com.pass.presentation.view.component
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,7 @@ import coil.compose.AsyncImage
 
 @Composable
 fun LiveStreamingItem(
+    context: Context,
     thumbnailUrl: String,
     title: String,
     userProfileUrl: String,
@@ -39,12 +42,15 @@ fun LiveStreamingItem(
         Row(
             modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp)
         ) {
-            AsyncImage(
-                model = userProfileUrl,
-                contentDescription = null,
-                clipToBounds = true,
-                modifier = Modifier.size(40.dp)
+            ProfileImageView(
+                context = context,
+                modifier = Modifier,
+                userProfileUrl = userProfileUrl,
+                imageSize = 40.dp,
+                onClickProfileImage = {}
             )
+
+            Spacer(modifier = Modifier.size(10.dp))
 
             Column(
                 modifier = Modifier.padding(start = 10.dp)

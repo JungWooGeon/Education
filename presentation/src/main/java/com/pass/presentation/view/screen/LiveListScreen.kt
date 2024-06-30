@@ -89,6 +89,7 @@ fun LiveListScreen(
     }
 
     LiveListScreen(
+        context = context,
         liveStreamingList = liveListState.liveStreamingList,
         onClickStartLiveStreamingButton = { viewModel.processIntent(LiveListIntent.StartLiveStreamingActivity) },
         onClickLiveStreamingItem = { viewModel.processIntent(LiveListIntent.OnClickLiveStreamingItem(it)) }
@@ -97,6 +98,7 @@ fun LiveListScreen(
 
 @Composable
 fun LiveListScreen(
+    context: Context,
     liveStreamingList: List<LiveStreaming>,
     onClickStartLiveStreamingButton: () -> Unit,
     onClickLiveStreamingItem: (String) -> Unit
@@ -112,6 +114,7 @@ fun LiveListScreen(
                 LazyColumn {
                     items(liveStreamingList) { liveStreaming ->
                         LiveStreamingItem(
+                            context = context,
                             thumbnailUrl = liveStreaming.thumbnailURL,
                             title = liveStreaming.title,
                             userProfileUrl = liveStreaming.userProfileURL,

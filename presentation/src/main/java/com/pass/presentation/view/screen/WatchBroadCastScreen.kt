@@ -36,7 +36,7 @@ fun WatchBroadCastScreen(
     val context = LocalContext.current
 
     // 뒤로 가기 이벤트 - 라이브 스트리밍 중에는 종료 다이얼로그 띄우기
-    BackHandler {
+    BackHandler(enabled = true) {
         viewModel.processIntent(WatchBroadCastIntent.OnClickBackButton)
     }
 
