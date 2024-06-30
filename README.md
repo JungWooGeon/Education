@@ -15,8 +15,8 @@
 <br><br>
 
 ## 🚀 설계
-<img src="https://github.com/JungWooGeon/Education/assets/61993128/2fbaf20f-a016-4fce-860f-db0b998af00d" width="600" />
 <img src="https://github.com/JungWooGeon/Education/assets/61993128/271d0e7c-9ad0-4a04-b1c7-46675f4ad672" width="600" />
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/2fbaf20f-a016-4fce-860f-db0b998af00d" width="600" />
 
 - View: 사용자 인터페이스를 제공 및 사용자 입력 처리
 - Model: Intent 처리 및 뷰와 도메인 계층 사이의 상태와 사이드 이펙트 관리
@@ -43,3 +43,13 @@
   - 프로필 관리(사진 업로드 및 수정, 이름 수정)
 
 <br><br>
+
+## 📷 화면
+
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/d184e8ab-d35d-4f3f-bc18-df036e7dfac0" width="400" /> <img src="https://github.com/JungWooGeon/Education/assets/61993128/63594cbc-72a9-4bba-8646-ff9d706a12fc" width="400" />
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/c36c4c2f-e980-4585-815b-40e14470bff9" width="400" /> <img src="https://github.com/JungWooGeon/Education/assets/61993128/1eb075d8-397d-4ce9-b5be-53e5abc975e2" width="400" />
+<img src="https://github.com/JungWooGeon/Education/assets/61993128/c9e9cdc3-0f74-4aad-a5bb-d510066eff6c" width="400" /> <img src="https://github.com/JungWooGeon/Education/assets/61993128/18790488-ef7a-4cfa-a375-cfb52179505f" width="400" />
+
+
+
+
