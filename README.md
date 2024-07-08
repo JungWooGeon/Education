@@ -1,7 +1,9 @@
 <img src="https://github.com/JungWooGeon/Education/assets/61993128/72db6b38-2f93-4838-a0a6-0d7e7eed3b31" width="100" />
 
 ## 💡 Code Bridge
-라이브 스트리밍과 동영상 강의로 함께하는 코딩 교육 플랫폼
+라이브 스트리밍과 동영상 강의로 함께하는 코딩 교육 플랫폼 <br>
+
+https://drive.google.com/file/d/1N7SHu6OeaqlXjEeLFfB7ktw_M2-jI1ID/view?usp=sharing
 
 <br><br>
 
